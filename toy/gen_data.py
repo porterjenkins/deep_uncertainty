@@ -1,14 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import binom
 
-TRN_MIN = -5
-TRN_MAX = 5
-TEST_MIN = -6
-TEST_MAX = 6
+from models.model_utils import get_binom_n, get_binom_p
 
-N_TRN = 1000
-N_TEST = 500
-def generate_data(num_points=N_TRN, x_min=TEST_MIN, x_max=TRN_MAX):
+def generate_gaussian_data(num_points, x_min, x_max):
     #np.random.seed(42)  # Set a seed for reproducibility
 
     x_values = np.random.uniform(x_min, x_max, num_points)
@@ -19,11 +15,21 @@ def generate_data(num_points=N_TRN, x_min=TEST_MIN, x_max=TRN_MAX):
     return x_values, y_values
 
 
+def generate_linear_binom_data(num_points, x_min, x_max, beta_mu=1.5, beta_sig=1.1, bias_sig=-1.0):
+    x_values = np.random.uniform(x_min, x_max, num_points)
+    mu = beta_mu * x_values
+    sig2 = beta_sig * x_values + bias_sig
+    n = np.round(get_binom_n(mu=mu, sig2=sig2)).astype(int)
+    p = get_binom_p(mu=mu, n=n)
+    y = binom.rvs(n=n, p=p)
+    return x_values, y
 
-x_values, y_values = generate_data()
 
-plt.scatter(x_values, y_values, alpha=0.5)
-plt.xlabel('x')
-plt.ylabel('y')
-plt.title('Generated Data')
-plt.show()
+def generate_nonlinear_binom_data(num_points, x_min, x_max, beta_sig=1.1, bias_sig=-1.0):
+    x_values = np.random.uniform(x_min, x_max, num_points)
+    mu = np.sin(x_values)
+    sig2 = beta_sig * x_values + bias_sig
+    n = np.round(get_binom_n(mu=mu, sig2=sig2)).astype(int)
+    p = get_binom_p(mu=mu, n=n)
+    y = binom.rvs(n=n, p=p)
+    return x_values, y

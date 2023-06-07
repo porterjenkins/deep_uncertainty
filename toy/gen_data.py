@@ -1,9 +1,8 @@
 import numpy as np
 import argparse
 from scipy.stats import binom
-import pandas as pd
-from sklearn.model_selection import train_test_split
 import os
+import matplotlib.pyplot as plt
 
 from models.model_utils import get_binom_n, get_binom_p
 from utils import get_yaml
@@ -81,6 +80,10 @@ def main(config: dict):
     np.savetxt(fname=fpath + '_x_test.txt', X=X_test)
     np.savetxt(fname=fpath + '_y_test.txt', X=y_test)
 
+    plt.scatter(X_trn, y_trn, label='TRAIN')
+    plt.scatter(X_test, y_test, label='TEST')
+    plt.legend()
+    plt.savefig(fpath + "_scatter.png")
 
 
 

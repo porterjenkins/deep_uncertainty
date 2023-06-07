@@ -89,7 +89,7 @@ def main(config: dict):
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
     # Train the network
-    num_epochs = 100
+    num_epochs = 500
     progress_bar = tqdm(range(num_epochs), desc="Training", unit="epoch")
     trn_losses = []
     val_losses = []
@@ -104,7 +104,7 @@ def main(config: dict):
 
 
     test_loss = evaluate_regression_nn(test_loader, model, criterion, device)
-    print(test_loss)
+    print("Test MSE: {:.4f}".format(test_loss))
 
     plt.plot(np.arange(num_epochs), trn_losses, label="TRAIN")
     plt.plot(np.arange(num_epochs), val_losses, label="VAL")

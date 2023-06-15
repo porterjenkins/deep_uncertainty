@@ -11,8 +11,10 @@ import matplotlib.pyplot as plt
 from utils import get_yaml
 from torch.utils.data import DataLoader, TensorDataset
 from models.regressors import RegressionNN
-from models.model_utils import get_1d_plot
+from models.model_utils import get_mean_preds_and_targets
+from evaluation.plots import get_1d_mean_plot
 from evaluation.evals import evaluate_model_mse
+from evaluation.metrics import get_mse
 from toy.gen_data import generate_gaussian_data
 
 def train_regression_nn(train_loader, model, criterion, optimizer, device):
@@ -77,7 +79,7 @@ def main(config: dict):
     # Instantiate and train the network
     model = RegressionNN().to(device)
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=3e-4)
 
     # Train the network
     num_epochs = config['optim']['epochs']
@@ -93,9 +95,9 @@ def main(config: dict):
         val_losses.append(val_loss)
 
 
-
-    test_loss = evaluate_model_mse(test_loader, model, device)
-    print("Test MSE: {:.4f}".format(test_loss))
+    test_preds, test_targets = get_mean_preds_and_targets(test_loader, model, device)
+    test_mse = get_mse(test_targets, test_preds)
+    print("Test MSE: {:.4f}".format(test_mse))
 
     plt.plot(np.arange(num_epochs), trn_losses, label="TRAIN")
     plt.plot(np.arange(num_epochs), val_losses, label="VAL")
@@ -103,7 +105,7 @@ def main(config: dict):
     plt.show()
 
 
-    get_1d_plot(X_test, y_test, model)
+    get_1d_mean_plot(X_test, y_test, model)
 
 
 

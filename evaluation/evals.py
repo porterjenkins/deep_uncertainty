@@ -23,3 +23,4 @@ def evaluate_model_mse(val_loader, model, device):
     mse = get_mse(y_true=targets_all, y_hat=preds_all)
 
     return mse
+

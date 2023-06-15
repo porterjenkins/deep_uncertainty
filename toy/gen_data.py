@@ -37,11 +37,47 @@ def generate_nonlinear_binom_data(num_points, x_min, x_max, beta_sig=1.1, bias_s
     y = binom.rvs(n=n, p=p)
     return x_values, y
 
+def generate_nonlinear_count_data(num_points, x_min, x_max, n_grid=10):
+    x_values = np.array(sorted(np.random.uniform(x_min, x_max, num_points)))
+    mu_values = np.sin(x_values + 5) * 5 + 2 + 1.5 * x_values
+
+    mu_min = mu_values.min()
+    mu_max = mu_values.max()
+    # bin width
+    w = (mu_max - mu_min) / n_grid
+    idx = (np.array(mu_values) - mu_min) // w
+    noise = np.arange(1,  n_grid+2)
+    band = np.take(noise, idx.astype(int))
+    low = mu_values - 0.5 * band
+    high = mu_values + 0.5 * band
+    y = np.random.randint(low=low, high=high + 1)
+
+    return x_values, y
+
+def generate_linear_count_data(num_points, x_min, x_max, n_grid=10):
+    x_values = np.array(sorted(np.random.uniform(x_min, x_max, num_points)))
+    mu_values = 1.5 * x_values
+
+    mu_min = mu_values.min()
+    mu_max = mu_values.max()
+    # bin width
+    w = (mu_max - mu_min) / n_grid
+    idx = (np.array(mu_values) - mu_min) // w
+    noise = np.arange(1,  n_grid+2)
+    band = np.take(noise, idx.astype(int))
+    low = mu_values - 0.5 * band
+    high = mu_values + 0.5 * band
+    y = np.random.randint(low=low, high=high + 1)
+
+    return x_values, y
+
 
 GENERATORS = {
     generate_gaussian_data.__name__: generate_gaussian_data,
     generate_linear_binom_data.__name__: generate_linear_binom_data,
     generate_nonlinear_binom_data.__name__: generate_nonlinear_binom_data,
+    generate_nonlinear_count_data.__name__: generate_nonlinear_count_data,
+    generate_linear_count_data.__name__: generate_linear_count_data
 }
 
 def main(config: dict):

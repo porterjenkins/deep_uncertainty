@@ -11,25 +11,10 @@ import matplotlib.pyplot as plt
 from utils import get_yaml
 from torch.utils.data import DataLoader, TensorDataset
 from models.regressors import RegressionNN
-from models.model_utils import get_mean_preds_and_targets
+from models.model_utils import get_mean_preds_and_targets, train_regression_nn
 from evaluation.plots import get_1d_mean_plot
 from evaluation.evals import evaluate_model_mse
 from evaluation.metrics import get_mse
-from toy.gen_data import generate_gaussian_data
-
-def train_regression_nn(train_loader, model, criterion, optimizer, device):
-    model.train()
-    running_loss = 0.0
-    for inputs, targets in train_loader:
-        inputs, targets = inputs.to(device), targets.to(device)
-        optimizer.zero_grad()
-        outputs = model(inputs)
-        loss = criterion(outputs, targets)
-        loss.backward()
-        optimizer.step()
-        running_loss += loss.item() * inputs.size(0)
-    return running_loss / len(train_loader.dataset)
-
 
 
 def main(config: dict):

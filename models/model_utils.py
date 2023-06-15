@@ -60,11 +60,26 @@ def get_gaussian_bounds(
         num_std:float = 1.96,
         log_var:bool = True
 ):
+    if isinstance(sigmas, torch.Tensor):
+        sigmas = sigmas.data.numpy()
     if log_var:
-        std_predicted = np.sqrt(np.exp(sigmas.squeeze().numpy()))
+        std_predicted = np.sqrt(np.exp(sigmas))
 
     upper = preds + std_predicted*np.exp(num_std)
     lower = preds - std_predicted*np.exp(num_std)
 
     return upper, lower
 
+
+def train_regression_nn(train_loader, model, criterion, optimizer, device):
+    model.train()
+    running_loss = 0.0
+    for inputs, targets in train_loader:
+        inputs, targets = inputs.to(device), targets.to(device)
+        optimizer.zero_grad()
+        outputs = model(inputs)
+        loss = criterion(outputs, targets)
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item() * inputs.size(0)
+    return running_loss / len(train_loader.dataset)

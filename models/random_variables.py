@@ -12,7 +12,7 @@ class BaseRandomVariable(AbstractBaseClass):
     """Base class for a random variable. Defines all properties and methods that a random variable class should implement."""
 
     @abstractmethod
-    def negative_log_likelihood(self, x):
+    def nll(self, x):
         """Calculate the negative log likelihood of `x` for this random variable."""
         pass
 
@@ -109,7 +109,7 @@ class DiscreteConflation(DiscreteRandomVariable):
         log_probability = np.log(self.pmf(x))
         return log_probability
     
-    def negative_log_likelihood(self, x: Union[int, np.ndarray]) -> Union[float, np.ndarray]:
+    def nll(self, x: Union[int, np.ndarray]) -> Union[float, np.ndarray]:
         """Calculate the negative log likelihood of x for this conflation.
         
         Args:
@@ -169,7 +169,7 @@ class DiscreteTruncatedNormal(DiscreteRandomVariable):
         log_probability = np.log(self.pmf(x))
         return log_probability
     
-    def negative_log_likelihood(self, x: Union[int, np.ndarray]) -> Union[float, np.ndarray]:
+    def nll(self, x: Union[int, np.ndarray]) -> Union[float, np.ndarray]:
         """Calculate the negative log likelihood of x for this random variable.
 
         Note that the negative log likelihood here is not the true negative log likelihood of this random variable, but is proportional to it.

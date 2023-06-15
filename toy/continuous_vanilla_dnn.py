@@ -12,6 +12,7 @@ from utils import get_yaml
 from torch.utils.data import DataLoader, TensorDataset
 from models.regressors import RegressionNN
 from models.model_utils import get_1d_plot
+from evaluation.evals import evaluate_model_mse
 from toy.gen_data import generate_gaussian_data
 
 def train_regression_nn(train_loader, model, criterion, optimizer, device):
@@ -27,17 +28,7 @@ def train_regression_nn(train_loader, model, criterion, optimizer, device):
         running_loss += loss.item() * inputs.size(0)
     return running_loss / len(train_loader.dataset)
 
-# Function for evaluation
-def evaluate_regression_nn(test_loader, model, criterion, device):
-    model.eval()
-    running_loss = 0.0
-    with torch.no_grad():
-        for inputs, targets in test_loader:
-            inputs, targets = inputs.to(device), targets.to(device)
-            outputs = model(inputs)
-            loss = criterion(outputs, targets)
-            running_loss += loss.item() * inputs.size(0)
-    return running_loss / len(test_loader.dataset)
+
 
 def main(config: dict):
 
@@ -89,13 +80,13 @@ def main(config: dict):
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
     # Train the network
-    num_epochs = 500
+    num_epochs = config['optim']['epochs']
     progress_bar = tqdm(range(num_epochs), desc="Training", unit="epoch")
     trn_losses = []
     val_losses = []
     for epoch in progress_bar:
         train_loss = train_regression_nn(train_loader, model, criterion, optimizer, device)
-        val_loss = evaluate_regression_nn(val_loader, model, criterion, device)
+        val_loss = evaluate_model_mse(val_loader, model, device)
 
         progress_bar.set_postfix({"Train Loss": f"{train_loss:.4f}", "Val Loss": f"{val_loss:.4f}"})
         trn_losses.append(train_loss)
@@ -103,7 +94,7 @@ def main(config: dict):
 
 
 
-    test_loss = evaluate_regression_nn(test_loader, model, criterion, device)
+    test_loss = evaluate_model_mse(test_loader, model, device)
     print("Test MSE: {:.4f}".format(test_loss))
 
     plt.plot(np.arange(num_epochs), trn_losses, label="TRAIN")

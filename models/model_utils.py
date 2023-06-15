@@ -32,6 +32,8 @@ def get_1d_plot(X, y, model):
 
     with torch.no_grad():
         y_predicted_tensor = model(x_for_pred)
+        if isinstance(y_predicted_tensor, tuple):
+            y_predicted_tensor = y_predicted_tensor[0]
         y_predicted = y_predicted_tensor.squeeze().numpy()
 
     plt.figure(figsize=(10, 6))

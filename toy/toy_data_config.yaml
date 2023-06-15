@@ -1,9 +1,9 @@
 dataset:
-  task: generate_gaussian_data
-  x_min: -5
-  x_max: 10
-  n_train: 1000
-  n_val: 200
-  n_test: 200
-  name: toy_data_continuous
+  task: generate_linear_count_data
+  x_min: 1
+  x_max: 25
+  n_train: 200
+  n_val: 50
+  n_test: 50
+  name: toy_data_linear_count
   output_dir: "../data"

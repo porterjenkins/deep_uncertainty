@@ -13,7 +13,7 @@ from utils import get_yaml
 from models.regressors import GaussianDNN
 from models.model_utils import get_mean_sigma_preds_and_targets, get_gaussian_bounds
 
-from evaluation.plots import get_1d_sigma_plot, get_1d_mean_plot
+from evaluation.plots import get_1d_sigma_plot_from_model, get_1d_mean_plot
 from evaluation.metrics import get_mse, get_calibration
 
 
@@ -121,7 +121,7 @@ def main(config: dict):
 
 
     get_1d_mean_plot(X_test, y_test, model)
-    get_1d_sigma_plot(X_test, y_test, model)
+    get_1d_sigma_plot_from_model(X_test, y_test, model)
 
 
 

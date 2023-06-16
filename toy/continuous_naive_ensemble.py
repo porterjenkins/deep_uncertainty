@@ -12,7 +12,7 @@ from utils import get_yaml
 from torch.utils.data import DataLoader, TensorDataset
 from models.regressors import RegressionNN
 from models.model_utils import get_mean_preds_and_targets, train_regression_nn, get_gaussian_bounds
-from evaluation.plots import get_1d_mean_plot
+from evaluation.plots import get_sigma_plot_from_test
 from evaluation.evals import evaluate_model_mse
 from evaluation.metrics import get_mse, get_calibration
 
@@ -93,9 +93,11 @@ def main(config: dict):
 
     test_mse = get_mse(test_targets, preds)
     print("Test MSE: {:.4f}".format(test_mse))
-    upper, lower = get_gaussian_bounds(test_preds, sigma)
-    test_calib = get_calibration(test_targets, upper, lower)
+    upper, lower = get_gaussian_bounds(test_preds.flatten(), sigma, log_var=False)
+    test_calib = get_calibration(test_targets.flatten(), upper, lower)
     print("Test Calib: {:.4f}".format(test_calib))
+
+    get_sigma_plot_from_test(X_test, test_targets, preds, upper, lower)
 
 
 

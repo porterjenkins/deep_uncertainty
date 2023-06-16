@@ -64,9 +64,11 @@ def get_gaussian_bounds(
         sigmas = sigmas.data.numpy()
     if log_var:
         std_predicted = np.sqrt(np.exp(sigmas))
+    else:
+        std_predicted = sigmas
 
-    upper = preds + std_predicted*np.exp(num_std)
-    lower = preds - std_predicted*np.exp(num_std)
+    upper = preds + std_predicted*num_std
+    lower = preds - std_predicted*num_std
 
     return upper, lower
 

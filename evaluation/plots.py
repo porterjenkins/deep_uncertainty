@@ -3,7 +3,7 @@ import torch
 from matplotlib import pyplot as plt
 
 
-def get_1d_sigma_plot(X, y, model):
+def get_1d_sigma_plot_from_model(X, y, model):
 
     x_for_prediction = np.sort(X)
     # x_for_prediction = np.linspace(-6, 6, 100)
@@ -24,7 +24,26 @@ def get_1d_sigma_plot(X, y, model):
 
     plt.xlabel('x')
     plt.ylabel('y')
-    plt.title('Gaussian DNN Regression')
+    plt.legend()
+    plt.show()
+
+def get_sigma_plot_from_test(x_test, y_test, preds, upper, lower):
+
+    order = x_test.argsort()
+
+    plt.figure(figsize=(10, 6))
+    plt.scatter(x_test[order], y_test[order], alpha=0.1, label="Test Data")
+    plt.plot(x_test[order], preds[order])
+    plt.fill_between(
+        x_test[order],
+        lower[order],
+        upper[order],
+        color='r',
+        alpha=0.2,
+        label="2 Std Dev"
+    )
+    plt.xlabel('x')
+    plt.ylabel('y')
     plt.legend()
     plt.show()
 

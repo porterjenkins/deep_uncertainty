@@ -36,11 +36,12 @@ def get_mean_preds_and_targets(loader, model, device):
     targets_all = torch.cat(targets_all)
     return preds_all, targets_all
 
-def get_mean_sigma_preds_and_targets(loader, model, device):
+def inference_with_sigma(loader, model, device):
     model.eval()
     preds_all = []
     sigma_all = []
     targets_all = []
+    inputs_all = []
     with torch.no_grad():
         for inputs, targets in loader:
             pred = model(inputs.to(device))
@@ -48,11 +49,13 @@ def get_mean_sigma_preds_and_targets(loader, model, device):
             sigma_all.append(sig.cpu())
             preds_all.append(mean.cpu())
             targets_all.append(targets)
+            inputs_all.append(inputs.cpu())
 
     preds_all = torch.cat(preds_all)
     targets_all = torch.cat(targets_all)
     sigma_all = torch.cat(sigma_all)
-    return preds_all, sigma_all, targets_all
+    inputs_all = torch.cat(inputs_all)
+    return preds_all, sigma_all, targets_all, inputs_all
 
 def get_gaussian_bounds(
         preds: torch.Tensor,
@@ -85,3 +88,31 @@ def train_regression_nn(train_loader, model, criterion, optimizer, device):
         optimizer.step()
         running_loss += loss.item() * inputs.size(0)
     return running_loss / len(train_loader.dataset)
+
+
+def train_gaussian_dnn(train_loader, model, optimizer, device):
+    model.train()
+    running_loss = 0.0
+    for inputs, targets in train_loader:
+        inputs, targets = inputs.to(device), targets.to(device)
+        optimizer.zero_grad()
+        mean, logvar = model(inputs)
+
+        loss = 0.5 * (torch.exp(-logvar) * (targets - mean) ** 2 + logvar).mean()
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item() * inputs.size(0)
+    return running_loss / len(train_loader.dataset)
+
+
+def get_nll_gaus_loss(val_loader, model, device):
+    model.eval()
+    running_loss = 0.0
+    with torch.no_grad():
+        for inputs, targets in val_loader:
+            inputs, targets = inputs.to(device), targets.to(device)
+            mean, logvar = model(inputs)
+
+            loss = 0.5 * (torch.exp(-logvar) * (targets - mean) ** 2 + logvar).mean()
+            running_loss += loss.item() * inputs.size(0)
+    return running_loss / len(val_loader.dataset)

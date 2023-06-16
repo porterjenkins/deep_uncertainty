@@ -27,7 +27,16 @@ def get_1d_sigma_plot_from_model(X, y, model):
     plt.legend()
     plt.show()
 
-def get_sigma_plot_from_test(x_test, y_test, preds, upper, lower):
+def get_sigma_plot_from_test(
+        x_test,
+        y_test,
+        preds,
+        upper,
+        lower,
+        c='r',
+        alpha=0.2,
+        show=True
+):
 
     order = x_test.argsort()
 
@@ -38,14 +47,15 @@ def get_sigma_plot_from_test(x_test, y_test, preds, upper, lower):
         x_test[order],
         lower[order],
         upper[order],
-        color='r',
-        alpha=0.2,
+        color=c,
+        alpha=alpha,
         label="2 Std Dev"
     )
     plt.xlabel('x')
     plt.ylabel('y')
     plt.legend()
-    plt.show()
+    if show:
+        plt.show()
 
 
 def get_1d_mean_plot(X, y, model):

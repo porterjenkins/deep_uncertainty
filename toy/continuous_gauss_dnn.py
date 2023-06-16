@@ -11,37 +11,12 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from utils import get_yaml
 from models.regressors import GaussianDNN
-from models.model_utils import get_mean_sigma_preds_and_targets, get_gaussian_bounds
+from models.model_utils import inference_with_sigma, get_gaussian_bounds, train_gaussian_dnn, \
+    get_nll_gaus_loss
 
 from evaluation.plots import get_1d_sigma_plot_from_model, get_1d_mean_plot
 from evaluation.metrics import get_mse, get_calibration
 
-
-def train_gaussian_dnn(train_loader, model, optimizer, device):
-    model.train()
-    running_loss = 0.0
-    for inputs, targets in train_loader:
-        inputs, targets = inputs.to(device), targets.to(device)
-        optimizer.zero_grad()
-        mean, logvar = model(inputs)
-
-        loss = 0.5 * (torch.exp(-logvar) * (targets - mean) ** 2 + logvar).mean()
-        loss.backward()
-        optimizer.step()
-        running_loss += loss.item() * inputs.size(0)
-    return running_loss / len(train_loader.dataset)
-
-def get_val_loss(val_loader, model, device):
-    model.eval()
-    running_loss = 0.0
-    with torch.no_grad():
-        for inputs, targets in val_loader:
-            inputs, targets = inputs.to(device), targets.to(device)
-            mean, logvar = model(inputs)
-
-            loss = 0.5 * (torch.exp(-logvar) * (targets - mean) ** 2 + logvar).mean()
-            running_loss += loss.item() * inputs.size(0)
-    return running_loss / len(val_loader.dataset)
 
 def main(config: dict):
 
@@ -99,13 +74,13 @@ def main(config: dict):
     val_losses = []
     for epoch in progress_bar:
         train_loss = train_gaussian_dnn(train_loader, model, optimizer, device)
-        val_loss = get_val_loss(val_loader, model, device)
+        val_loss = get_nll_gaus_loss(val_loader, model, device)
 
         progress_bar.set_postfix({"Train Loss": f"{train_loss:.4f}", "Val Loss": f"{val_loss:.4f}"})
         trn_losses.append(train_loss)
         val_losses.append(val_loss)
 
-    test_preds, test_sigmas, test_targets = get_mean_sigma_preds_and_targets(test_loader, model, device)
+    test_preds, test_sigmas, test_targets = inference_with_sigma(test_loader, model, device)
 
     test_mse = get_mse(test_targets, test_preds)
     print("Test MSE: {:.4f}".format(test_mse))

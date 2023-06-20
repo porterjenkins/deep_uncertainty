@@ -1,5 +1,10 @@
-import torch
 from torch import nn
+
+import pyro
+import pyro.distributions as dist
+from pyro.nn import PyroModule, PyroSample
+
+
 
 class RegressionNN(nn.Module):
     def __init__(self):
@@ -30,3 +35,27 @@ class GaussianDNN(nn.Module):
         mean = self.mean_output(x)
         logvar = self.logvar_output(x)
         return mean, logvar
+
+class PyroGaussianDNN(PyroModule):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = PyroModule[nn.Linear](1, 32)
+        self.fc1.weight = PyroSample(dist.Normal(0., 1.).expand([32, 1]).to_event(2))
+        self.fc1.bias = PyroSample(dist.Normal(0., 1.).expand([32]).to_event(1))
+        self.fc2 = PyroModule[nn.Linear](32, 32)
+        self.fc2.weight = PyroSample(dist.Normal(0., 1.).expand([32, 32]).to_event(2))
+        self.fc2.bias = PyroSample(dist.Normal(0., 1.).expand([32]).to_event(1))
+        self.mean = PyroModule[nn.Linear](32, 1)
+        self.mean.weight = PyroSample(dist.Normal(0., 1.).expand([1, 32]).to_event(2))
+        self.mean.bias = PyroSample(dist.Normal(0., 1.).expand([1]).to_event(1))
+        self.relu = nn.ReLU()
+
+    def forward(self, x, y=None):
+        x = x.reshape(-1, 1)
+        x = self.relu(self.fc1(x))
+        x = self.relu(self.fc2(x))
+        mu = self.mean(x).squeeze()
+        sigma = pyro.sample("sigma", dist.Uniform(0., 1.))
+        with pyro.plate("data", x.shape[0]):
+            obs = pyro.sample("obs", dist.Normal(mu, sigma), obs=y)
+        return mu

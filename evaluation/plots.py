@@ -35,7 +35,8 @@ def get_sigma_plot_from_test(
         lower,
         c='r',
         alpha=0.2,
-        show=True
+        show=True,
+        title=''
 ):
 
     order = x_test.argsort()
@@ -54,6 +55,7 @@ def get_sigma_plot_from_test(
     plt.xlabel('x')
     plt.ylabel('y')
     plt.legend()
+    plt.title(title)
     if show:
         plt.show()
 

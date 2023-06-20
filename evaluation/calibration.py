@@ -68,8 +68,8 @@ def plot_regression_calibration_curve(y_true: np.ndarray, y_pred: np.ndarray, si
 def compute_calibration_score(y_true: np.ndarray, y_pred: np.ndarray, sigma_pred: np.ndarray) -> float:
     """Given the targets and outputs of a regression model, along with its predictive uncertainty, compute the calibration score of the model.
 
-    The calibration score is defined as 1 minus the absolute value of the area between the calibration curve of a perfectly calibrated model (y = x)
-    and the given model.
+    The calibration score is defined as 1 minus twice the area between the calibration curve of a perfectly calibrated model (y = x)
+    and the given model (the 2x multiplier is so that the score lives between 0 and 1)
     
     Args:
         y_true (ndarray, (n,)): The true values of the regression targets.
@@ -78,10 +78,9 @@ def compute_calibration_score(y_true: np.ndarray, y_pred: np.ndarray, sigma_pred
     """
     with warnings.catch_warnings():     # Scipy passes back an annoying integration warning that doesn't affect the output.
         warnings.simplefilter("ignore")
-        area_under_model_calibration_curve = quad(lambda p: get_pct_of_targets_in_pred_confidence_interval(y_true, y_pred, sigma_pred, p), 0, 1)[0]
+        area_between_model_and_perfect_calibration_curve = quad(lambda p: abs(get_pct_of_targets_in_pred_confidence_interval(y_true, y_pred, sigma_pred, p) - p), 0, 1)[0]
 
-    area_under_perfect_calibration_curve = 0.5
-    calibration_score = 1 - abs(area_under_model_calibration_curve - area_under_perfect_calibration_curve)
+    calibration_score = 1 - (2 * area_between_model_and_perfect_calibration_curve)
     
     return calibration_score
 

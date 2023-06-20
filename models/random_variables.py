@@ -16,6 +16,11 @@ class BaseRandomVariable(AbstractBaseClass):
         """Calculate the negative log likelihood of `x` for this random variable."""
         pass
 
+    @abstractmethod
+    def ppf(self, q):
+        """Return the largest possible value of this random variable at which the probability mass to the left is less than or equal to `q`."""
+        pass
+
 
 class DiscreteRandomVariable(BaseRandomVariable):
     """Base class for a discrete random variable. Defines all properties and methods that a discrete random variable class should implement."""
@@ -121,6 +126,17 @@ class DiscreteConflation(DiscreteRandomVariable):
         nll = -self.logpmf(x)
         return nll
     
+    def ppf(self, q: float) -> int:
+        """Return the largest possible value of this conflation at which the probability mass to the left is less than or equal to `q`.
+        
+        Args:
+            q (float): The desired quantile.
+        """
+        i = 0
+        while self.mass[:i+1].sum() <= q:
+            i += 1
+        return int(self.support[i])
+    
 
 class DiscreteTruncatedNormal(DiscreteRandomVariable):
     """A discrete truncated normal random variable.
@@ -186,3 +202,11 @@ class DiscreteTruncatedNormal(DiscreteRandomVariable):
             np.log(erf((self.b - self.mu)/ (self.sigma * np.sqrt(2))) - erf((self.a - self.mu) / (self.sigma * np.sqrt(2))))
         )
         return nll
+    
+    def ppf(self, q: Union[float, np.ndarray]) -> Union[int, np.ndarray]:
+        """Return the largest possible value of this random variable at which the probability mass to the left is less than or equal to `q`.
+        
+        Args:
+            q (float): The desired quantile.
+        """
+        return np.floor(self.base_rv.ppf(q)).astype(int)

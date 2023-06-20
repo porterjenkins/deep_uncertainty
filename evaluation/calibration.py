@@ -65,10 +65,10 @@ def plot_regression_calibration_curve(y_true: np.ndarray, y_pred: np.ndarray, si
     if show:
         plt.show()
 
-def compute_calibration_score(y_true: np.ndarray, y_pred: np.ndarray, sigma_pred: np.ndarray) -> float:
-    """Given the targets and outputs of a regression model, along with its predictive uncertainty, compute the calibration score of the model.
+def compute_average_calibration_score(y_true: np.ndarray, y_pred: np.ndarray, sigma_pred: np.ndarray) -> float:
+    """Given the targets and outputs of a regression model, along with its predictive uncertainty, compute the average calibration score of the model.
 
-    The calibration score is defined as 1 minus twice the area between the calibration curve of a perfectly calibrated model (y = x)
+    The average calibration score is defined as 1 minus twice the area between the calibration curve of a perfectly calibrated model (y = x)
     and the given model (the 2x multiplier is so that the score lives between 0 and 1)
     
     Args:
@@ -95,4 +95,4 @@ if __name__ == "__main__":
     sigma_pred = np.ones_like(x)    # We have nearly perfect calibration here since our model knows its uncertainty is 1.
 
     plot_regression_calibration_curve(y_true, y_pred, sigma_pred, num_bins=9)
-    print(compute_calibration_score(y_true, y_pred, sigma_pred))    # Should be close to 1.
+    print(compute_average_calibration_score(y_true, y_pred, sigma_pred))    # Should be close to 1.

@@ -6,17 +6,17 @@ from torch import nn
 from tqdm import tqdm
 import torch.optim as optim
 import matplotlib.pyplot as plt
-from torch.utils.data import DataLoader, TensorDataset
 
 
 from utils import get_yaml
-from models.regressors import GaussianDNN
-from models.model_utils import inference_with_sigma, get_gaussian_bounds, train_gaussian_dnn, \
-    get_nll_gaus_loss
-
-from evaluation.plots import get_1d_sigma_plot_from_model, get_1d_mean_plot
+from torch.utils.data import DataLoader, TensorDataset
+from models.regressors import RegressionNN
+from models.model_utils import get_mean_preds_and_targets, train_regression_nn, get_gaussian_bounds
+from evaluation.plots import get_sigma_plot_from_test
+from evaluation.evals import evaluate_model_mse
 from evaluation.metrics import get_mse, get_calibration
 
+NUM_MEMBERS = 5
 
 def main(config: dict):
 
@@ -61,42 +61,44 @@ def main(config: dict):
 
     # Check for CUDA availability and set the device accordingly
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # Instantiate and train the network
-    model = GaussianDNN().to(device)
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=3e-4)
 
-    # Train the network
-    num_epochs = config['optim']['epochs']
-    progress_bar = tqdm(range(num_epochs), desc="Training", unit="epoch")
-    trn_losses = []
-    val_losses = []
-    for epoch in progress_bar:
-        train_loss = train_gaussian_dnn(train_loader, model, optimizer, device)
-        val_loss = get_nll_gaus_loss(val_loader, model, device)
+    ensemble_preds = np.zeros((len(test_loader), NUM_MEMBERS))
 
-        progress_bar.set_postfix({"Train Loss": f"{train_loss:.4f}", "Val Loss": f"{val_loss:.4f}"})
-        trn_losses.append(train_loss)
-        val_losses.append(val_loss)
+    for i in range(NUM_MEMBERS):
+        # Instantiate and train the network
+        model_i = RegressionNN().to(device)
 
-    test_preds, test_sigmas, test_targets = inference_with_sigma(test_loader, model, device)
+        optimizer = optim.Adam(model_i.parameters(), lr=3e-4)
 
-    test_mse = get_mse(test_targets, test_preds)
+        # Train the network
+        num_epochs = config['optim']['epochs']
+        progress_bar = tqdm(range(num_epochs), desc="Training", unit="epoch")
+        trn_losses = []
+        val_losses = []
+        for epoch in progress_bar:
+            train_loss = train_regression_nn(train_loader, model_i, criterion, optimizer, device)
+            val_loss = evaluate_model_mse(val_loader, model_i, device)
+
+            progress_bar.set_postfix({"Train Loss": f"{train_loss:.4f}", "Val Loss": f"{val_loss:.4f}"})
+            trn_losses.append(train_loss)
+            val_losses.append(val_loss)
+
+
+        test_preds, test_targets = get_mean_preds_and_targets(test_loader, model_i, device)
+        ensemble_preds[:, i] = test_preds.data.numpy().flatten()
+
+    preds = ensemble_preds.mean(1)
+    sigma = ensemble_preds.std(1)
+
+    test_mse = get_mse(test_targets, preds)
     print("Test MSE: {:.4f}".format(test_mse))
-    upper, lower = get_gaussian_bounds(test_preds, test_sigmas)
-    test_calib = get_calibration(test_targets, upper, lower)
+    upper, lower = get_gaussian_bounds(test_preds.flatten(), sigma, log_var=False)
+    test_calib = get_calibration(test_targets.flatten(), upper, lower)
     print("Test Calib: {:.4f}".format(test_calib))
 
+    get_sigma_plot_from_test(X_test, test_targets, preds, upper, lower)
 
-    plt.plot(np.arange(num_epochs), trn_losses, label="TRAIN")
-    plt.plot(np.arange(num_epochs), val_losses, label="VAL")
-    plt.legend()
-    plt.show()
-
-
-    get_1d_mean_plot(X_test, y_test, model)
-    get_1d_sigma_plot_from_model(X_test, y_test, model)
 
 
 

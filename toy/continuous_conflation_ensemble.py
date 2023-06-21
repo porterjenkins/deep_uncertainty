@@ -6,6 +6,7 @@ from torch import nn
 from tqdm import tqdm
 import torch.optim as optim
 import matplotlib.pyplot as plt
+from scipy.stats import norm
 
 
 from utils import get_yaml
@@ -15,6 +16,7 @@ from models.model_utils import inference_with_sigma, train_gaussian_dnn, get_gau
 from evaluation.plots import get_sigma_plot_from_test, get_1d_sigma_plot_from_model
 from evaluation.evals import evaluate_model_mse
 from evaluation.metrics import get_mse, get_calibration
+from evaluation.calibration import plot_regression_calibration_curve, compute_average_calibration_score
 
 NUM_MEMBERS = 5
 
@@ -116,13 +118,21 @@ def main(config: dict):
     mu_star, var_star = get_conflation_2darray(mus=ensemble_preds, sigmas=ensemble_vars)
     sigma_star = np.sqrt(var_star)
 
+    # posterior predictive distribution
+    ppd = norm(
+        mu_star.flatten(),
+        sigma_star.flatten()
+    )
+
     test_mse = get_mse(test_targets, mu_star)
     print("Test MSE: {:.4f}".format(test_mse))
     upper, lower = get_gaussian_bounds(mu_star, sigma_star, log_var=False)
     test_calib = get_calibration(test_targets.flatten(), upper, lower)
     print("Test Calib: {:.4f}".format(test_calib))
+    mean_calib = compute_average_calibration_score(test_targets.data.numpy().flatten(), ppd)
+    print("Mean Calib: {:.4f}".format(mean_calib))
 
-    for i in range(NUM_MEMBERS):
+    """for i in range(NUM_MEMBERS):
         upper_i, lower_i = get_gaussian_bounds(ensemble_preds[:, i], ensemble_sigmas[:, i], log_var=False)
         get_sigma_plot_from_test(
             test_inputs.data.numpy().flatten(),
@@ -131,7 +141,7 @@ def main(config: dict):
             upper_i,
             lower_i,
             title=f'member: {i}'
-        )
+        )"""
 
 
     get_sigma_plot_from_test(
@@ -143,6 +153,12 @@ def main(config: dict):
         title="Conflation"
     )
 
+
+    plot_regression_calibration_curve(
+            test_targets.data.numpy().flatten(),
+            ppd,
+            num_bins=15
+        )
 
 
 

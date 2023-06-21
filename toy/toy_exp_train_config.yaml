@@ -1,6 +1,6 @@
 dataset:
   dir: "../data"
-  name: "toy_data_continuous"
+  name: "toy_data_nonlinear_count"
 optim:
   batch_size: 32
-  epochs: 500
+  epochs: 1000

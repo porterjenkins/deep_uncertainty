@@ -91,10 +91,16 @@ class DiscreteConflation(DiscreteRandomVariable):
             probability (float | np.ndarray): The probability of x.
         """
         if not np.all(np.in1d(x, self.support)):
-            raise ValueError(f"Provided value {x} is not in the support of this random variable.")
+            raise ValueError(f"Provided value(s) {x} not in the support of this random variable.")
         
-        probability = self.mass[np.in1d(self.support, x)]
-        return probability[0] if len(probability) == 1 else probability
+        if type(x) == np.ndarray:
+            indices = [np.where(self.support == val)[0][0] for val in x if val in self.support]
+            probability = self.mass[indices]
+    
+        else:
+            probability = self.mass[np.where(self.support == x)][0]
+
+        return probability
     
     def logpmf(self, x: Union[int, np.ndarray]) -> Union[float, np.ndarray]:
         """Calculate the log probability that this conflation takes on the value(s) x.
@@ -108,8 +114,8 @@ class DiscreteConflation(DiscreteRandomVariable):
         Returns:
             log_probability (float | np.ndarray): The log probability of x.
         """
-        if x not in self.support:
-            raise ValueError(f"Provided value {x} is not in the support of this random variable.")
+        if not np.all(np.in1d(x, self.support)):
+            raise ValueError(f"Provided value(s) {x} not in the support of this random variable.")
         
         log_probability = np.log(self.pmf(x))
         return log_probability

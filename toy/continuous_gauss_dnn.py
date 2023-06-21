@@ -7,7 +7,7 @@ from tqdm import tqdm
 import torch.optim as optim
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader, TensorDataset
-
+from scipy.stats import norm
 
 from utils import get_yaml
 from models.regressors import GaussianDNN
@@ -16,6 +16,7 @@ from models.model_utils import inference_with_sigma, get_gaussian_bounds, train_
 
 from evaluation.plots import get_1d_sigma_plot_from_model, get_1d_mean_plot
 from evaluation.metrics import get_mse, get_calibration
+from evaluation.calibration import plot_regression_calibration_curve, compute_average_calibration_score
 
 
 def main(config: dict):
@@ -81,12 +82,20 @@ def main(config: dict):
         val_losses.append(val_loss)
 
     test_preds, test_sigmas, test_targets, test_inputs = inference_with_sigma(test_loader, model, device)
+    test_sigmas = np.sqrt(np.exp(test_sigmas))
+    # posterior predictive distribution
+    ppd = norm(
+        test_preds.data.numpy().flatten(),
+        test_sigmas.data.numpy().flatten()
+    )
 
     test_mse = get_mse(test_targets, test_preds)
     print("Test MSE: {:.4f}".format(test_mse))
-    upper, lower = get_gaussian_bounds(test_preds, test_sigmas)
+    upper, lower = get_gaussian_bounds(test_preds, test_sigmas, log_var=False)
     test_calib = get_calibration(test_targets, upper, lower)
     print("Test Calib: {:.4f}".format(test_calib))
+    mean_calib = compute_average_calibration_score(test_targets.data.numpy().flatten(), ppd)
+    print("Mean Calib: {:.4f}".format(mean_calib))
 
 
     plt.plot(np.arange(num_epochs), trn_losses, label="TRAIN")
@@ -97,6 +106,12 @@ def main(config: dict):
 
     get_1d_mean_plot(X_test, y_test, model)
     get_1d_sigma_plot_from_model(X_test, y_test, model)
+
+    plot_regression_calibration_curve(
+        test_targets.data.numpy().flatten(),
+        ppd,
+        num_bins=15
+    )
 
 
 

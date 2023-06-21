@@ -3,4 +3,4 @@ dataset:
   name: "toy_data_nonlinear_count"
 optim:
   batch_size: 32
-  epochs: 1000
+  epochs: 500

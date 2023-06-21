@@ -35,7 +35,7 @@ def display_bayes_credible_interval(rv, p: float, ax: Optional[plt.Axes] = None,
     ax = plt.subplots(1, 1)[1] if ax is None else ax
 
     if hasattr(rv, "pmf"):
-        support = np.arange(rv.ppf(0.001), rv.ppf(0.999))
+        support = np.arange(rv.ppf(0.001), rv.ppf(0.999) + 1)
         ax.plot(support, rv.pmf(support), color='black', linestyle='-', marker='o')
         ax.set_ylim(bottom=0)
         ax.set_xlabel("Support")

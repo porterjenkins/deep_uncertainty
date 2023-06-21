@@ -1,4 +1,5 @@
 from torch import nn
+import torch
 
 import pyro
 import pyro.distributions as dist
@@ -10,15 +11,22 @@ class RegressionNN(nn.Module):
     def __init__(self):
         super(RegressionNN, self).__init__()
         self.layers = nn.Sequential(
-            nn.Linear(1, 32),
+            nn.Linear(1, 64),
             nn.ReLU(),
-            nn.Linear(32, 32),
+            nn.Linear(64, 64),
             nn.ReLU(),
-            nn.Linear(32, 1)
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1),
         )
 
     def forward(self, x):
-        return self.layers(x)
+        y_hat = self.layers(x)
+        if not self.training:
+            y_hat = torch.exp(y_hat)
+        return y_hat
 
 class GaussianDNN(nn.Module):
     def __init__(self):

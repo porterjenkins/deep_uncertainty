@@ -60,7 +60,7 @@ def get_sigma_plot_from_test(
         plt.show()
 
 
-def get_1d_mean_plot(X, y, model):
+def get_1d_mean_plot(X, y, model, lower=None, upper=None):
 
     x_for_pred = np.sort(X)
     x_for_pred = torch.Tensor(x_for_pred.reshape(-1, 1))
@@ -76,6 +76,16 @@ def get_1d_mean_plot(X, y, model):
     plt.figure(figsize=(10, 6))
     plt.scatter(X, y, alpha=0.5, label="Generated Data")
     plt.plot(x_for_pred, y_predicted, label="Predicted", color='r', linestyle='-', linewidth=2)
+
+    if (lower is not None) and (upper is not None):
+        plt.fill_between(
+            X_test[order],
+            lower[order].flatten(),
+            upper[order].flatten(),
+            color='red',
+            alpha=0.5,
+            label="95% CI"
+        )
 
     plt.xlabel('x')
     plt.ylabel('y')

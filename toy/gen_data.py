@@ -39,7 +39,7 @@ def generate_nonlinear_binom_data(num_points, x_min, x_max, beta_sig=1.1, bias_s
 
 def generate_nonlinear_count_data(num_points, x_min, x_max, n_grid=10):
     x_values = np.array(sorted(np.random.uniform(x_min, x_max, num_points)))
-    mu_values = np.sin(x_values + 5) * 5 + 2 + 1.5 * x_values
+    mu_values = np.sin(x_values + 5) * 10 + 2 + 1.5 * x_values
 
     mu_min = mu_values.min()
     mu_max = mu_values.max()

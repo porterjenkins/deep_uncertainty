@@ -8,8 +8,9 @@ from pyro.nn import PyroModule, PyroSample
 
 
 class RegressionNN(nn.Module):
-    def __init__(self):
+    def __init__(self, log_output: bool = False):
         super(RegressionNN, self).__init__()
+        self.log_output = log_output
         self.layers = nn.Sequential(
             nn.Linear(1, 64),
             nn.ReLU(),
@@ -24,7 +25,7 @@ class RegressionNN(nn.Module):
 
     def forward(self, x):
         y_hat = self.layers(x)
-        if not self.training:
+        if (self.log_output) and (not self.training):
             y_hat = torch.exp(y_hat)
         return y_hat
 

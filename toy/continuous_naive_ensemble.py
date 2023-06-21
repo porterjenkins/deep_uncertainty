@@ -6,6 +6,7 @@ from torch import nn
 from tqdm import tqdm
 import torch.optim as optim
 import matplotlib.pyplot as plt
+from scipy.stats import norm
 
 
 from utils import get_yaml
@@ -15,6 +16,7 @@ from models.model_utils import get_mean_preds_and_targets, train_regression_nn, 
 from evaluation.plots import get_sigma_plot_from_test
 from evaluation.evals import evaluate_model_mse
 from evaluation.metrics import get_mse, get_calibration
+from evaluation.calibration import compute_average_calibration_score, plot_regression_calibration_curve
 
 NUM_MEMBERS = 5
 
@@ -91,13 +93,25 @@ def main(config: dict):
     preds = ensemble_preds.mean(1)
     sigma = ensemble_preds.std(1)
 
-    test_mse = get_mse(test_targets, preds)
+    ppd = norm(
+        preds.flatten(),
+        sigma.flatten()
+    )
+
+    test_mse = get_mse(y_test, preds)
     print("Test MSE: {:.4f}".format(test_mse))
-    upper, lower = get_gaussian_bounds(test_preds.flatten(), sigma, log_var=False)
+    upper, lower = get_gaussian_bounds(preds.flatten(), sigma.flatten(), log_var=False)
     test_calib = get_calibration(test_targets.flatten(), upper, lower)
     print("Test Calib: {:.4f}".format(test_calib))
+    mean_calib = compute_average_calibration_score(test_targets.data.numpy().flatten(), ppd)
+    print("Mean Calib: {:.4f}".format(mean_calib))
 
     get_sigma_plot_from_test(X_test, test_targets, preds, upper, lower)
+    plot_regression_calibration_curve(
+        test_targets.data.numpy().flatten(),
+        ppd,
+        num_bins=15
+    )
 
 
 

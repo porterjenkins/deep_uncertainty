@@ -22,6 +22,15 @@ def get_bayes_credible_interval(rv, p: float) -> Tuple[float, float]:
 
     return credible_interval_min, credible_interval_max
 
+def display_bayes_credible_interval(rv, p: float):
+    interval_min, interval_max = get_bayes_credible_interval(rv, p)
+    support = np.linspace(rv.ppf(0.001), rv.ppf(0.999), 100)
+    plt.plot(support, rv.pdf(support), color='black')
+    plt.ylim(bottom=0)
+    plt.vlines(x=[interval_min, interval_max], ymin=[0, 0], ymax=[rv.pdf(interval_min), rv.pdf(interval_max)], colors=['red', 'red'])
+    plt.show()
+    
+
 def get_pct_of_targets_in_pred_credible_interval(y_true: np.ndarray, posterior_predictive_distribution, p: float = 0.95) -> float:
     """Return the percentage of ground truth targets that are within the p% credible interval of a probabilistic regression model.
 
@@ -94,8 +103,10 @@ if __name__ == "__main__":
     y_true = 3 * x
 
     y_pred = y_true + np.random.randn(1000)
-    sigma_pred = np.ones_like(x)    # We have nearly perfect calibration here since our model knows its uncertainty is 1.
+    sigma_pred = 3 * np.ones_like(x)    # We have nearly perfect calibration here since our model knows its uncertainty is 1.
     posterior_predictive_distribution = norm(y_pred, sigma_pred)
 
     plot_regression_calibration_curve(y_true, posterior_predictive_distribution, num_bins=9)
     print(compute_average_calibration_score(y_true, posterior_predictive_distribution))    # Should be close to 1.
+
+    display_bayes_credible_interval(binom(3, 0.5), p=0.9)

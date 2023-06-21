@@ -66,7 +66,7 @@ def main(config: dict):
     # Instantiate and train the network
     model = GaussianDNN().to(device)
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=1e-2)
+    optimizer = optim.Adam(model.parameters(), lr=3e-4)
 
     # Train the network
     num_epochs = config['optim']['epochs']

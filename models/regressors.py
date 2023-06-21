@@ -32,17 +32,25 @@ class RegressionNN(nn.Module):
 class GaussianDNN(nn.Module):
     def __init__(self):
         super(GaussianDNN, self).__init__()
-        self.fc1 = nn.Linear(1, 32)
-        self.fc2 = nn.Linear(32, 32)
-        self.mean_output = nn.Linear(32, 1)
-        self.logvar_output = nn.Linear(32, 1)
-        self.activation = nn.ReLU()
+
+        self.layers = nn.Sequential(
+            nn.Linear(1, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+        )
+
+        self.mean_output = nn.Linear(64, 1)
+        self.logvar_output = nn.Linear(64, 1)
 
     def forward(self, x):
-        x = self.activation(self.fc1(x))
-        x = self.activation(self.fc2(x))
-        mean = self.mean_output(x)
-        logvar = self.logvar_output(x)
+        h = self.layers(x)
+        mean = self.mean_output(h)
+        logvar = self.logvar_output(h)
         return mean, logvar
 
 class PyroGaussianDNN(PyroModule):

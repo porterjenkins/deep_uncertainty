@@ -17,6 +17,7 @@ from models.model_utils import get_mean_preds_and_targets, train_regression_nn
 from evaluation.plots import get_1d_mean_plot, get_sigma_plot_from_test
 from evaluation.evals import evaluate_model_criterion
 from evaluation.metrics import get_mse, get_calibration
+from evaluation.calibration import compute_average_calibration_score, plot_regression_calibration_curve
 
 
 def main(config: dict):
@@ -86,14 +87,18 @@ def main(config: dict):
 
     test_preds, test_targets = get_mean_preds_and_targets(test_loader, model, device)
 
-    prob = poisson(test_preds.data.numpy())
-    lower, upper = prob.interval(0.95)
+    prob = poisson(test_preds.data.numpy().flatten())
+    lower = prob.ppf(0.025)
+    upper = prob.ppf(0.975)
 
     test_mse = get_mse(test_targets, test_preds)
     print("Test MSE: {:.4f}".format(test_mse))
 
     test_calib = get_calibration(test_targets.flatten(), upper.flatten(), lower.flatten())
-    print("Test Calib: {:.4f}".format(test_calib))
+    print("95% Test Calib: {:.4f}".format(test_calib))
+
+    mean_calib = compute_average_calibration_score(test_targets.data.numpy().flatten(), prob)
+    print("Mean Calib: {:.4f}".format(mean_calib))
 
     plt.plot(np.arange(num_epochs), trn_losses, label="TRAIN")
     plt.plot(np.arange(num_epochs), val_losses, label="VAL")
@@ -102,6 +107,11 @@ def main(config: dict):
 
 
     get_sigma_plot_from_test(X_test, y_test, test_preds, upper=upper.flatten(), lower=lower.flatten())
+    plot_regression_calibration_curve(
+        test_targets.data.numpy().flatten(),
+        prob,
+        num_bins=15
+    )
 
 
 

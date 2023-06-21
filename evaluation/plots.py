@@ -50,7 +50,7 @@ def get_sigma_plot_from_test(
         upper[order],
         color=c,
         alpha=alpha,
-        label="2 Std Dev"
+        label="95% CI"
     )
     plt.xlabel('x')
     plt.ylabel('y')

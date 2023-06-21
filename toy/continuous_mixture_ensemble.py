@@ -6,7 +6,7 @@ from torch import nn
 from tqdm import tqdm
 import torch.optim as optim
 import matplotlib.pyplot as plt
-
+from scipy.stats import norm
 
 from utils import get_yaml
 from torch.utils.data import DataLoader, TensorDataset
@@ -14,6 +14,7 @@ from models.regressors import GaussianDNN
 from models.model_utils import inference_with_sigma, train_gaussian_dnn, get_gaussian_bounds, get_nll_gaus_loss
 from evaluation.plots import get_sigma_plot_from_test, get_1d_sigma_plot_from_model
 from evaluation.evals import evaluate_model_mse
+from evaluation.calibration import compute_average_calibration_score, plot_regression_calibration_curve
 from evaluation.metrics import get_mse, get_calibration
 
 NUM_MEMBERS = 5
@@ -95,18 +96,28 @@ def main(config: dict):
     sigma2_star = np.mean(np.power(ensemble_sigmas, 2) + np.power(ensemble_preds, 2), axis=1) - np.power(mu_star, 2)
     sigma_star = np.sqrt(sigma2_star)
 
+    # posterior predictive distribution
+    ppd = norm(
+        mu_star.flatten(),
+        sigma_star.flatten()
+    )
+
     test_mse = get_mse(test_targets, mu_star)
     print("Test MSE: {:.4f}".format(test_mse))
     upper, lower = get_gaussian_bounds(mu_star, sigma_star, log_var=False)
     test_calib = get_calibration(test_targets.flatten(), upper, lower)
     print("Test Calib: {:.4f}".format(test_calib))
+    mean_calib = compute_average_calibration_score(test_targets.data.numpy().flatten(), ppd)
+    print("Mean Calib: {:.4f}".format(mean_calib))
 
-    upper0, lower0 = get_gaussian_bounds(ensemble_preds[:, 0], ensemble_sigmas[:, 0], log_var=False)
-    get_sigma_plot_from_test(test_inputs.data.numpy().flatten(), y_test, ensemble_preds[:, 0], upper0, lower0, c='blue', show=True)
-    upper1, lower1 = get_gaussian_bounds(ensemble_preds[:, 1], ensemble_sigmas[:, 1], log_var=False)
-    get_sigma_plot_from_test(test_inputs.data.numpy().flatten(), test_targets, ensemble_preds[:, 1], upper1, lower1, c='green', show=False)
+
 
     get_sigma_plot_from_test(test_inputs.data.numpy().flatten(), test_targets, mu_star, upper, lower)
+    plot_regression_calibration_curve(
+        test_targets.data.numpy().flatten(),
+        ppd,
+        num_bins=15
+    )
 
 
 

@@ -53,14 +53,14 @@ def plot_regression_calibration_curve(y_true: np.ndarray, posterior_predictive_d
     epsilon = 1e-4
     credible_interval_probabilities = np.linspace(0 + epsilon, 1 - epsilon, num=num_bins)
     expected_pct_of_targets_in_pred_credible_intervals = credible_interval_probabilities
-    pct_of_targets_in_pred_credible_intervals = [get_pct_of_targets_in_pred_credible_interval(y_true, posterior_predictive_distribution, p) for p in credible_interval_probabilities]
+    actual_pct_of_targets_in_pred_credible_intervals = [get_pct_of_targets_in_pred_credible_interval(y_true, posterior_predictive_distribution, p) for p in credible_interval_probabilities]
          
     ax = plt.subplots(1, 1)[1] if ax is None else ax
     ax.set_title("Calibration Curve")
-    ax.set_xlabel("Percentage of targets in predicted p% confidence interval")
-    ax.set_ylabel("Expected percentage of targets in p% confidence interval")
+    ax.set_xlabel("Expected percentage of targets in p% confidence interval")
+    ax.set_ylabel("Percentage of targets in predicted p% confidence interval")
     ax.plot(expected_pct_of_targets_in_pred_credible_intervals, expected_pct_of_targets_in_pred_credible_intervals, linestyle='--', color='red', label='Perfectly calibrated')
-    ax.plot(pct_of_targets_in_pred_credible_intervals, expected_pct_of_targets_in_pred_credible_intervals, marker='o', linestyle='-', color='black', label='Model')
+    ax.plot(expected_pct_of_targets_in_pred_credible_intervals, actual_pct_of_targets_in_pred_credible_intervals, marker='o', linestyle='-', color='black', label='Model')
     ax.legend()
     plt.tight_layout()
     

@@ -3,7 +3,7 @@ from abc import (
     ABC as AbstractBaseClass,
     abstractmethod,
 )
-from scipy.stats import truncnorm, rv_discrete
+from scipy.stats import truncnorm, rv_discrete, gamma
 from scipy.special import erf
 import numpy as np
 
@@ -210,3 +210,92 @@ class DiscreteTruncatedNormal(DiscreteRandomVariable):
             q (float): The desired quantile.
         """
         return np.floor(self.base_rv.ppf(q)).astype(int)
+    
+
+class GammaCount(DiscreteRandomVariable):
+    """A gamma-count random variable (as defined in https://link.springer.com/article/10.1007/s10182-021-00432-6).
+    
+    This random variable has support [0, inf) and is parametrized by alpha and beta. Its pmf is given by
+
+    P(X = x) = gamma_cdf(alpha * x, beta) - gamma_cdf(alpha * (x + 1), beta).
+
+    Args:
+        alpha (float): Alpha parameter of this gamma-count distribution.
+        beta (float): Beta parameter of this gamma-count distribution.
+    """
+    def __init__(self, alpha: float, beta: float):
+        self.alpha = alpha
+        self.beta = beta
+        
+        # Pre-compute expected value and variance.
+        truncated_support = np.arange(1000)
+        self.expected_value = (truncated_support * self.pmf(truncated_support)).sum()
+        self.variance = (truncated_support**2 * self.pmf(truncated_support)).sum() - self.expected_value**2
+        self.standard_deviation = np.sqrt(self.variance)
+
+    def _gamma_cdf(self, x: Union[int, np.ndarray]) -> Union[float, np.ndarray]:
+        """Internal method for computing the gamma cdf as defined by the gamma count distribution.
+        
+        Args:
+            x (int | np.ndarray): The value(s) to evaluate the gamma cdf at.
+        
+        Returns:
+            probability (int | np.ndarray): The output of the gamma cdf at x.
+        """
+        if type(x) == np.ndarray:
+            probability = np.zeros(x.shape)
+            probability[x == 0] = 1.
+            probability[x != 0] = gamma.cdf(self.beta, a=(self.alpha * x[x != 0]))
+        else:
+            probability = 1. if x == 0 else gamma.cdf(self.beta, a=(self.alpha*x))
+
+        return probability
+
+    def pmf(self, x: Union[int, np.ndarray]) -> Union[float, np.ndarray]:
+        """Calculate the probability that this random variable takes on the value(s) x.
+        
+        Args:
+            x (int | np.ndarray): The value(s) to compute the probability of.
+
+        Returns:
+            probability (float | np.ndarray): The probability of x.
+        """
+        return self._gamma_cdf(x) - self._gamma_cdf(x + 1)
+    
+    def logpmf(self, x: Union[int, np.ndarray]):
+        """Calculate the log probability that this random variable takes on the value(s) x.
+        
+        Args:
+            x (int | np.ndarray): The value(s) to compute the log probability of.
+
+        Returns:
+            log_probability (float | np.ndarray): The log probability of x.
+        """
+        log_probability = np.log(self.pmf(x))
+        return log_probability
+    
+    def nll(self, x):
+        """Calculate the negative log likelihood of x for this random variable.
+        
+        Args:
+            x (int | np.ndarray): The value(s) to compute the negative log likelihood of.
+
+        Returns:
+            nll (float | np.ndarray): The negative log likelihood of x.
+        """
+        return -self.logpmf(x)
+
+    def ppf(self, q: float) -> int:
+        """Return the largest possible value of this random variable at which the probability mass to the left is less than or equal to `q`.
+        
+        Args:
+            q (float): The desired quantile.
+        """
+        truncated_support = np.arange(1000)
+        mass = self.pmf(truncated_support)
+        i = 0
+        while mass[:i+1].sum() <= q:
+            i += 1
+        return int(truncated_support[i])
+    
+    

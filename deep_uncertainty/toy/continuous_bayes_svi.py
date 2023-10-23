@@ -6,7 +6,7 @@ from pyro.infer.autoguide import AutoDiagonalNormal
 from pyro.infer import SVI, Trace_ELBO, Predictive
 from tqdm.auto import trange, tqdm
 
-from models.regressors import PyroGaussianDNN
+from deep_uncertainty.models.regressors import PyroGaussianDNN
 
 TRN_MIN = -5
 TRN_MAX = 5

@@ -104,6 +104,17 @@ def train_gaussian_dnn(train_loader, model, optimizer, device):
         running_loss += loss.item() * inputs.size(0)
     return running_loss / len(train_loader.dataset)
 
+def evaluate_gaussian_dnn(val_loader, model, device):
+    model.eval()
+    running_loss = 0.0
+    with torch.no_grad():
+        for inputs, targets in val_loader:
+            inputs, targets = inputs.to(device), targets.to(device)
+            mean, logvar = model(inputs)
+            
+            loss = 0.5 * (torch.exp(-logvar) * (targets - mean)**2 + logvar).mean()
+            running_loss += loss.item() * inputs.size(0)
+    return running_loss / len(val_loader.dataset)
 
 def get_nll_gaus_loss(val_loader, model, device):
     model.eval()

@@ -9,14 +9,14 @@ import matplotlib.pyplot as plt
 from scipy.stats import norm
 
 
-from utils import get_yaml
+from deep_uncertainty.utils.generic_utils import get_yaml
 from torch.utils.data import DataLoader, TensorDataset
-from models.regressors import GaussianDNN
-from models.model_utils import inference_with_sigma, train_gaussian_dnn, get_gaussian_bounds, get_nll_gaus_loss
-from evaluation.plots import get_sigma_plot_from_test, get_1d_sigma_plot_from_model
-from evaluation.evals import evaluate_model_mse
-from evaluation.metrics import get_mse, get_calibration
-from evaluation.calibration import plot_regression_calibration_curve, compute_average_calibration_score
+from deep_uncertainty.models.regressors import GaussianDNN
+from deep_uncertainty.utils.model_utils import inference_with_sigma, train_gaussian_dnn, get_gaussian_bounds, get_nll_gaus_loss
+from deep_uncertainty.evaluation.plots import get_sigma_plot_from_test, get_1d_sigma_plot_from_model
+from deep_uncertainty.evaluation.evals import evaluate_model_mse
+from deep_uncertainty.evaluation.metrics import get_mse, get_calibration
+from deep_uncertainty.evaluation.calibration import plot_regression_calibration_curve, compute_average_calibration_score
 
 NUM_MEMBERS = 5
 

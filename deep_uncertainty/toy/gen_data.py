@@ -4,8 +4,8 @@ from scipy.stats import binom
 import os
 import matplotlib.pyplot as plt
 
-from models.model_utils import get_binom_n, get_binom_p
-from utils import get_yaml
+from deep_uncertainty.utils.model_utils import get_binom_n, get_binom_p
+from deep_uncertainty.utils.generic_utils import get_yaml
 
 def generate_gaussian_data(num_points, x_min, x_max):
     #np.random.seed(42)  # Set a seed for reproducibility

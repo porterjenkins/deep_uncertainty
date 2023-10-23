@@ -8,14 +8,15 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 
-from utils import get_yaml
+
+from deep_uncertainty.utils.generic_utils import get_yaml
 from torch.utils.data import DataLoader, TensorDataset
-from models.regressors import GaussianDNN
-from models.model_utils import inference_with_sigma, train_gaussian_dnn, get_gaussian_bounds, get_nll_gaus_loss
-from evaluation.plots import get_sigma_plot_from_test, get_1d_sigma_plot_from_model
-from evaluation.evals import evaluate_model_mse
-from evaluation.calibration import compute_average_calibration_score, plot_regression_calibration_curve
-from evaluation.metrics import get_mse, get_calibration
+from deep_uncertainty.models.regressors import RegressionNN
+from deep_uncertainty.utils.model_utils import get_mean_preds_and_targets, train_regression_nn, get_gaussian_bounds
+from deep_uncertainty.evaluation.plots import get_sigma_plot_from_test
+from deep_uncertainty.evaluation.evals import evaluate_model_mse
+from deep_uncertainty.evaluation.metrics import get_mse, get_calibration
+from deep_uncertainty.evaluation.calibration import compute_average_calibration_score, plot_regression_calibration_curve
 
 NUM_MEMBERS = 5
 
@@ -65,12 +66,10 @@ def main(config: dict):
     criterion = nn.MSELoss()
 
     ensemble_preds = np.zeros((len(test_loader), NUM_MEMBERS))
-    ensemble_sigmas = np.zeros((len(test_loader), NUM_MEMBERS))
-
 
     for i in range(NUM_MEMBERS):
         # Instantiate and train the network
-        model_i = GaussianDNN().to(device)
+        model_i = RegressionNN().to(device)
 
         optimizer = optim.Adam(model_i.parameters(), lr=3e-4)
 
@@ -80,45 +79,39 @@ def main(config: dict):
         trn_losses = []
         val_losses = []
         for epoch in progress_bar:
-            train_loss = train_gaussian_dnn(train_loader, model_i, optimizer, device)
-            val_loss = get_nll_gaus_loss(val_loader, model_i, device)
+            train_loss = train_regression_nn(train_loader, model_i, criterion, optimizer, device)
+            val_loss = evaluate_model_mse(val_loader, model_i, device)
 
             progress_bar.set_postfix({"Train Loss": f"{train_loss:.4f}", "Val Loss": f"{val_loss:.4f}"})
             trn_losses.append(train_loss)
             val_losses.append(val_loss)
 
-        test_preds, test_sigmas, test_targets, test_inputs = inference_with_sigma(test_loader, model_i, device)
+
+        test_preds, test_targets = get_mean_preds_and_targets(test_loader, model_i, device)
         ensemble_preds[:, i] = test_preds.data.numpy().flatten()
-        ensemble_sigmas[:, i] = np.sqrt(np.exp(test_sigmas.data.numpy().flatten()))
 
-    mu_star = ensemble_preds.mean(1)
-    # equation from Lakshminarayanan 2017
-    sigma2_star = np.mean(np.power(ensemble_sigmas, 2) + np.power(ensemble_preds, 2), axis=1) - np.power(mu_star, 2)
-    sigma_star = np.sqrt(sigma2_star)
+    preds = ensemble_preds.mean(1)
+    sigma = ensemble_preds.std(1)
 
-    # posterior predictive distribution
     ppd = norm(
-        mu_star.flatten(),
-        sigma_star.flatten()
+        preds.flatten(),
+        sigma.flatten()
     )
 
-    test_mse = get_mse(test_targets, mu_star)
+    test_mse = get_mse(y_test, preds)
     print("Test MSE: {:.4f}".format(test_mse))
-    upper, lower = get_gaussian_bounds(mu_star, sigma_star, log_var=False)
+    upper, lower = get_gaussian_bounds(preds.flatten(), sigma.flatten(), log_var=False)
     test_calib = get_calibration(test_targets.flatten(), upper, lower)
     print("Test Calib: {:.4f}".format(test_calib))
     mean_calib = compute_average_calibration_score(test_targets.data.numpy().flatten(), ppd)
     print("Mean Calib: {:.4f}".format(mean_calib))
 
-
-
-    get_sigma_plot_from_test(test_inputs.data.numpy().flatten(), test_targets, mu_star, upper, lower)
+    get_sigma_plot_from_test(X_test, test_targets, preds, upper, lower)
     plot_regression_calibration_curve(
         test_targets.data.numpy().flatten(),
         ppd,
         num_bins=15
     )
-
 
 
 

@@ -125,7 +125,8 @@ def main(config: dict):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data-cfg', type=str, default="./toy_data_config.yaml", help='Path to data config file')
+    
+    parser.add_argument('--data-cfg', type=str, default="./deep_uncertainty/toy/toy_data_config.yaml", help='Path to data config file')
     args = parser.parse_args()
 
     cfg = get_yaml(args.data_cfg)

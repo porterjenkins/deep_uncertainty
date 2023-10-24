@@ -6,4 +6,4 @@ dataset:
   n_val: 100
   n_test: 100
   name: toy_data_nonlinear_count
-  output_dir: "../data"
+  output_dir: "/Users/danielsmith/Documents/1-RL/ASU/research/DeliciousAI/code/deep_uncertainty/data/generate_linear_count_data/"

@@ -10,7 +10,7 @@ from scipy.stats import poisson
 
 
 
-from utils import get_yaml
+from deep_uncertainty.utils.generic_utils import get_yaml
 from torch.utils.data import DataLoader, TensorDataset
 from deep_uncertainty.models.regressors import RegressionNN
 from deep_uncertainty.utils.model_utils import get_mean_preds_and_targets, train_regression_nn
@@ -117,19 +117,15 @@ def main(config: dict):
 
 
 
-
-
-
-
-
-
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--trn-cfg', type=str, default="./toy_exp_train_config.yaml", help='Path to data config file')
+    path = "/Users/danielsmith/Documents/1-RL/ASU/research/DeliciousAI/code/deep_uncertainty/deep_uncertainty/toy/toy_exp_train_config.yaml"
+    relative_path = path
+    parser.add_argument('--trn-cfg', type=str, default=relative_path, help='Path to data config file')
     args = parser.parse_args()
 
     cfg = get_yaml(args.trn_cfg)
 
     main(config=cfg)
+
+# /Users/danielsmith/Documents/1-RL/ASU/research/DeliciousAI/code/deep_uncertainty/data/toy_data_nonlinear_count_x_train.txt

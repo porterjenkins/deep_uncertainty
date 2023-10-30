@@ -1,5 +1,5 @@
 dataset:
-  dir: "/Users/danielsmith/Documents/1-RL/ASU/research/DeliciousAI/code/deep_uncertainty/data/nonlinear_count_data/"
+  dir: "./data/nonlinear_count_data/"
   name: "toy_data_nonlinear_count"
   # name: "toy_data_continuous"
 optim:

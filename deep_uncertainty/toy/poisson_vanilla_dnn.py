@@ -115,11 +115,9 @@ def main(config: dict):
 
 
 
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    path = "/Users/danielsmith/Documents/1-RL/ASU/research/DeliciousAI/code/deep_uncertainty/deep_uncertainty/toy/toy_exp_train_config.yaml"
+    path = "./deep_uncertainty/toy/toy_exp_train_config.yaml"
     relative_path = path
     parser.add_argument('--trn-cfg', type=str, default=relative_path, help='Path to data config file')
     args = parser.parse_args()

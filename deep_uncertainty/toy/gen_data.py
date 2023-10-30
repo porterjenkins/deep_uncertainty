@@ -83,7 +83,7 @@ GENERATORS = {
 def main(config: dict):
 
     if not os.path.exists(config["output_dir"]):
-        os.mkdir(config["output_dir"])
+        os.makedirs(config["output_dir"])
 
     generator = GENERATORS[config["task"]]
 

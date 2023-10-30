@@ -67,7 +67,7 @@ def main(config: dict):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Instantiate and train the network
-    model = RegressionNN().to(device)
+    model = RegressionNN(log_output=True).to(device)
     criterion = nn.PoissonNLLLoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
 

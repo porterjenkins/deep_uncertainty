@@ -66,7 +66,7 @@ def main(config: dict):
     # Check for CUDA availability and set the device accordingly
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Instantiate and train the network
+    # 1. Instantiate and train the network
     model = RegressionNN(log_output=True).to(device)
     criterion = nn.PoissonNLLLoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
@@ -77,7 +77,10 @@ def main(config: dict):
     trn_losses = []
     val_losses = []
     for epoch in progress_bar:
+        # input: (32, 1)
         train_loss = train_regression_nn(train_loader, model, criterion, optimizer, device)
+
+        # validation loss
         val_loss = evaluate_model_criterion(val_loader, model, criterion, device)
 
         progress_bar.set_postfix({"Train Loss": f"{train_loss:.4f}", "Val Loss": f"{val_loss:.4f}"})
@@ -87,7 +90,8 @@ def main(config: dict):
 
     test_preds, test_targets = get_mean_preds_and_targets(test_loader, model, device)
 
-    prob = poisson(test_preds.data.numpy().flatten())
+    prob = poisson(test_preds.data.numpy().flatten()) # a discrete probability distribution: 
+    # expresses the probability of a given number of events occurring in a fixed interval of time or space
     lower = prob.ppf(0.025)
     upper = prob.ppf(0.975)
 

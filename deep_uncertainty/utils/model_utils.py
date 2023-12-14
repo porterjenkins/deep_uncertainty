@@ -22,6 +22,25 @@ def get_binom_n(mu: np.array, sig2: np.array):
     return mu/(1-(sig2/mu))
 
 
+
+def get_mean_preds_and_targets_DPR(loader, model, device):
+    model.eval()
+    preds_all = []
+    targets_all = []
+    with torch.no_grad():
+        for inputs, targets in loader:
+            inputs = inputs.to(device)
+            beta, alpha = model(inputs)
+            lambda_i = torch.exp(inputs * beta.squeeze(-1))
+            # mean = model(inputs.to(device))
+            preds_all.append(lambda_i.cpu())
+            targets_all.append(targets)
+
+    preds_all = torch.cat(preds_all)
+    targets_all = torch.cat(targets_all)
+    return preds_all, targets_all
+
+
 def get_mean_preds_and_targets(loader, model, device):
     model.eval()
     preds_all = []
@@ -80,7 +99,7 @@ def train_regression_nn(train_loader, model, criterion, optimizer, device):
     model.train()
     running_loss = 0.0
     for inputs, targets in train_loader:
-        inputs, targets = inputs.to(device), targets.to(device)
+        inputs, targets = inputs.to(device), targets.to(device) # input: (32, 1), target: (32, 1)
         optimizer.zero_grad()
         outputs = model(inputs)
         loss = criterion(outputs, targets)

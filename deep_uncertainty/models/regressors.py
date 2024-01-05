@@ -1,10 +1,10 @@
-from torch import nn
-import torch
+from typing import Tuple
 
 import pyro
 import pyro.distributions as dist
+import torch
 from pyro.nn import PyroModule, PyroSample
-
+from torch import nn
 
 
 class RegressionNN(nn.Module):
@@ -76,3 +76,31 @@ class PyroGaussianDNN(PyroModule):
         with pyro.plate("data", x.shape[0]):
             obs = pyro.sample("obs", dist.Normal(mu, sigma), obs=y)
         return mu
+    
+class DoublePoissonNN(nn.Module):
+    """A neural network that learns the parameters of a double poisson to fit its regression targets."""
+    
+    def __init__(self):
+        super(DoublePoissonNN, self).__init__()
+        self.layers = nn.Sequential(
+            nn.Linear(1, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, 2),
+        )
+
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Make a forward pass through the network.
+        
+        Args:
+            x (torch.Tensor): Input tensor, with shape (n, d).
+
+        Returns:
+            torch.Tensor: Tensor with shape (n, 2), where the outputs along dimension 2 are logmu, logphi. Run `torch.split(output, [1, 1], dim=-1)` to separate into `logmu`, `logphi` tensors.
+        """
+        return self.layers(x)

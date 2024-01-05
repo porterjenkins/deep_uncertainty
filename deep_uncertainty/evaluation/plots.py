@@ -56,6 +56,7 @@ def get_sigma_plot_from_test(
     plt.ylabel('y')
     plt.legend()
     plt.title(title)
+    plt.ylim(y_test.min() - 5, y_test.max() + 5)
     if show:
         plt.show()
 

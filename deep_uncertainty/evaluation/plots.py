@@ -18,25 +18,31 @@ def get_1d_sigma_plot_from_model(X, y, model):
 
     plt.figure(figsize=(10, 6))
     plt.scatter(X, y, alpha=0.1, label="Generated Data")
-    plt.plot(x_for_prediction, mean_predicted, label="Predicted Mean", color='r', linestyle='-', linewidth=2)
-    plt.fill_between(x_for_prediction, mean_predicted - 2 * std_predicted, mean_predicted + 2 * std_predicted,
-                     color='r', alpha=0.2, label="2 Std Dev")
+    plt.plot(
+        x_for_prediction,
+        mean_predicted,
+        label="Predicted Mean",
+        color="r",
+        linestyle="-",
+        linewidth=2,
+    )
+    plt.fill_between(
+        x_for_prediction,
+        mean_predicted - 2 * std_predicted,
+        mean_predicted + 2 * std_predicted,
+        color="r",
+        alpha=0.2,
+        label="2 Std Dev",
+    )
 
-    plt.xlabel('x')
-    plt.ylabel('y')
+    plt.xlabel("x")
+    plt.ylabel("y")
     plt.legend()
     plt.show()
 
+
 def get_sigma_plot_from_test(
-        x_test,
-        y_test,
-        preds,
-        upper,
-        lower,
-        c='r',
-        alpha=0.2,
-        show=True,
-        title=''
+    x_test, y_test, preds, upper, lower, c="r", alpha=0.2, show=True, title=""
 ):
 
     order = x_test.argsort()
@@ -45,17 +51,13 @@ def get_sigma_plot_from_test(
     plt.scatter(x_test[order], y_test[order], alpha=0.1, label="Test Data")
     plt.plot(x_test[order], preds[order])
     plt.fill_between(
-        x_test[order],
-        lower[order],
-        upper[order],
-        color=c,
-        alpha=alpha,
-        label="95% CI"
+        x_test[order], lower[order], upper[order], color=c, alpha=alpha, label="95% CI"
     )
-    plt.xlabel('x')
-    plt.ylabel('y')
+    plt.xlabel("x")
+    plt.ylabel("y")
     plt.legend()
     plt.title(title)
+    plt.ylim(y_test.min() - 5, y_test.max() + 5)
     if show:
         plt.show()
 
@@ -75,20 +77,20 @@ def get_1d_mean_plot(X, y, model, lower=None, upper=None):
 
     plt.figure(figsize=(10, 6))
     plt.scatter(X, y, alpha=0.5, label="Generated Data")
-    plt.plot(x_for_pred, y_predicted, label="Predicted", color='r', linestyle='-', linewidth=2)
+    plt.plot(x_for_pred, y_predicted, label="Predicted", color="r", linestyle="-", linewidth=2)
 
     if (lower is not None) and (upper is not None):
         plt.fill_between(
             X_test[order],
             lower[order].flatten(),
             upper[order].flatten(),
-            color='red',
+            color="red",
             alpha=0.5,
-            label="95% CI"
+            label="95% CI",
         )
 
-    plt.xlabel('x')
-    plt.ylabel('y')
-    plt.title('Simple Regression')
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.title("Simple Regression")
     plt.legend()
     plt.show()

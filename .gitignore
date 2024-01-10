@@ -4,8 +4,4 @@ __pycache__
 .DS_Store
 *.env
 */.ipynb_checkpoints
-<<<<<<< Updated upstream
 .vscode
-=======
-.vscode
->>>>>>> Stashed changes

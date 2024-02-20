@@ -6,16 +6,26 @@
 #
 black==22.3.0
     # via -r requirements.in
+bleach==6.1.0
+    # via panel
+bokeh==3.3.4
+    # via panel
 build==1.0.3
     # via pip-tools
+certifi==2024.2.2
+    # via requests
 cfgv==3.4.0
     # via pre-commit
+charset-normalizer==3.3.2
+    # via requests
 click==8.1.7
     # via
     #   black
     #   pip-tools
 contourpy==1.2.0
-    # via matplotlib
+    # via
+    #   bokeh
+    #   matplotlib
 cycler==0.12.1
     # via matplotlib
 distlib==0.3.8
@@ -28,14 +38,32 @@ fonttools==4.47.0
     # via matplotlib
 identify==2.5.33
     # via pre-commit
+idna==3.6
+    # via requests
 iniconfig==2.0.0
     # via pytest
+jinja2==3.1.3
+    # via bokeh
 joblib==1.3.2
     # via scikit-learn
 kiwisolver==1.4.5
     # via matplotlib
+linkify-it-py==2.0.3
+    # via panel
+markdown==3.5.2
+    # via panel
+markdown-it-py==3.0.0
+    # via
+    #   mdit-py-plugins
+    #   panel
+markupsafe==2.1.5
+    # via jinja2
 matplotlib==3.7.2
     # via -r requirements.in
+mdit-py-plugins==0.4.0
+    # via panel
+mdurl==0.1.2
+    # via markdown-it-py
 mypy-extensions==1.0.0
     # via black
 nodeenv==1.8.0
@@ -43,9 +71,11 @@ nodeenv==1.8.0
 numpy==1.25.1
     # via
     #   -r requirements.in
+    #   bokeh
     #   contourpy
     #   matplotlib
     #   opt-einsum
+    #   pandas
     #   pyro-ppl
     #   scikit-learn
     #   scipy
@@ -53,13 +83,26 @@ opt-einsum==3.3.0
     # via pyro-ppl
 packaging==23.2
     # via
+    #   bokeh
     #   build
     #   matplotlib
     #   pytest
+pandas==2.2.0
+    # via
+    #   bokeh
+    #   panel
+panel==1.3.8
+    # via -r requirements.in
+param==2.0.2
+    # via
+    #   panel
+    #   pyviz-comms
 pathspec==0.12.1
     # via black
 pillow==10.2.0
-    # via matplotlib
+    # via
+    #   bokeh
+    #   matplotlib
 pip-tools==7.3.0
     # via -r requirements.in
 platformdirs==4.1.0
@@ -85,11 +128,20 @@ pytest==7.4.4
 pytest-lazy-fixture==0.6.3
     # via -r requirements.in
 python-dateutil==2.8.2
-    # via matplotlib
+    # via
+    #   matplotlib
+    #   pandas
+pytz==2024.1
+    # via pandas
+pyviz-comms==3.0.1
+    # via panel
 pyyaml==6.0.1
     # via
     #   -r requirements.in
+    #   bokeh
     #   pre-commit
+requests==2.31.0
+    # via panel
 scikit-learn==1.3.0
     # via -r requirements.in
 scipy==1.11.1
@@ -97,7 +149,9 @@ scipy==1.11.1
     #   -r requirements.in
     #   scikit-learn
 six==1.16.0
-    # via python-dateutil
+    # via
+    #   bleach
+    #   python-dateutil
 threadpoolctl==3.2.0
     # via scikit-learn
 tomli==2.0.1
@@ -111,16 +165,33 @@ torch==1.13.1
     # via
     #   -r requirements.in
     #   pyro-ppl
+tornado==6.4
+    # via bokeh
 tqdm==4.65.0
     # via
     #   -r requirements.in
+    #   panel
     #   pyro-ppl
 typing-extensions==4.9.0
-    # via torch
+    # via
+    #   panel
+    #   torch
+tzdata==2024.1
+    # via pandas
+uc-micro-py==1.0.3
+    # via linkify-it-py
+urllib3==2.2.1
+    # via requests
 virtualenv==20.25.0
     # via pre-commit
+webencodings==0.5.1
+    # via bleach
 wheel==0.42.0
     # via pip-tools
+xyzservices==2023.10.1
+    # via
+    #   bokeh
+    #   panel
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

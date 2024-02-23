@@ -4,11 +4,11 @@ import numpy as np
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
-from deep_uncertainty.models.random_variables import DiscreteConflation
-from deep_uncertainty.models.random_variables import DiscreteRandomVariable
-from deep_uncertainty.models.random_variables import DiscreteTruncatedNormal
-from deep_uncertainty.models.random_variables import DoublePoisson
-from deep_uncertainty.models.random_variables import GammaCount
+from deep_uncertainty.random_variables import DiscreteConflation
+from deep_uncertainty.random_variables import DiscreteTruncatedNormal
+from deep_uncertainty.random_variables import DoublePoisson
+from deep_uncertainty.random_variables import GammaCount
+from deep_uncertainty.random_variables.base import DiscreteRandomVariable
 
 
 @pytest.fixture

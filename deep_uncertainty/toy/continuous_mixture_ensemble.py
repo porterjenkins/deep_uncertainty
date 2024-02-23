@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data import TensorDataset
 from tqdm import tqdm
 
-from deep_uncertainty.evaluation.calibration import compute_average_calibration_score
+from deep_uncertainty.evaluation.calibration import compute_mean_calibration
 from deep_uncertainty.evaluation.calibration import plot_regression_calibration_curve
 from deep_uncertainty.evaluation.metrics import get_calibration
 from deep_uncertainty.evaluation.metrics import get_mse
@@ -108,7 +108,7 @@ def main(config: dict):
     upper, lower = get_gaussian_bounds(mu_star, sigma_star, log_var=False)
     test_calib = get_calibration(test_targets.flatten(), upper, lower)
     print("Test Calib: {:.4f}".format(test_calib))
-    mean_calib = compute_average_calibration_score(test_targets.data.numpy().flatten(), ppd)
+    mean_calib = compute_mean_calibration(test_targets.data.numpy().flatten(), ppd)
     print("Mean Calib: {:.4f}".format(mean_calib))
 
     get_sigma_plot_from_test(

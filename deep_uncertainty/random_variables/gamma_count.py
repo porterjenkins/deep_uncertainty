@@ -1,10 +1,8 @@
 import numpy as np
 from scipy.stats import gamma
 
-from deep_uncertainty.random_variables.base import DiscreteRandomVariable
 
-
-class GammaCount(DiscreteRandomVariable):
+class GammaCount:
     """A gamma-count random variable (as defined in https://link.springer.com/article/10.1007/s10182-021-00432-6).
 
     This random variable has support [0, inf) and is parametrized by alpha and beta. Its pmf is given by
@@ -69,17 +67,6 @@ class GammaCount(DiscreteRandomVariable):
         """
         log_probability = np.log(self.pmf(x))
         return log_probability
-
-    def nll(self, x: int | np.ndarray) -> float | np.ndarray:
-        """Calculate the negative log likelihood of x for this random variable.
-
-        Args:
-            x (int | np.ndarray): The value(s) to compute the negative log likelihood of.
-
-        Returns:
-            nll (float | np.ndarray): The negative log likelihood of x.
-        """
-        return -self.logpmf(x)
 
     def ppf(self, q: float) -> int | np.ndarray:
         """Return the largest possible value of this random variable at which the probability mass to the left is less than or equal to `q`.

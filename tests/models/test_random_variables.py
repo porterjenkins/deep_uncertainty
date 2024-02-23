@@ -8,7 +8,7 @@ from deep_uncertainty.random_variables import DiscreteConflation
 from deep_uncertainty.random_variables import DiscreteTruncatedNormal
 from deep_uncertainty.random_variables import DoublePoisson
 from deep_uncertainty.random_variables import GammaCount
-from deep_uncertainty.random_variables.base import DiscreteRandomVariable
+from deep_uncertainty.random_variables.discrete_random_variable import DiscreteRandomVariable
 
 
 @pytest.fixture
@@ -116,8 +116,8 @@ def test_univariate_discrete_rv_ppf_matches_expectations(
 ):
     quantile = rv.ppf(0.5)
     assert isinstance(quantile, int)
-    assert rv.pmf(discrete_support[discrete_support <= quantile]).sum() <= 0.5
-    assert rv.pmf(discrete_support[discrete_support <= (quantile + 1)]).sum() > 0.5
+    assert rv.pmf(discrete_support[discrete_support <= quantile]).sum() >= 0.5
+    assert rv.pmf(discrete_support[discrete_support <= (quantile - 1)]).sum() < 0.5
 
 
 @pytest.mark.parametrize(

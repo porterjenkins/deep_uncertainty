@@ -4,6 +4,14 @@
 #
 #    pip-compile requirements.in
 #
+aiohttp==3.9.3
+    # via fsspec
+aiosignal==1.3.1
+    # via aiohttp
+async-timeout==4.0.3
+    # via aiohttp
+attrs==23.2.0
+    # via aiohttp
 black==22.3.0
     # via -r requirements.in
 bleach==6.1.0
@@ -36,10 +44,20 @@ filelock==3.13.1
     # via virtualenv
 fonttools==4.47.0
     # via matplotlib
+frozenlist==1.4.1
+    # via
+    #   aiohttp
+    #   aiosignal
+fsspec[http]==2024.2.0
+    # via
+    #   lightning
+    #   pytorch-lightning
 identify==2.5.33
     # via pre-commit
 idna==3.6
-    # via requests
+    # via
+    #   requests
+    #   yarl
 iniconfig==2.0.0
     # via pytest
 jinja2==3.1.3
@@ -48,6 +66,13 @@ joblib==1.3.2
     # via scikit-learn
 kiwisolver==1.4.5
     # via matplotlib
+lightning==2.2.0.post0
+    # via -r requirements.in
+lightning-utilities==0.10.1
+    # via
+    #   lightning
+    #   pytorch-lightning
+    #   torchmetrics
 linkify-it-py==2.0.3
     # via panel
 markdown==3.5.2
@@ -64,6 +89,10 @@ mdit-py-plugins==0.4.0
     # via panel
 mdurl==0.1.2
     # via markdown-it-py
+multidict==6.0.5
+    # via
+    #   aiohttp
+    #   yarl
 mypy-extensions==1.0.0
     # via black
 nodeenv==1.8.0
@@ -73,20 +102,27 @@ numpy==1.25.1
     #   -r requirements.in
     #   bokeh
     #   contourpy
+    #   lightning
     #   matplotlib
     #   opt-einsum
     #   pandas
     #   pyro-ppl
+    #   pytorch-lightning
     #   scikit-learn
     #   scipy
+    #   torchmetrics
 opt-einsum==3.3.0
     # via pyro-ppl
 packaging==23.2
     # via
     #   bokeh
     #   build
+    #   lightning
+    #   lightning-utilities
     #   matplotlib
     #   pytest
+    #   pytorch-lightning
+    #   torchmetrics
 pandas==2.2.0
     # via
     #   bokeh
@@ -131,6 +167,8 @@ python-dateutil==2.8.2
     # via
     #   matplotlib
     #   pandas
+pytorch-lightning==2.2.0.post0
+    # via lightning
 pytz==2024.1
     # via pandas
 pyviz-comms==3.0.1
@@ -139,7 +177,9 @@ pyyaml==6.0.1
     # via
     #   -r requirements.in
     #   bokeh
+    #   lightning
     #   pre-commit
+    #   pytorch-lightning
 requests==2.31.0
     # via panel
 scikit-learn==1.3.0
@@ -164,17 +204,29 @@ tomli==2.0.1
 torch==1.13.1
     # via
     #   -r requirements.in
+    #   lightning
     #   pyro-ppl
+    #   pytorch-lightning
+    #   torchmetrics
+torchmetrics==1.3.1
+    # via
+    #   lightning
+    #   pytorch-lightning
 tornado==6.4
     # via bokeh
 tqdm==4.65.0
     # via
     #   -r requirements.in
+    #   lightning
     #   panel
     #   pyro-ppl
+    #   pytorch-lightning
 typing-extensions==4.9.0
     # via
+    #   lightning
+    #   lightning-utilities
     #   panel
+    #   pytorch-lightning
     #   torch
 tzdata==2024.1
     # via pandas
@@ -192,6 +244,8 @@ xyzservices==2023.10.1
     # via
     #   bokeh
     #   panel
+yarl==1.9.4
+    # via aiohttp
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

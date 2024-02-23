@@ -1,13 +1,29 @@
 import numpy as np
-from scipy.stats import loggamma
+from scipy.special import loggamma
 
-from deep_uncertainty.random_variables.base import DiscreteRandomVariable
+from deep_uncertainty.random_variables.discrete_random_variable import DiscreteRandomVariable
 
 
 class DoublePoisson(DiscreteRandomVariable):
-    def __init__(self, mu: float | int | np.ndarray, phi: float | int | np.ndarray):
+    """A Double Poisson random variable.
+
+    Attributes:
+        mu (float | int | np.ndarray): The mu parameter of the distribution (can be vectorized).
+        phi (float | int | np.ndarray): The phi parameter of the distribution (can be vectorized).
+        max_value (int, optional): The highest value to assume support for (since the DPO support is infinite). For numerical purposes. Defaults to 2000.
+        C (float | np.ndarray): Approximate constant of proportionality used in probability calculations.
+        dimension (int): The dimension of this random variable (matches the dimension of mu and phi).
+    """
+
+    def __init__(
+        self, mu: float | int | np.ndarray, phi: float | int | np.ndarray, max_value: int = 2000
+    ):
         self.mu = np.array(mu)
         self.phi = np.array(phi)
+        self.C = 1 + ((1 - self.phi) / (12 * self.mu * self.phi)) * (
+            1 + (1 / (self.mu * self.phi))
+        )
+        super().__init__(dimension=self.mu.size, max_value=max_value)
 
     def pmf(self, x: int | np.ndarray) -> float | np.ndarray:
         """Calculate the probability that this random variable takes on the value(s) x.
@@ -30,43 +46,14 @@ class DoublePoisson(DiscreteRandomVariable):
             log_probability (float | np.ndarray): The log probability of x.
         """
         x = np.array(x)
-        eps = 1e-5
-        c = 1 + ((1 - self.phi) / (12 * self.mu * self.phi)) * (1 + (1 / (self.mu * self.phi)))
+        eps = 1e-6
 
         return (
             0.5 * np.log(self.phi)
             - self.phi * self.mu
-            - np.log(c)
+            - np.log(self.C)
             - x
-            + x * np.log(x + eps)
+            + x * np.log(np.maximum(x, eps))
             - loggamma(x + 1)
-            + self.phi * x * (1 + np.log(self.mu) - np.log(x + eps))
+            + self.phi * x * (1 + np.log(self.mu) - np.log(np.maximum(x, eps)))
         )
-
-    def nll(self, x: int | np.ndarray) -> float | np.ndarray:
-        """Calculate the negative log likelihood of x for this random variable.
-
-        Args:
-            x (int | np.ndarray): The value(s) to compute the negative log likelihood of.
-
-        Returns:
-            nll (float | np.ndarray): The negative log likelihood of x.
-        """
-        return -self.logpmf(x)
-
-    def ppf(self, q: float) -> int | np.ndarray:
-        """Return the largest possible value of this random variable at which the probability mass to the left is less than or equal to `q`.
-
-        Args:
-            q (float): The desired quantile.
-
-        Returns:
-            int | np.ndarray: The largest value at which this distribution has mass <= `q` to the left of it.
-        """
-        truncated_support = np.arange(2000).reshape(-1, 1)
-        mass = self.pmf(truncated_support)
-        mass = mass / mass.sum(axis=0)  # Sometimes, the resultant mass isn't entirely normalized.
-        mask = np.cumsum(mass, axis=0) <= q
-        values = len(mass) - np.argmax(mask[::-1], axis=0) - 1
-        values[mask.sum(axis=0) == 0] = 0
-        return values.item() if values.size == 1 else values

@@ -1,10 +1,10 @@
 import numpy as np
 from scipy.stats import rv_discrete
 
-from deep_uncertainty.random_variables.base import DiscreteRandomVariable
+from deep_uncertainty.random_variables.discrete_random_variable import DiscreteRandomVariable
 
 
-class DiscreteConflation(DiscreteRandomVariable):
+class DiscreteConflation:
     """A conflation of discrete random variables, as described in https://www.researchgate.net/publication/1747728_Conflations_of_Probability_Distributions.
 
     Given discrete random variables X_1, X_2, ..., X_n, with pmfs g_{X_1}, g_{X_2}, ..., g_{X_n}, the conflation Q = X_1 & X_2 & ... & X_n has pmf given by
@@ -92,18 +92,17 @@ class DiscreteConflation(DiscreteRandomVariable):
         return nll
 
     def ppf(self, q: float) -> int | np.ndarray:
-        """Return the largest possible value of this conflation at which the probability mass to the left is less than or equal to `q`.
+        """Return the smallest possible value of this conflation at which the probability mass to the left is greater than or equal to `q`.
 
         Args:
             q (float): The desired quantile.
 
         Returns:
-            int | np.ndarray: The largest value at which this distribution has mass <= `q` to the left of it.
+            int | np.ndarray: The smallest value at which this distribution has mass >= `q` to the left of it.
         """
         mass = self.pmf(self.support.reshape(-1, 1)).reshape(-1, 1)
         mass = mass / mass.sum(axis=0)  # Sometimes, the resultant mass isn't entirely normalized.
-        mask = np.cumsum(mass, axis=0) <= q
-        indices = len(mass) - np.argmax(mask[::-1], axis=0) - 1
-        indices[mask.sum(axis=0) == 0] = 0
+        mask = np.cumsum(mass, axis=0) >= min(q, 0.9999)
+        indices = np.argmax(mask, axis=0)
         values = self.support[indices]
         return values.item() if values.size == 1 else values

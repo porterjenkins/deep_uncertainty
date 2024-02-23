@@ -2,10 +2,8 @@ import numpy as np
 from scipy.special import erf
 from scipy.stats import truncnorm
 
-from deep_uncertainty.random_variables.base import DiscreteRandomVariable
 
-
-class DiscreteTruncatedNormal(DiscreteRandomVariable):
+class DiscreteTruncatedNormal:
     """A discrete truncated normal random variable.
 
     This random variable has support [lower_bound, upper_bound] \\intersect \\mathbb{Z}.

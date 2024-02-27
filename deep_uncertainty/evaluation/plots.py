@@ -41,23 +41,32 @@ def get_1d_sigma_plot_from_model(X, y, model):
     plt.show()
 
 
-def get_sigma_plot_from_test(
-    x_test, y_test, preds, upper, lower, c="r", alpha=0.2, show=True, title=""
+def plot_test_vs_pred_with_error_bounds(
+    x_test: np.ndarray,
+    y_test: np.ndarray,
+    preds: np.ndarray,
+    upper: np.ndarray,
+    lower: np.ndarray,
+    c: str = "r",
+    alpha: float = 0.2,
+    show: bool = True,
+    title: str = "",
+    ax: plt.Axes | None = None,
 ):
-
     order = x_test.argsort()
 
-    plt.figure(figsize=(10, 6))
-    plt.scatter(x_test[order], y_test[order], alpha=0.1, label="Test Data")
-    plt.plot(x_test[order], preds[order])
-    plt.fill_between(
+    ax = plt.subplots(1, 1, figsize=(10, 6))[1] if ax is None else ax
+
+    ax.scatter(x_test[order], y_test[order], alpha=0.1, label="Test Data")
+    ax.plot(x_test[order], preds[order])
+    ax.fill_between(
         x_test[order], lower[order], upper[order], color=c, alpha=alpha, label="95% CI"
     )
-    plt.xlabel("x")
-    plt.ylabel("y")
-    plt.legend()
-    plt.title(title)
-    plt.ylim(y_test.min() - 5, y_test.max() + 5)
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.legend()
+    ax.set_title(title)
+    ax.set_ylim(y_test.min() - 5, y_test.max() + 5)
     if show:
         plt.show()
 

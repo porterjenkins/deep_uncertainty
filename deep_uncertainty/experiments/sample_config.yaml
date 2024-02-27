@@ -1,0 +1,25 @@
+experiment_name: test-run
+architecture:
+  backbone_type: mlp
+  head_type: double_poisson
+dataset:
+  path: /Users/spenceryoung/Desktop/DAI/code/deep_uncertainty/data/nonlinear_count_data/toy_data_nonlinear_count.npz
+training:
+  accelerator: cpu
+  batch_size: 32
+  chkp_dir: /Users/spenceryoung/Desktop/DAI/code/deep_uncertainty/chkp
+  num_epochs: 100
+  optimizer:
+    type: adam_w
+    kwargs:
+      lr: 0.001
+      weight_decay: 0.00001
+  lr_scheduler:
+    type: cosine_annealing
+    kwargs:
+      T_max: 500
+      eta_min: 0
+      last_epoch: -1
+evaluation:
+  num_trials: 5
+  log_dir: /Users/spenceryoung/Desktop/DAI/code/deep_uncertainty/logs

@@ -4,6 +4,14 @@
 #
 #    pip-compile requirements.in
 #
+aiohttp==3.9.3
+    # via fsspec
+aiosignal==1.3.1
+    # via aiohttp
+async-timeout==4.0.3
+    # via aiohttp
+attrs==23.2.0
+    # via aiohttp
 black==22.3.0
     # via -r requirements.in
 build==1.0.3
@@ -26,16 +34,37 @@ filelock==3.13.1
     # via virtualenv
 fonttools==4.47.0
     # via matplotlib
+frozenlist==1.4.1
+    # via
+    #   aiohttp
+    #   aiosignal
+fsspec[http]==2024.2.0
+    # via
+    #   lightning
+    #   pytorch-lightning
 identify==2.5.33
     # via pre-commit
+idna==3.6
+    # via yarl
 iniconfig==2.0.0
     # via pytest
 joblib==1.3.2
     # via scikit-learn
 kiwisolver==1.4.5
     # via matplotlib
+lightning==2.2.0.post0
+    # via -r requirements.in
+lightning-utilities==0.10.1
+    # via
+    #   lightning
+    #   pytorch-lightning
+    #   torchmetrics
 matplotlib==3.7.2
     # via -r requirements.in
+multidict==6.0.5
+    # via
+    #   aiohttp
+    #   yarl
 mypy-extensions==1.0.0
     # via black
 nodeenv==1.8.0
@@ -44,18 +73,25 @@ numpy==1.25.1
     # via
     #   -r requirements.in
     #   contourpy
+    #   lightning
     #   matplotlib
     #   opt-einsum
     #   pyro-ppl
+    #   pytorch-lightning
     #   scikit-learn
     #   scipy
+    #   torchmetrics
 opt-einsum==3.3.0
     # via pyro-ppl
 packaging==23.2
     # via
     #   build
+    #   lightning
+    #   lightning-utilities
     #   matplotlib
     #   pytest
+    #   pytorch-lightning
+    #   torchmetrics
 pathspec==0.12.1
     # via black
 pillow==10.2.0
@@ -86,10 +122,14 @@ pytest-lazy-fixture==0.6.3
     # via -r requirements.in
 python-dateutil==2.8.2
     # via matplotlib
+pytorch-lightning==2.2.0.post0
+    # via lightning
 pyyaml==6.0.1
     # via
     #   -r requirements.in
+    #   lightning
     #   pre-commit
+    #   pytorch-lightning
 scikit-learn==1.3.0
     # via -r requirements.in
 scipy==1.11.1
@@ -110,17 +150,32 @@ tomli==2.0.1
 torch==1.13.1
     # via
     #   -r requirements.in
+    #   lightning
     #   pyro-ppl
+    #   pytorch-lightning
+    #   torchmetrics
+torchmetrics==1.3.1
+    # via
+    #   lightning
+    #   pytorch-lightning
 tqdm==4.65.0
     # via
     #   -r requirements.in
+    #   lightning
     #   pyro-ppl
+    #   pytorch-lightning
 typing-extensions==4.9.0
-    # via torch
+    # via
+    #   lightning
+    #   lightning-utilities
+    #   pytorch-lightning
+    #   torch
 virtualenv==20.25.0
     # via pre-commit
 wheel==0.42.0
     # via pip-tools
+yarl==1.9.4
+    # via aiohttp
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

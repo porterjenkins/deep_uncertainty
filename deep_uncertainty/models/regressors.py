@@ -1,6 +1,9 @@
-from typing import List
-
+"""This file is maintained solely for legacy scripts and should be deprecated eventually. New scripts should employ the named networks in the parent `models` directory for experiments."""
+import pyro
+import pyro.distributions as dist
 import torch
+from pyro.nn import PyroModule
+from pyro.nn import PyroSample
 from torch import nn
 
 from deep_uncertainty.models.backbones import MLPBackbone
@@ -12,13 +15,13 @@ class RegressionNN(nn.Module):
     Attributes:
         input_dim (int, optional): Dimension of input data. Defaults to 1 (scalars).
         output_dim (int, optional): Dimension of outputs. If learning a distribution, these will be the parameters of that distribution. Defaults to 1.
-        log_dims (List[bool], optional): If provided, a list specifying, for each output dim, if that output is in log space during training. Defaults to [] (no log outputs).
+        log_dims (list[bool], optional): If provided, a list specifying, for each output dim, if that output is in log space during training. Defaults to [] (no log outputs).
 
     Raises:
         ValueError: If `log_dims` does not have the same dimensionality as specified by `output_dim`.
     """
 
-    def __init__(self, input_dim: int = 1, output_dim: int = 1, log_dims: List[bool] = []):
+    def __init__(self, input_dim: int = 1, output_dim: int = 1, log_dims: list[bool] = []):
         super(RegressionNN, self).__init__()
 
         self.input_dim = input_dim
@@ -50,12 +53,6 @@ class RegressionNN(nn.Module):
                 if dim_is_in_log_space:
                     y_hat[:, j] = torch.exp(y_hat[:, j])
         return y_hat
-
-
-"""The code below is maintained solely for legacy scripts and should be deprecated eventually. New scripts should employ the generalized RegressionNN for experiments."""
-import pyro
-import pyro.distributions as dist
-from pyro.nn import PyroModule, PyroSample
 
 
 class OldRegressionNN(nn.Module):

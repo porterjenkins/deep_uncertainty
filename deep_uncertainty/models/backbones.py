@@ -3,7 +3,7 @@ from torch import nn
 
 
 class MLPBackbone(nn.Module):
-    """An MLP feature extractor for common use by RegressionNN models.
+    """An MLP feature extractor.
 
     Attributes:
         input_dim (int, optional): Dimension of input data. Defaults to 1 (scalars).

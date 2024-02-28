@@ -44,8 +44,10 @@ def get_model(config: ExperimentConfig) -> BaseRegressionNN:
     return model
 
 
-def get_dataloaders(config: ExperimentConfig) -> tuple[DataLoader, DataLoader, DataLoader]:
-    data = np.load(config.dataset_path)
+def get_dataloaders(
+    dataset_path: str | Path, batch_size: int
+) -> tuple[DataLoader, DataLoader, DataLoader]:
+    data = np.load(dataset_path)
     X_train, y_train = data["X_train"], data["y_train"]
     X_val, y_val = data["X_val"], data["y_val"]
     X_test, y_test = data["X_test"], data["y_test"]
@@ -64,21 +66,21 @@ def get_dataloaders(config: ExperimentConfig) -> tuple[DataLoader, DataLoader, D
     )
     train_loader = DataLoader(
         train_dataset,
-        batch_size=config.batch_size,
+        batch_size=batch_size,
         shuffle=True,
         num_workers=9,
         persistent_workers=True,
     )
     val_loader = DataLoader(
         val_dataset,
-        batch_size=config.batch_size,
+        batch_size=batch_size,
         shuffle=False,
         num_workers=9,
         persistent_workers=True,
     )
     test_loader = DataLoader(
         test_dataset,
-        batch_size=config.batch_size,
+        batch_size=batch_size,
         shuffle=False,
         num_workers=9,
         persistent_workers=True,

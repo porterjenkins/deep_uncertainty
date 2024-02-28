@@ -11,6 +11,9 @@ class DiscreteRandomVariable:
     def pmf(self, x: int | np.ndarray) -> float | np.ndarray:
         raise NotImplementedError("Should be implemented by subclass.")
 
+    def expected_value(self) -> float | np.ndarray:
+        raise NotImplementedError("Should be implemented by subclass.")
+
     def ppf(self, q: float) -> int | float | np.ndarray:
         """Return the smallest possible value of this random variable at which the probability mass to the left is greater than or equal to `q`.
 

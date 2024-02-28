@@ -13,8 +13,8 @@ from deep_uncertainty.evaluation.calibration import compute_mean_calibration
 from deep_uncertainty.evaluation.calibration import plot_regression_calibration_curve
 from deep_uncertainty.evaluation.metrics import get_calibration
 from deep_uncertainty.evaluation.metrics import get_mse
-from deep_uncertainty.evaluation.plots import plot_test_vs_pred_with_error_bounds
-from deep_uncertainty.models.regressors import OldGaussianDNN
+from deep_uncertainty.evaluation.plots import plot_posterior_predictive
+from deep_uncertainty.models.old_regressors import OldGaussianDNN
 from deep_uncertainty.utils.generic_utils import get_yaml
 from deep_uncertainty.utils.model_utils import get_gaussian_bounds
 from deep_uncertainty.utils.model_utils import get_nll_gaus_loss
@@ -142,7 +142,7 @@ def main(config: dict):
             title=f'member: {i}'
         )"""
 
-    plot_test_vs_pred_with_error_bounds(
+    plot_posterior_predictive(
         test_inputs.data.numpy().flatten(), test_targets, mu_star, upper, lower, title="Conflation"
     )
 

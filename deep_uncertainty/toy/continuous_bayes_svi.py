@@ -6,7 +6,7 @@ from pyro.infer import Trace_ELBO
 from pyro.infer.autoguide import AutoDiagonalNormal
 from tqdm.auto import tqdm
 
-from deep_uncertainty.models.regressors import OldPyroGaussianDNN
+from deep_uncertainty.models.old_regressors import OldPyroGaussianDNN
 
 TRN_MIN = -5
 TRN_MAX = 5

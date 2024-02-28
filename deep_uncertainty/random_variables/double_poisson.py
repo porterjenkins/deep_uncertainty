@@ -36,6 +36,9 @@ class DoublePoisson(DiscreteRandomVariable):
         """
         return np.exp(self.logpmf(x))
 
+    def expected_value(self) -> float | np.ndarray:
+        return self.mu
+
     def logpmf(self, x: int | np.ndarray) -> float | np.ndarray:
         """Calculate the log probability that this random variable takes on the value(s) x.
 

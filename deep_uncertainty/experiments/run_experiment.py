@@ -13,10 +13,10 @@ from deep_uncertainty.utils.experiment_utils import get_dataloaders
 from deep_uncertainty.utils.experiment_utils import get_model
 from deep_uncertainty.utils.experiment_utils import save_losses_plot
 
-# TODO: This logs locally, but we may want WandB eventually.
-
 
 def main(config: ExperimentConfig):
+
+    train_loader, val_loader, test_loader = get_dataloaders(config.dataset_path, config.batch_size)
 
     for _ in range(config.num_trials):
 
@@ -25,7 +25,6 @@ def main(config: ExperimentConfig):
             config.chkp_dir / config.experiment_name, every_n_epochs=100
         )
         logger = CSVLogger(save_dir=config.log_dir, name=config.experiment_name)
-        train_loader, val_loader, test_loader = get_dataloaders(config)
 
         trainer = L.Trainer(
             accelerator=config.accelerator_type.value,

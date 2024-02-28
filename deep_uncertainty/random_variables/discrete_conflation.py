@@ -1,8 +1,6 @@
 import numpy as np
 from scipy.stats import rv_discrete
 
-from deep_uncertainty.random_variables.discrete_random_variable import DiscreteRandomVariable
-
 
 class DiscreteConflation:
     """A conflation of discrete random variables, as described in https://www.researchgate.net/publication/1747728_Conflations_of_Probability_Distributions.
@@ -20,7 +18,7 @@ class DiscreteConflation:
 
     def __init__(
         self,
-        random_variables: list[DiscreteRandomVariable | rv_discrete],
+        random_variables: list[rv_discrete],
         support: np.ndarray,
     ) -> None:
         self.random_variables = random_variables

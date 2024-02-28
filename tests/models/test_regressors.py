@@ -1,6 +1,6 @@
 import torch
 
-from deep_uncertainty.models.regressors import RegressionNN
+from deep_uncertainty.models.old_regressors import RegressionNN
 
 
 def test_regression_nn_handles_log_output_correctly():

@@ -13,7 +13,7 @@ from tqdm import tqdm
 from deep_uncertainty.evaluation.evals import evaluate_model_mse
 from deep_uncertainty.evaluation.metrics import get_mse
 from deep_uncertainty.evaluation.plots import get_1d_mean_plot
-from deep_uncertainty.models.regressors import OldRegressionNN
+from deep_uncertainty.models.old_regressors import OldRegressionNN
 from deep_uncertainty.utils.generic_utils import get_yaml
 from deep_uncertainty.utils.model_utils import get_mean_preds_and_targets
 from deep_uncertainty.utils.model_utils import train_regression_nn

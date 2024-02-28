@@ -16,8 +16,8 @@ from deep_uncertainty.evaluation.calibration import plot_regression_calibration_
 from deep_uncertainty.evaluation.evals import evaluate_model_criterion
 from deep_uncertainty.evaluation.metrics import get_calibration
 from deep_uncertainty.evaluation.metrics import get_mse
-from deep_uncertainty.evaluation.plots import plot_test_vs_pred_with_error_bounds
-from deep_uncertainty.models.regressors import OldRegressionNN
+from deep_uncertainty.evaluation.plots import plot_posterior_predictive
+from deep_uncertainty.models.old_regressors import OldRegressionNN
 from deep_uncertainty.utils.generic_utils import get_yaml
 from deep_uncertainty.utils.model_utils import get_mean_preds_and_targets
 from deep_uncertainty.utils.model_utils import train_regression_nn
@@ -106,7 +106,7 @@ def main(config: dict):
     plt.legend()
     plt.show()
 
-    plot_test_vs_pred_with_error_bounds(
+    plot_posterior_predictive(
         X_test, y_test, test_preds, upper=upper.flatten(), lower=lower.flatten()
     )
     plot_regression_calibration_curve(test_targets.data.numpy().flatten(), prob, num_bins=15)

@@ -41,7 +41,7 @@ def get_1d_sigma_plot_from_model(X, y, model):
     plt.show()
 
 
-def plot_test_vs_pred_with_error_bounds(
+def plot_posterior_predictive(
     x_test: np.ndarray,
     y_test: np.ndarray,
     preds: np.ndarray,

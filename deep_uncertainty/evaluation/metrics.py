@@ -9,7 +9,7 @@ from torchmetrics import Metric
 
 from deep_uncertainty.evaluation.calibration import compute_mean_calibration
 from deep_uncertainty.evaluation.calibration import plot_regression_calibration_curve
-from deep_uncertainty.evaluation.plots import plot_test_vs_pred_with_error_bounds
+from deep_uncertainty.evaluation.plots import plot_posterior_predictive
 
 
 class MeanCalibration(Metric):
@@ -74,7 +74,7 @@ class MeanCalibration(Metric):
         plot_regression_calibration_curve(
             self.all_targets, self.posterior_predictive, ax=axs[0], show=False
         )
-        plot_test_vs_pred_with_error_bounds(
+        plot_posterior_predictive(
             x_test=self.all_inputs,
             y_test=self.all_targets,
             preds=mean_preds,

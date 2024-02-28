@@ -1,7 +1,10 @@
 experiment_name: test-run
 architecture:
   backbone_type: mlp
-  head_type: double_poisson
+  head:
+    type: double_poisson
+    kwargs:
+      beta: 0.5
 dataset:
   path: /Users/spenceryoung/Desktop/DAI/code/deep_uncertainty/data/nonlinear_count_data/toy_data_nonlinear_count.npz
 training:

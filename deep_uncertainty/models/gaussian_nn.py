@@ -1,3 +1,5 @@
+from functools import partial
+
 import torch
 from scipy.stats import norm
 from torchmetrics import MeanAbsoluteError
@@ -23,6 +25,7 @@ class GaussianNN(BaseRegressionNN):
         optim_kwargs (dict): Key-value argument specifications for the chosen optimizer, e.g. {"lr": 1e-3, "weight_decay": 1e-5}.
         lr_scheduler_type (LRSchedulerType | None): If specified, the type of learning rate scheduler to use during training, e.g. "cosine_annealing".
         lr_scheduler_kwargs (dict | None): If specified, key-value argument specifications for the chosen lr scheduler, e.g. {"T_max": 500}.
+        beta (float | None, optional): Beta parameter to use in Gaussian NLL loss. If specified, must be in [0, 1]. Defaults to None.
     """
 
     def __init__(
@@ -33,13 +36,17 @@ class GaussianNN(BaseRegressionNN):
         optim_kwargs: dict,
         lr_scheduler_type: LRSchedulerType | None = None,
         lr_scheduler_kwargs: dict | None = None,
+        beta: float | None = None,
     ):
+        if beta is not None and (beta < 0 or beta > 1):
+            raise ValueError(f"If beta is specified, it must be in [0, 1]. Got value {beta}")
+
         super(GaussianNN, self).__init__(
             input_dim=input_dim,
             intermediate_dim=64,
             output_dim=2,
             backbone_type=backbone_type,
-            loss_fn=gaussian_nll,
+            loss_fn=partial(gaussian_nll, beta=beta),
             optim_type=optim_type,
             optim_kwargs=optim_kwargs,
             lr_scheduler_type=lr_scheduler_type,

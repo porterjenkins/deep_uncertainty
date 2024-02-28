@@ -1,5 +1,7 @@
+import os
 from argparse import ArgumentParser
 from argparse import Namespace
+from pathlib import Path
 
 import lightning as L
 import numpy as np
@@ -19,17 +21,24 @@ from deep_uncertainty.models import GaussianNN
 from deep_uncertainty.models import MeanNN
 from deep_uncertainty.models import PoissonNN
 from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
+from deep_uncertainty.utils.generic_utils import partialclass
 
 
 def get_model(config: ExperimentConfig) -> BaseRegressionNN:
     if config.head_type == HeadType.MEAN:
         initializer = MeanNN
     elif config.head_type == HeadType.GAUSSIAN:
-        initializer = GaussianNN
+        if config.head_kwargs is not None:
+            initializer = partialclass(GaussianNN, **config.head_kwargs)
+        else:
+            initializer = GaussianNN
     elif config.head_type == HeadType.POISSON:
         initializer = PoissonNN
     elif config.head_type == HeadType.DOUBLE_POISSON:
-        initializer = DoublePoissonNN
+        if config.head_kwargs is not None:
+            initializer = partialclass(DoublePoissonNN, **config.head_kwargs)
+        else:
+            initializer = DoublePoissonNN
 
     model = initializer(
         input_dim=1,
@@ -87,29 +96,31 @@ def get_dataloaders(config: ExperimentConfig) -> tuple[DataLoader, DataLoader, D
 
 def main(config: ExperimentConfig):
 
-    # TODO: Implement repeated runs?
+    for _ in range(config.num_trials):
 
-    model = get_model(config)
-    checkpoint_callback = ModelCheckpoint(
-        config.chkp_dir / config.experiment_name, every_n_epochs=100
-    )
-    logger = CSVLogger(save_dir=config.log_dir, name=config.experiment_name)
-    train_loader, val_loader, test_loader = get_dataloaders(config)
+        model = get_model(config)
+        checkpoint_callback = ModelCheckpoint(
+            config.chkp_dir / config.experiment_name, every_n_epochs=100
+        )
+        logger = CSVLogger(save_dir=config.log_dir, name=config.experiment_name)
+        train_loader, val_loader, test_loader = get_dataloaders(config)
 
-    trainer = L.Trainer(
-        accelerator=config.accelerator_type.value,
-        min_epochs=config.num_epochs,
-        max_epochs=config.num_epochs,
-        log_every_n_steps=25,
-        check_val_every_n_epoch=10,
-        enable_model_summary=False,
-        callbacks=[checkpoint_callback],
-        logger=logger,
-    )
-    trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)
-    metrics = RegressionMetrics(**trainer.test(model=model, dataloaders=test_loader)[0])
+        trainer = L.Trainer(
+            accelerator=config.accelerator_type.value,
+            min_epochs=config.num_epochs,
+            max_epochs=config.num_epochs,
+            log_every_n_steps=25,
+            check_val_every_n_epoch=10,
+            enable_model_summary=False,
+            callbacks=[checkpoint_callback],
+            logger=logger,
+        )
+        trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
-    print(metrics)
+        metrics = RegressionMetrics(**trainer.test(model=model, dataloaders=test_loader)[0])
+        logger.log_metrics(metrics.__dict__)
+        config.to_yaml(Path(logger.log_dir) / "config.yaml")
+        os.remove(Path(logger.log_dir) / "hparams.yaml")  # Unused artifact of lightning.
 
 
 def parse_args() -> Namespace:

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import yaml
+
 from deep_uncertainty.experiments.enums import AcceleratorType
 from deep_uncertainty.experiments.enums import BackboneType
 from deep_uncertainty.experiments.enums import HeadType
@@ -18,6 +20,7 @@ class ExperimentConfig:
         experiment_name (str): The name of the experiment (used for identifying chkp weights / eval logs), automatically cast to snake case.
         backbone_type (BackboneType): The backbone type to use in the neural network, e.g. "mlp", "cnn", etc.
         head_type (HeadType): The output head to use in the neural network, e.g. "gaussian", "mean", "poisson", etc.
+        head_kwargs (dict | None): Key-value argument specifications for the chosen regression head (if applicable).
         chkp_dir (Path): Directory to checkpoint model weights in.
         batch_size (int): The batch size to train with.
         num_epochs (int): The number of epochs through the data to complete during training.
@@ -28,6 +31,7 @@ class ExperimentConfig:
         dataset_path (Path): Path to the dataset .npz file to use.
         num_trials (int): Number of trials to run for this experiment.
         log_dir (Path): Directory to log results to.
+        source_dict (dict): Dictionary from which config was constructed.
     """
 
     def __init__(
@@ -36,6 +40,7 @@ class ExperimentConfig:
         accelerator_type: AcceleratorType,
         backbone_type: BackboneType,
         head_type: HeadType,
+        head_kwargs: dict | None,
         chkp_dir: Path,
         batch_size: int,
         num_epochs: int,
@@ -46,11 +51,13 @@ class ExperimentConfig:
         dataset_path: Path,
         num_trials: int,
         log_dir: Path,
+        source_dict: dict,
     ):
         self.experiment_name = experiment_name
         self.accelerator_type = accelerator_type
         self.backbone_type = backbone_type
         self.head_type = head_type
+        self.head_kwargs = head_kwargs
         self.chkp_dir = chkp_dir
         self.batch_size = batch_size
         self.num_epochs = num_epochs
@@ -61,6 +68,7 @@ class ExperimentConfig:
         self.dataset_path = dataset_path
         self.num_trials = num_trials
         self.log_dir = log_dir
+        self.source_dict = source_dict
 
     @staticmethod
     def from_yaml(config_path: str | Path) -> ExperimentConfig:
@@ -73,13 +81,15 @@ class ExperimentConfig:
             ExperimentConfig: The specified config.
         """
         config_dict = get_yaml(config_path)
+        architecture_dict = config_dict["architecture"]
         training_dict = config_dict["training"]
         eval_dict = config_dict["evaluation"]
 
         experiment_name = to_snake_case(config_dict["experiment_name"])
         accelerator_type = AcceleratorType(training_dict["accelerator"])
-        backbone_type = BackboneType(config_dict["architecture"]["backbone_type"])
-        head_type = HeadType(config_dict["architecture"]["head_type"])
+        backbone_type = BackboneType(architecture_dict["backbone_type"])
+        head_type = HeadType(architecture_dict["head"]["type"])
+        head_kwargs = architecture_dict["head"].get("kwargs", None)
         chkp_dir = Path(training_dict["chkp_dir"])
         batch_size = training_dict["batch_size"]
         num_epochs = training_dict["num_epochs"]
@@ -102,6 +112,7 @@ class ExperimentConfig:
             accelerator_type=accelerator_type,
             backbone_type=backbone_type,
             head_type=head_type,
+            head_kwargs=head_kwargs,
             chkp_dir=chkp_dir,
             batch_size=batch_size,
             num_epochs=num_epochs,
@@ -112,4 +123,14 @@ class ExperimentConfig:
             dataset_path=dataset_path,
             num_trials=num_trials,
             log_dir=log_dir,
+            source_dict=config_dict,
         )
+
+    def to_yaml(self, filepath: str | Path):
+        """Save this config as a .yaml file at the given filepath.
+
+        Args:
+            filepath (str | Path): The filepath to save this config at.
+        """
+        with open(filepath, "w") as f:
+            yaml.dump(self.source_dict, f)

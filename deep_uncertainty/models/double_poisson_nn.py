@@ -1,3 +1,5 @@
+from functools import partial
+
 import torch
 from torchmetrics import MeanAbsoluteError
 from torchmetrics import MeanAbsolutePercentageError
@@ -21,8 +23,9 @@ class DoublePoissonNN(BaseRegressionNN):
         backbone_type (BackboneType): The backbone type to use in the neural network, e.g. "mlp", "cnn", etc.
         optim_type (OptimizerType): The type of optimizer to use for training the network, e.g. "adam", "sgd", etc.
         optim_kwargs (dict): Key-value argument specifications for the chosen optimizer, e.g. {"lr": 1e-3, "weight_decay": 1e-5}.
-        lr_scheduler_type (LRSchedulerType | None): If specified, the type of learning rate scheduler to use during training, e.g. "cosine_annealing".
-        lr_scheduler_kwargs (dict | None): If specified, key-value argument specifications for the chosen lr scheduler, e.g. {"T_max": 500}.
+        lr_scheduler_type (LRSchedulerType | None, optional): If specified, the type of learning rate scheduler to use during training, e.g. "cosine_annealing". Defaults to None.
+        lr_scheduler_kwargs (dict | None, optional): If specified, key-value argument specifications for the chosen lr scheduler, e.g. {"T_max": 500}. Defaults to None.
+        beta (float | None, optional): Beta parameter to use in Double Poisson NLL loss. If specified, must be in [0, 1]. Defaults to None.
     """
 
     def __init__(
@@ -33,13 +36,17 @@ class DoublePoissonNN(BaseRegressionNN):
         optim_kwargs: dict,
         lr_scheduler_type: LRSchedulerType | None = None,
         lr_scheduler_kwargs: dict | None = None,
+        beta: float | None = None,
     ):
+        if beta is not None and (beta < 0 or beta > 1):
+            raise ValueError(f"If beta is specified, it must be in [0, 1]. Got value {beta}")
+
         super(DoublePoissonNN, self).__init__(
             input_dim=input_dim,
             intermediate_dim=64,
             output_dim=2,
             backbone_type=backbone_type,
-            loss_fn=double_poisson_nll,
+            loss_fn=partial(double_poisson_nll, beta=beta),
             optim_type=optim_type,
             optim_kwargs=optim_kwargs,
             lr_scheduler_type=lr_scheduler_type,

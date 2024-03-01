@@ -1,6 +1,7 @@
 import torch
 
-from deep_uncertainty.evaluation.metrics import get_mse
+from deep_uncertainty.evaluation.torchmetrics import get_mse
+
 
 def evaluate_model_mse(val_loader, model, device):
     model.eval()
@@ -24,6 +25,7 @@ def evaluate_model_mse(val_loader, model, device):
 
     return mse
 
+
 def evaluate_model_criterion(val_loader, model, criterion, device):
     model.eval()
     preds_all = []
@@ -45,5 +47,3 @@ def evaluate_model_criterion(val_loader, model, criterion, device):
     loss = criterion(preds_all, targets_all)
 
     return loss
-
-

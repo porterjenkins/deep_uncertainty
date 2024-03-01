@@ -7,8 +7,8 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.data import TensorDataset
 
+from deep_uncertainty.enums import HeadType
 from deep_uncertainty.experiments.config import ExperimentConfig
-from deep_uncertainty.experiments.enums import HeadType
 from deep_uncertainty.models import DoublePoissonNN
 from deep_uncertainty.models import GaussianNN
 from deep_uncertainty.models import MeanNN

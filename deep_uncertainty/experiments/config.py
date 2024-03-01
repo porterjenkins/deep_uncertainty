@@ -4,11 +4,11 @@ from pathlib import Path
 
 import yaml
 
-from deep_uncertainty.experiments.enums import AcceleratorType
-from deep_uncertainty.experiments.enums import BackboneType
-from deep_uncertainty.experiments.enums import HeadType
-from deep_uncertainty.experiments.enums import LRSchedulerType
-from deep_uncertainty.experiments.enums import OptimizerType
+from deep_uncertainty.enums import AcceleratorType
+from deep_uncertainty.enums import BackboneType
+from deep_uncertainty.enums import HeadType
+from deep_uncertainty.enums import LRSchedulerType
+from deep_uncertainty.enums import OptimizerType
 from deep_uncertainty.utils.generic_utils import get_yaml
 from deep_uncertainty.utils.generic_utils import to_snake_case
 

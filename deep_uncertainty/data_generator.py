@@ -6,6 +6,7 @@ from typing import Tuple
 import numpy as np
 from scipy.stats import binom
 
+from deep_uncertainty.random_variables import DoublePoisson
 from deep_uncertainty.utils.model_utils import get_binom_n
 from deep_uncertainty.utils.model_utils import get_binom_p
 
@@ -144,3 +145,31 @@ class DataGenerator:
         y = np.random.randint(low=low, high=high + 1)
 
         return x_values, y
+
+    @staticmethod
+    def generate_count_dataset_with_isolated_points(
+        n: int = 1000,
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Create a count dataset similar to the continuous one used in Figure 2 of "Faithful Heteroscedastic Regression with Neural Networks".
+
+        This dataset is created by sampling x ~ Uniform(3, 8). Define mu = ceil(xsin(x)) + 15, phi = (mu / 20)(6 - 0.5x).
+        We sample y ~ DoublePoisson(mu, phi).
+
+        The isolated points (X = 0, Y = ceil(sin(0)) + 15) and (X = 10, Y = ceil(10sin(10)) + 15) are returned separately.
+
+        Returns:
+            np.ndarray: X
+            np.ndarray: y
+            np.ndarray: X values for the isolated points.
+            np.ndarray: y values for the isolated points.
+        """
+        X = np.random.uniform(low=3, high=8, size=n)
+
+        y_mu = np.ceil(X * np.sin(X)) + 15
+        eps_phi = (y_mu / 20) * (6 - 0.5 * X)
+        y = np.array([DoublePoisson(mu, phi).rvs(1).item() for mu, phi in zip(y_mu, eps_phi)])
+
+        isolated_X = np.array([1, 10])
+        isolated_y = np.ceil(isolated_X * np.sin(isolated_X)) + 15
+
+        return X, y, isolated_X, isolated_y

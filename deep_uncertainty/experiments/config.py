@@ -22,6 +22,7 @@ class ExperimentConfig:
         head_type (HeadType): The output head to use in the neural network, e.g. "gaussian", "mean", "poisson", etc.
         head_kwargs (dict | None): Key-value argument specifications for the chosen regression head (if applicable).
         chkp_dir (Path): Directory to checkpoint model weights in.
+        chkp_freq (int): Number of epochs to wait in between checkpointing model weights.
         batch_size (int): The batch size to train with.
         num_epochs (int): The number of epochs through the data to complete during training.
         optim_type (OptimizerType): The type of optimizer to use for training the network, e.g. "adam", "sgd", etc.
@@ -42,6 +43,7 @@ class ExperimentConfig:
         head_type: HeadType,
         head_kwargs: dict | None,
         chkp_dir: Path,
+        chkp_freq: int,
         batch_size: int,
         num_epochs: int,
         optim_type: OptimizerType,
@@ -59,6 +61,7 @@ class ExperimentConfig:
         self.head_type = head_type
         self.head_kwargs = head_kwargs
         self.chkp_dir = chkp_dir
+        self.chkp_freq = chkp_freq
         self.batch_size = batch_size
         self.num_epochs = num_epochs
         self.optim_type = optim_type
@@ -91,6 +94,7 @@ class ExperimentConfig:
         head_type = HeadType(architecture_dict["head"]["type"])
         head_kwargs = architecture_dict["head"].get("kwargs", None)
         chkp_dir = Path(training_dict["chkp_dir"])
+        chkp_freq = training_dict["chkp_freq"]
         batch_size = training_dict["batch_size"]
         num_epochs = training_dict["num_epochs"]
         optim_type = OptimizerType(training_dict["optimizer"]["type"])
@@ -114,6 +118,7 @@ class ExperimentConfig:
             head_type=head_type,
             head_kwargs=head_kwargs,
             chkp_dir=chkp_dir,
+            chkp_freq=chkp_freq,
             batch_size=batch_size,
             num_epochs=num_epochs,
             optim_type=optim_type,

@@ -11,6 +11,7 @@ training:
   accelerator: cpu
   batch_size: 32
   chkp_dir: /Users/spenceryoung/Desktop/DAI/code/deep_uncertainty/chkp
+  chkp_freq: 20
   num_epochs: 100
   optimizer:
     type: adam_w
@@ -20,7 +21,7 @@ training:
   lr_scheduler:
     type: cosine_annealing
     kwargs:
-      T_max: 500
+      T_max: 100
       eta_min: 0
       last_epoch: -1
 evaluation:

@@ -7,7 +7,6 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import CSVLogger
 
 from deep_uncertainty.experiments.config import ExperimentConfig
-from deep_uncertainty.experiments.regression_metrics import RegressionMetrics
 from deep_uncertainty.utils.experiment_utils import get_dataloaders
 from deep_uncertainty.utils.experiment_utils import get_model
 from deep_uncertainty.utils.experiment_utils import save_losses_plot
@@ -40,8 +39,8 @@ def main(config: ExperimentConfig):
         )
         trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
-        metrics = RegressionMetrics(**trainer.test(model=model, dataloaders=test_loader)[0])
-        logger.log_metrics(metrics.__dict__)
+        metrics = trainer.test(model=model, dataloaders=test_loader)[0]
+        logger.log_metrics(metrics)
         log_dir = Path(logger.log_dir)
         config.to_yaml(log_dir / "config.yaml")
         save_losses_plot(log_dir)

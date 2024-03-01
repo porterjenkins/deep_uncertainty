@@ -12,11 +12,11 @@ from tqdm import tqdm
 
 from deep_uncertainty.evaluation.calibration import compute_mean_calibration
 from deep_uncertainty.evaluation.calibration import plot_regression_calibration_curve
-from deep_uncertainty.evaluation.evals import evaluate_model_mse
-from deep_uncertainty.evaluation.metrics import get_calibration
-from deep_uncertainty.evaluation.metrics import get_mse
-from deep_uncertainty.evaluation.plots import plot_posterior_predictive
-from deep_uncertainty.models.old_regressors import OldRegressionNN
+from deep_uncertainty.evaluation.old.evals import evaluate_model_mse
+from deep_uncertainty.evaluation.old.metrics import get_calibration
+from deep_uncertainty.evaluation.old.metrics import get_mse
+from deep_uncertainty.evaluation.plotting import plot_posterior_predictive
+from deep_uncertainty.models.old.regressors import OldRegressionNN
 from deep_uncertainty.utils.generic_utils import get_yaml
 from deep_uncertainty.utils.model_utils import get_gaussian_bounds
 from deep_uncertainty.utils.model_utils import get_mean_preds_and_targets

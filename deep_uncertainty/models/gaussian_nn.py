@@ -7,10 +7,10 @@ from torchmetrics import MeanAbsolutePercentageError
 from torchmetrics import MeanSquaredError
 from torchmetrics import Metric
 
-from deep_uncertainty.evaluation.metrics import MeanCalibration
-from deep_uncertainty.experiments.enums import BackboneType
-from deep_uncertainty.experiments.enums import LRSchedulerType
-from deep_uncertainty.experiments.enums import OptimizerType
+from deep_uncertainty.enums import BackboneType
+from deep_uncertainty.enums import LRSchedulerType
+from deep_uncertainty.enums import OptimizerType
+from deep_uncertainty.evaluation.torchmetrics import MeanCalibration
 from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
 from deep_uncertainty.training.losses import gaussian_nll
 

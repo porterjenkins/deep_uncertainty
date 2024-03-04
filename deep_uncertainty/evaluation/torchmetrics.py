@@ -5,9 +5,9 @@ import torch
 from matplotlib.figure import Figure
 from torchmetrics import Metric
 
-from deep_uncertainty.evaluation.calibration import compute_mean_calibration
-from deep_uncertainty.evaluation.calibration import plot_regression_calibration_curve
+from deep_uncertainty.evaluation.calibration import compute_young_calibration
 from deep_uncertainty.evaluation.plotting import plot_posterior_predictive
+from deep_uncertainty.evaluation.plotting import plot_regression_calibration_curve
 
 
 class MeanCalibration(Metric):
@@ -55,8 +55,8 @@ class MeanCalibration(Metric):
             for param_name in self.param_list
         }
         self.posterior_predictive = self.rv_class_type(**param_dict)
-        self.all_targets = torch.cat(self.y).flatten().detach().numpy()
-        return compute_mean_calibration(self.all_targets, self.posterior_predictive)
+        self.all_targets = torch.cat(self.y).long().flatten().detach().numpy()
+        return compute_young_calibration(self.all_targets, self.posterior_predictive)
 
     def plot(self) -> Figure:
         if not self._computed:

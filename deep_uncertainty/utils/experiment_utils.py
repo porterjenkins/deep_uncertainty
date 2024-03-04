@@ -21,15 +21,23 @@ def get_model(config: ExperimentConfig) -> BaseRegressionNN:
     if config.head_type == HeadType.MEAN:
         initializer = MeanNN
     elif config.head_type == HeadType.GAUSSIAN:
-        if config.head_kwargs is not None:
-            initializer = partialclass(GaussianNN, **config.head_kwargs)
+        if config.beta_scheduler_type is not None:
+            initializer = partialclass(
+                GaussianNN,
+                beta_scheduler_type=config.beta_scheduler_type,
+                beta_scheduler_kwargs=config.beta_scheduler_kwargs,
+            )
         else:
             initializer = GaussianNN
     elif config.head_type == HeadType.POISSON:
         initializer = PoissonNN
     elif config.head_type == HeadType.DOUBLE_POISSON:
-        if config.head_kwargs is not None:
-            initializer = partialclass(DoublePoissonNN, **config.head_kwargs)
+        if config.beta_scheduler_type is not None:
+            initializer = partialclass(
+                DoublePoissonNN,
+                beta_scheduler_type=config.beta_scheduler_type,
+                beta_scheduler_kwargs=config.beta_scheduler_kwargs,
+            )
         else:
             initializer = DoublePoissonNN
 

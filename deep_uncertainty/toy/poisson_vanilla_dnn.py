@@ -11,12 +11,12 @@ from torch.utils.data import DataLoader
 from torch.utils.data import TensorDataset
 from tqdm import tqdm
 
-from deep_uncertainty.evaluation.calibration import compute_mean_calibration
-from deep_uncertainty.evaluation.calibration import plot_regression_calibration_curve
+from deep_uncertainty.evaluation.calibration import compute_young_calibration
 from deep_uncertainty.evaluation.old.evals import evaluate_model_criterion
 from deep_uncertainty.evaluation.old.metrics import get_calibration
 from deep_uncertainty.evaluation.old.metrics import get_mse
 from deep_uncertainty.evaluation.plotting import plot_posterior_predictive
+from deep_uncertainty.evaluation.plotting import plot_regression_calibration_curve
 from deep_uncertainty.models.old.regressors import OldRegressionNN
 from deep_uncertainty.utils.generic_utils import get_yaml
 from deep_uncertainty.utils.model_utils import get_mean_preds_and_targets
@@ -98,7 +98,7 @@ def main(config: dict):
     test_calib = get_calibration(test_targets.flatten(), upper.flatten(), lower.flatten())
     print("95% Test Calib: {:.4f}".format(test_calib))
 
-    mean_calib = compute_mean_calibration(test_targets.data.numpy().flatten(), prob)
+    mean_calib = compute_young_calibration(test_targets.data.numpy().flatten(), prob)
     print("Mean Calib: {:.4f}".format(mean_calib))
 
     plt.plot(np.arange(num_epochs), trn_losses, label="TRAIN")

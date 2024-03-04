@@ -31,3 +31,8 @@ class OptimizerType(Enum):
 
 class LRSchedulerType(Enum):
     COSINE_ANNEALING = "cosine_annealing"
+
+
+class BetaSchedulerType(Enum):
+    COSINE_ANNEALING = "cosine_annealing"
+    LINEAR = "linear"

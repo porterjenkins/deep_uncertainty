@@ -6,6 +6,7 @@ import yaml
 
 from deep_uncertainty.enums import AcceleratorType
 from deep_uncertainty.enums import BackboneType
+from deep_uncertainty.enums import BetaSchedulerType
 from deep_uncertainty.enums import HeadType
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
@@ -20,7 +21,6 @@ class ExperimentConfig:
         experiment_name (str): The name of the experiment (used for identifying chkp weights / eval logs), automatically cast to snake case.
         backbone_type (BackboneType): The backbone type to use in the neural network, e.g. "mlp", "cnn", etc.
         head_type (HeadType): The output head to use in the neural network, e.g. "gaussian", "mean", "poisson", etc.
-        head_kwargs (dict | None): Key-value argument specifications for the chosen regression head (if applicable).
         chkp_dir (Path): Directory to checkpoint model weights in.
         chkp_freq (int): Number of epochs to wait in between checkpointing model weights.
         batch_size (int): The batch size to train with.
@@ -29,6 +29,8 @@ class ExperimentConfig:
         optim_kwargs (dict): Key-value argument specifications for the chosen optimizer, e.g. {"lr": 1e-3, "weight_decay": 1e-5}.
         lr_scheduler_type (LRSchedulerType | None): If specified, the type of learning rate scheduler to use during training, e.g. "cosine_annealing".
         lr_scheduler_kwargs (dict | None): If specified, key-value argument specifications for the chosen lr scheduler, e.g. {"T_max": 500}.
+        beta_scheduler_type (BetaSchedulerType | None): If specified, the type of beta scheduler to use for training loss (if applicable).
+        beta_scheduler_kwargs (dict | None): If specified, key-value argument specifications for the chosen beta scheduler, e.g. {"beta_0": 1.0, "beta_1": 0.5}.
         dataset_path (Path): Path to the dataset .npz file to use.
         num_trials (int): Number of trials to run for this experiment.
         log_dir (Path): Directory to log results to.
@@ -41,7 +43,6 @@ class ExperimentConfig:
         accelerator_type: AcceleratorType,
         backbone_type: BackboneType,
         head_type: HeadType,
-        head_kwargs: dict | None,
         chkp_dir: Path,
         chkp_freq: int,
         batch_size: int,
@@ -50,6 +51,8 @@ class ExperimentConfig:
         optim_kwargs: dict,
         lr_scheduler_type: LRSchedulerType | None,
         lr_scheduler_kwargs: dict | None,
+        beta_scheduler_type: BetaSchedulerType | None,
+        beta_scheduler_kwargs: dict | None,
         dataset_path: Path,
         num_trials: int,
         log_dir: Path,
@@ -59,7 +62,6 @@ class ExperimentConfig:
         self.accelerator_type = accelerator_type
         self.backbone_type = backbone_type
         self.head_type = head_type
-        self.head_kwargs = head_kwargs
         self.chkp_dir = chkp_dir
         self.chkp_freq = chkp_freq
         self.batch_size = batch_size
@@ -68,6 +70,8 @@ class ExperimentConfig:
         self.optim_kwargs = optim_kwargs
         self.lr_scheduler_type = lr_scheduler_type
         self.lr_scheduler_kwargs = lr_scheduler_kwargs
+        self.beta_scheduler_type = beta_scheduler_type
+        self.beta_scheduler_kwargs = beta_scheduler_kwargs
         self.dataset_path = dataset_path
         self.num_trials = num_trials
         self.log_dir = log_dir
@@ -92,7 +96,6 @@ class ExperimentConfig:
         accelerator_type = AcceleratorType(training_dict["accelerator"])
         backbone_type = BackboneType(architecture_dict["backbone_type"])
         head_type = HeadType(architecture_dict["head"]["type"])
-        head_kwargs = architecture_dict["head"].get("kwargs", None)
         chkp_dir = Path(training_dict["chkp_dir"])
         chkp_freq = training_dict["chkp_freq"]
         batch_size = training_dict["batch_size"]
@@ -107,6 +110,12 @@ class ExperimentConfig:
             lr_scheduler_type = None
             lr_scheduler_kwargs = None
 
+        if "beta_scheduler" in training_dict:
+            beta_scheduler_type = BetaSchedulerType(training_dict["beta_scheduler"]["type"])
+            beta_scheduler_kwargs = training_dict["beta_scheduler"]["kwargs"]
+            if beta_scheduler_kwargs.get("last_epoch", None) == -1:
+                beta_scheduler_kwargs["last_epoch"] = num_epochs
+
         dataset_path = Path(config_dict["dataset"]["path"])
         num_trials = eval_dict["num_trials"]
         log_dir = Path(eval_dict["log_dir"])
@@ -116,7 +125,6 @@ class ExperimentConfig:
             accelerator_type=accelerator_type,
             backbone_type=backbone_type,
             head_type=head_type,
-            head_kwargs=head_kwargs,
             chkp_dir=chkp_dir,
             chkp_freq=chkp_freq,
             batch_size=batch_size,
@@ -125,6 +133,8 @@ class ExperimentConfig:
             optim_kwargs=optim_kwargs,
             lr_scheduler_type=lr_scheduler_type,
             lr_scheduler_kwargs=lr_scheduler_kwargs,
+            beta_scheduler_type=beta_scheduler_type,
+            beta_scheduler_kwargs=beta_scheduler_kwargs,
             dataset_path=dataset_path,
             num_trials=num_trials,
             log_dir=log_dir,

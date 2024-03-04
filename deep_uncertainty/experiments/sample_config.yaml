@@ -3,13 +3,18 @@ architecture:
   backbone_type: mlp
   head:
     type: double_poisson
-    kwargs:
-      beta: 0.5
+
 dataset:
   path: /Users/spenceryoung/Desktop/DAI/code/deep_uncertainty/data/nonlinear_count_data/toy_data_nonlinear_count.npz
 training:
   accelerator: cpu
   batch_size: 32
+  beta_scheduler:
+    type: cosine_annealing
+    kwargs:
+      beta_0: 1.0
+      beta_1: 1.0
+      last_epoch: -1
   chkp_dir: /Users/spenceryoung/Desktop/DAI/code/deep_uncertainty/chkp
   chkp_freq: 20
   num_epochs: 100

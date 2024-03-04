@@ -10,12 +10,12 @@ from torch.utils.data import DataLoader
 from torch.utils.data import TensorDataset
 from tqdm import tqdm
 
-from deep_uncertainty.evaluation.calibration import compute_mean_calibration
-from deep_uncertainty.evaluation.calibration import plot_regression_calibration_curve
+from deep_uncertainty.evaluation.calibration import compute_young_calibration
 from deep_uncertainty.evaluation.old.metrics import get_calibration
 from deep_uncertainty.evaluation.old.metrics import get_mse
 from deep_uncertainty.evaluation.old.plots import get_1d_mean_plot
 from deep_uncertainty.evaluation.old.plots import get_1d_sigma_plot_from_model
+from deep_uncertainty.evaluation.plotting import plot_regression_calibration_curve
 from deep_uncertainty.models.old.regressors import OldGaussianDNN
 from deep_uncertainty.utils.generic_utils import get_yaml
 from deep_uncertainty.utils.model_utils import get_gaussian_bounds
@@ -94,7 +94,7 @@ def main(config: dict):
     upper, lower = get_gaussian_bounds(test_preds, test_sigmas, log_var=False)
     test_calib = get_calibration(test_targets, upper, lower)
     print("Test Calib: {:.4f}".format(test_calib))
-    mean_calib = compute_mean_calibration(test_targets.data.numpy().flatten(), ppd)
+    mean_calib = compute_young_calibration(test_targets.data.numpy().flatten(), ppd)
     print("Mean Calib: {:.4f}".format(mean_calib))
 
     plt.plot(np.arange(num_epochs), trn_losses, label="TRAIN")

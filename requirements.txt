@@ -44,6 +44,7 @@ frozenlist==1.4.1
     #   aiosignal
 fsspec[http]==2024.2.0
     # via
+    #   fsspec
     #   lightning
     #   pytorch-lightning
 identify==2.5.33
@@ -82,12 +83,23 @@ numpy==1.25.1
     #   lightning
     #   matplotlib
     #   opt-einsum
+    #   pandas
     #   pyro-ppl
     #   pytorch-lightning
     #   scikit-learn
     #   scipy
     #   torchmetrics
     #   torchvision
+nvidia-cublas-cu11==11.10.3.66
+    # via
+    #   nvidia-cudnn-cu11
+    #   torch
+nvidia-cuda-nvrtc-cu11==11.7.99
+    # via torch
+nvidia-cuda-runtime-cu11==11.7.99
+    # via torch
+nvidia-cudnn-cu11==8.5.0.96
+    # via torch
 opt-einsum==3.3.0
     # via pyro-ppl
 packaging==23.2
@@ -99,6 +111,8 @@ packaging==23.2
     #   pytest
     #   pytorch-lightning
     #   torchmetrics
+pandas==2.1.4
+    # via -r requirements.in
 pathspec==0.12.1
     # via black
 pillow==10.2.0
@@ -130,9 +144,13 @@ pytest==7.4.4
 pytest-lazy-fixture==0.6.3
     # via -r requirements.in
 python-dateutil==2.8.2
-    # via matplotlib
+    # via
+    #   matplotlib
+    #   pandas
 pytorch-lightning==2.2.0.post0
     # via lightning
+pytz==2024.1
+    # via pandas
 pyyaml==6.0.1
     # via
     #   -r requirements.in
@@ -185,12 +203,17 @@ typing-extensions==4.9.0
     #   pytorch-lightning
     #   torch
     #   torchvision
+tzdata==2024.1
+    # via pandas
 urllib3==2.2.1
     # via requests
 virtualenv==20.25.0
     # via pre-commit
 wheel==0.42.0
-    # via pip-tools
+    # via
+    #   nvidia-cublas-cu11
+    #   nvidia-cuda-runtime-cu11
+    #   pip-tools
 yarl==1.9.4
     # via aiohttp
 

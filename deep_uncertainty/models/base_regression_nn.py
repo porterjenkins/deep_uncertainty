@@ -82,21 +82,21 @@ class BaseRegressionNN(L.LightningModule):
     def training_step(self, batch: torch.Tensor) -> torch.Tensor:
         x, y = batch
         y_hat = self._forward_impl(x)
-        loss = self.loss_fn(y_hat.squeeze(), y.squeeze().float())
+        loss = self.loss_fn(y_hat, y.view(-1, 1).float())
         self.log("train_loss", loss, prog_bar=True)
         return loss
 
     def validation_step(self, batch: torch.Tensor) -> torch.Tensor:
         x, y = batch
         y_hat = self._forward_impl(x)
-        loss = self.loss_fn(y_hat.squeeze(), y.squeeze().float())
+        loss = self.loss_fn(y_hat, y.view(-1, 1).float())
         self.log("val_loss", loss, prog_bar=True)
         return loss
 
     def test_step(self, batch: torch.Tensor) -> torch.Tensor:
         x, y = batch
         y_hat = self._predict_impl(x)
-        self._update_test_metrics_batch(x, y_hat, y)
+        self._update_test_metrics_batch(x, y_hat, y.view(-1, 1).float())
 
         return y_hat
 

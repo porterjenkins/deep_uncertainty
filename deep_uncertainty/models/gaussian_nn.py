@@ -11,6 +11,7 @@ from deep_uncertainty.enums import BackboneType
 from deep_uncertainty.enums import BetaSchedulerType
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
+from deep_uncertainty.evaluation.torchmetrics import ExpectedCalibrationError
 from deep_uncertainty.evaluation.torchmetrics import YoungCalibration
 from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
 from deep_uncertainty.training.beta_schedulers import CosineAnnealingBetaScheduler
@@ -74,6 +75,10 @@ class GaussianNN(BaseRegressionNN):
             mean_param_name="loc",
             is_scalar=is_scalar,
         )
+        self.ece = ExpectedCalibrationError(
+            param_list=["loc", "scale"],
+            rv_class_type=norm,
+        )
         self.mse = MeanSquaredError()
         self.mae = MeanAbsoluteError()
         self.mape = MeanAbsolutePercentageError()
@@ -120,6 +125,7 @@ class GaussianNN(BaseRegressionNN):
             "mae": self.mae,
             "mape": self.mape,
             "mean_calibration": self.mean_calibration,
+            "ece": self.ece,
         }
 
     def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
@@ -132,6 +138,7 @@ class GaussianNN(BaseRegressionNN):
 
         std = torch.sqrt(var)
         self.mean_calibration.update({"loc": mu, "scale": std}, x, y.flatten())
+        self.ece.update({"loc": mu, "scale": std}, y.flatten())
 
     def on_train_epoch_end(self):
         if self.beta_scheduler is not None:

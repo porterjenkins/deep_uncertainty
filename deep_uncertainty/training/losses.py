@@ -1,3 +1,5 @@
+import warnings
+
 import torch
 
 
@@ -14,6 +16,10 @@ def double_poisson_nll(
     Returns:
         torch.Tensor: Avg. loss across all targets. Zero-dimensional tensor (torch.Size([])).
     """
+    if targets.size(1) != 1:
+        warnings.warn(
+            f"Targets tensor for `double_poisson_nll` expected to be of shape (n, 1) but got shape {targets.shape}. This may result in unexpected training behavior."
+        )
     if beta is not None:
         if beta < 0 or beta > 1:
             raise ValueError(f"Invalid value of beta specified. Must be in [0, 1]. Got {beta}")
@@ -47,6 +53,10 @@ def gaussian_nll(
     Returns:
         torch.Tensor: Avg. loss across all targets. Zero-dimensional tensor (torch.Size([])).
     """
+    if targets.size(1) != 1:
+        warnings.warn(
+            f"Targets tensor for `gaussian_nll` expected to be of shape (n, 1) but got shape {targets.shape}. This may result in unexpected training behavior."
+        )
     if beta is not None:
         if beta < 0 or beta > 1:
             raise ValueError(f"Invalid value of beta specified. Must be in [0, 1]. Got {beta}")

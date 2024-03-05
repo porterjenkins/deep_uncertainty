@@ -87,9 +87,9 @@ class YoungCalibration(Metric):
             )
             self.all_inputs = torch.cat(self.x).flatten().detach().numpy()
             plot_posterior_predictive(
-                x_test=self.all_inputs,
-                y_test=self.all_targets,
-                preds=mean_preds,
+                x=self.all_inputs,
+                y=self.all_targets,
+                mu=mean_preds,
                 upper=self.posterior_predictive.ppf(0.025),
                 lower=self.posterior_predictive.ppf(0.975),
                 show=False,
@@ -126,6 +126,9 @@ class ExpectedCalibrationError(Metric):
         super().__init__(**kwargs)
         self.param_list = param_list
         self.rv_class_type = rv_class_type
+        self.num_bins = num_bins
+        self.weights = weights
+        self.alpha = alpha
 
         for param in param_list:
             self.add_state(param, default=[], dist_reduce_fx="cat")
@@ -152,4 +155,10 @@ class ExpectedCalibrationError(Metric):
         }
         self.posterior_predictive = self.rv_class_type(**param_dict)
         self.all_targets = torch.cat(self.y).long().flatten().detach().numpy()
-        return compute_expected_calibration_error(self.all_targets, self.posterior_predictive)
+        return compute_expected_calibration_error(
+            self.all_targets,
+            self.posterior_predictive,
+            self.num_bins,
+            self.weights,
+            self.alpha,
+        )

@@ -62,11 +62,11 @@ class YoungCalibration(Metric):
 
     def compute(self) -> torch.Tensor:
         param_dict = {
-            param_name: torch.cat(getattr(self, param_name)).flatten().detach().numpy()
+            param_name: torch.cat(getattr(self, param_name)).flatten().detach().cpu().numpy()
             for param_name in self.param_list
         }
         self.posterior_predictive = self.rv_class_type(**param_dict)
-        self.all_targets = torch.cat(self.y).long().flatten().detach().numpy()
+        self.all_targets = torch.cat(self.y).long().flatten().detach().cpu().numpy()
         return compute_young_calibration(self.all_targets, self.posterior_predictive)
 
     def plot(self) -> Figure:
@@ -85,7 +85,7 @@ class YoungCalibration(Metric):
             plot_regression_calibration_curve(
                 self.all_targets, self.posterior_predictive, ax=axs[0], show=False
             )
-            self.all_inputs = torch.cat(self.x).flatten().detach().numpy()
+            self.all_inputs = torch.cat(self.x).flatten().detach().cpu().numpy()
             plot_posterior_predictive(
                 x=self.all_inputs,
                 y=self.all_targets,
@@ -150,11 +150,11 @@ class ExpectedCalibrationError(Metric):
 
     def compute(self) -> torch.Tensor:
         param_dict = {
-            param_name: torch.cat(getattr(self, param_name)).flatten().detach().numpy()
+            param_name: torch.cat(getattr(self, param_name)).flatten().detach().cpu().numpy()
             for param_name in self.param_list
         }
         self.posterior_predictive = self.rv_class_type(**param_dict)
-        self.all_targets = torch.cat(self.y).long().flatten().detach().numpy()
+        self.all_targets = torch.cat(self.y).long().flatten().detach().cpu().numpy()
         return compute_expected_calibration_error(
             self.all_targets,
             self.posterior_predictive,

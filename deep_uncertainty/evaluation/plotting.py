@@ -13,31 +13,45 @@ RandomVariable: TypeAlias = rv_discrete | rv_continuous | DiscreteRandomVariable
 
 
 def plot_posterior_predictive(
-    x_test: np.ndarray,
-    y_test: np.ndarray,
-    preds: np.ndarray,
+    x: np.ndarray,
+    y: np.ndarray,
+    mu: np.ndarray,
     upper: np.ndarray,
     lower: np.ndarray,
-    c: str = "r",
-    alpha: float = 0.2,
+    error_color: str = "r",
+    error_alpha: float = 0.2,
     show: bool = True,
     title: str = "",
     ax: plt.Axes | None = None,
 ):
-    order = x_test.argsort()
+    """Visualize a model's posterior predictive distribution over a 1d dataset (`x`, `y` both scalars) by showing the expected value and error bounds across the regression targets.
+
+    Args:
+        x (np.ndarray): The x values (inputs).
+        y (np.ndarray): The ground truth y values (outputs).
+        mu (np.ndarray): The expected values of the model's posterior predictive distribution over `y`.
+        upper (np.ndarray): Upper bounds for the model's posterior predictive distribution over `y`.
+        lower (np.ndarray): Lower bounds for the model's posterior predictive distribution over `y`.
+        error_color (str, optional): Color with which to fill the model's error bounds. Defaults to "r".
+        alpha (float, optional): Transparency value for the model's error bounds. Defaults to 0.2.
+        show (bool, optional): Whether/not to show the resultant plot. Defaults to True.
+        title (str, optional): If specified, a title for the resultant plot. Defaults to "".
+        ax (plt.Axes | None, optional): If given, the axis on which to plot the posterior predictive distribution. Defaults to None (axis is created).
+    """
+    order = x.argsort()
 
     ax = plt.subplots(1, 1, figsize=(10, 6))[1] if ax is None else ax
 
-    ax.scatter(x_test[order], y_test[order], alpha=0.1, label="Test Data")
-    ax.plot(x_test[order], preds[order])
+    ax.scatter(x[order], y[order], alpha=0.1, label="Test Data")
+    ax.plot(x[order], mu[order])
     ax.fill_between(
-        x_test[order], lower[order], upper[order], color=c, alpha=alpha, label="95% CI"
+        x[order], lower[order], upper[order], color=error_color, alpha=error_alpha, label="95% CI"
     )
     ax.set_xlabel("x")
     ax.set_ylabel("y")
     ax.legend()
     ax.set_title(title)
-    ax.set_ylim(y_test.min() - 5, y_test.max() + 5)
+    ax.set_ylim(y.min() - 5, y.max() + 5)
     if show:
         plt.show()
 

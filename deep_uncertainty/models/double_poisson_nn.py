@@ -10,7 +10,7 @@ from deep_uncertainty.enums import BackboneType
 from deep_uncertainty.enums import BetaSchedulerType
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
-from deep_uncertainty.evaluation.torchmetrics import MeanCalibration
+from deep_uncertainty.evaluation.torchmetrics import YoungCalibration
 from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
 from deep_uncertainty.random_variables import DoublePoisson
 from deep_uncertainty.training.beta_schedulers import CosineAnnealingBetaScheduler
@@ -22,7 +22,8 @@ class DoublePoissonNN(BaseRegressionNN):
     """A neural network that learns the parameters of a Double Poisson distribution over each regression target (conditioned on the input).
 
     Attributes:
-        input_dim (int): Dimension of input data.
+        input_dim (int | None): Dimension of input data (if applicable).
+        is_scalar (bool): Boolean indicating if input data is scalar or not.
         backbone_type (BackboneType): The backbone type to use in the neural network, e.g. "mlp", "cnn", etc.
         optim_type (OptimizerType): The type of optimizer to use for training the network, e.g. "adam", "sgd", etc.
         optim_kwargs (dict): Key-value argument specifications for the chosen optimizer, e.g. {"lr": 1e-3, "weight_decay": 1e-5}.
@@ -34,7 +35,8 @@ class DoublePoissonNN(BaseRegressionNN):
 
     def __init__(
         self,
-        input_dim: int,
+        input_dim: int | None,
+        is_scalar: bool,
         backbone_type: BackboneType,
         optim_type: OptimizerType,
         optim_kwargs: dict,
@@ -66,8 +68,11 @@ class DoublePoissonNN(BaseRegressionNN):
             lr_scheduler_type=lr_scheduler_type,
             lr_scheduler_kwargs=lr_scheduler_kwargs,
         )
-        self.mean_calibration = MeanCalibration(
-            param_list=["mu", "phi"], rv_class_type=DoublePoisson, mean_param_name="mu"
+        self.mean_calibration = YoungCalibration(
+            param_list=["mu", "phi"],
+            rv_class_type=DoublePoisson,
+            mean_param_name="mu",
+            is_scalar=is_scalar,
         )
         self.mse = MeanSquaredError()
         self.mae = MeanAbsoluteError()
@@ -78,7 +83,7 @@ class DoublePoissonNN(BaseRegressionNN):
         """Make a forward pass through the network.
 
         Args:
-            x (torch.Tensor): Batched input tensor with shape (N, `self.input_dim`).
+            x (torch.Tensor): Batched input tensor with shape (N, ...).
 
         Returns:
             torch.Tensor: Output tensor, with shape (N, 2).
@@ -93,7 +98,7 @@ class DoublePoissonNN(BaseRegressionNN):
         """Make a prediction with the network.
 
         Args:
-            x (torch.Tensor): Batched input tensor with shape (N, `self.input_dim`).
+            x (torch.Tensor): Batched input tensor with shape (N, ...).
 
         Returns:
             torch.Tensor: Output tensor, with shape (N, 2).
@@ -114,10 +119,12 @@ class DoublePoissonNN(BaseRegressionNN):
 
     def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
         mu, phi = torch.split(y_hat, [1, 1], dim=-1)
-        self.mse.update(mu, y)
-        self.mae.update(mu, y)
-        self.mape.update(mu, y)
-        self.mean_calibration.update({"mu": mu, "phi": phi}, x, y)
+        mu = mu.flatten()
+        phi = phi.flatten()
+        self.mse.update(mu, y.flatten())
+        self.mae.update(mu, y.flatten())
+        self.mape.update(mu, y.flatten())
+        self.mean_calibration.update({"mu": mu, "phi": phi}, x, y.flatten())
 
     def on_train_epoch_end(self):
         if self.beta_scheduler is not None:

@@ -7,6 +7,8 @@ import yaml
 from deep_uncertainty.enums import AcceleratorType
 from deep_uncertainty.enums import BackboneType
 from deep_uncertainty.enums import BetaSchedulerType
+from deep_uncertainty.enums import DatasetName
+from deep_uncertainty.enums import DatasetType
 from deep_uncertainty.enums import HeadType
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
@@ -31,7 +33,8 @@ class ExperimentConfig:
         lr_scheduler_kwargs (dict | None): If specified, key-value argument specifications for the chosen lr scheduler, e.g. {"T_max": 500}.
         beta_scheduler_type (BetaSchedulerType | None): If specified, the type of beta scheduler to use for training loss (if applicable).
         beta_scheduler_kwargs (dict | None): If specified, key-value argument specifications for the chosen beta scheduler, e.g. {"beta_0": 1.0, "beta_1": 0.5}.
-        dataset_path (Path): Path to the dataset .npz file to use.
+        dataset_type (DatasetType): Type of dataset to use in this experiment (tabular or image).
+        dataset_spec (Path | ImageDataset): If dataset is tabular, path to the dataset .npz file to use. Otherwise, name of the image dataset to load.
         num_trials (int): Number of trials to run for this experiment.
         log_dir (Path): Directory to log results to.
         source_dict (dict): Dictionary from which config was constructed.
@@ -53,7 +56,8 @@ class ExperimentConfig:
         lr_scheduler_kwargs: dict | None,
         beta_scheduler_type: BetaSchedulerType | None,
         beta_scheduler_kwargs: dict | None,
-        dataset_path: Path,
+        dataset_type: DatasetType,
+        dataset_spec: Path | DatasetName,
         num_trials: int,
         log_dir: Path,
         source_dict: dict,
@@ -72,7 +76,8 @@ class ExperimentConfig:
         self.lr_scheduler_kwargs = lr_scheduler_kwargs
         self.beta_scheduler_type = beta_scheduler_type
         self.beta_scheduler_kwargs = beta_scheduler_kwargs
-        self.dataset_path = dataset_path
+        self.dataset_type = dataset_type
+        self.dataset_spec = dataset_spec
         self.num_trials = num_trials
         self.log_dir = log_dir
         self.source_dict = source_dict
@@ -116,7 +121,12 @@ class ExperimentConfig:
             if beta_scheduler_kwargs.get("last_epoch", None) == -1:
                 beta_scheduler_kwargs["last_epoch"] = num_epochs
 
-        dataset_path = Path(config_dict["dataset"]["path"])
+        dataset_type = DatasetType(config_dict["dataset"]["type"])
+        if dataset_type in [DatasetType.SCALAR, DatasetType.TABULAR]:
+            dataset_spec = Path(config_dict["dataset"]["spec"])
+        elif dataset_type == DatasetType.IMAGE:
+            dataset_spec = DatasetName(config_dict["dataset"]["spec"])
+
         num_trials = eval_dict["num_trials"]
         log_dir = Path(eval_dict["log_dir"])
 
@@ -135,7 +145,8 @@ class ExperimentConfig:
             lr_scheduler_kwargs=lr_scheduler_kwargs,
             beta_scheduler_type=beta_scheduler_type,
             beta_scheduler_kwargs=beta_scheduler_kwargs,
-            dataset_path=dataset_path,
+            dataset_type=dataset_type,
+            dataset_spec=dataset_spec,
             num_trials=num_trials,
             log_dir=log_dir,
             source_dict=config_dict,

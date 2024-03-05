@@ -15,7 +15,7 @@ class MeanNN(BaseRegressionNN):
     """A neural network that fits to regression targets using mean squared error.
 
     Attributes:
-        input_dim (int): Dimension of input data.
+        input_dim (int | None): Dimension of input data (if applicable).
         backbone_type (BackboneType): The backbone type to use in the neural network, e.g. "mlp", "cnn", etc.
         optim_type (OptimizerType): The type of optimizer to use for training the network, e.g. "adam", "sgd", etc.
         optim_kwargs (dict): Key-value argument specifications for the chosen optimizer, e.g. {"lr": 1e-3, "weight_decay": 1e-5}.
@@ -25,7 +25,8 @@ class MeanNN(BaseRegressionNN):
 
     def __init__(
         self,
-        input_dim: int,
+        input_dim: int | None,
+        is_scalar: bool,
         backbone_type: BackboneType,
         optim_type: OptimizerType,
         optim_kwargs: dict,
@@ -52,7 +53,7 @@ class MeanNN(BaseRegressionNN):
         """Make a forward pass through the network.
 
         Args:
-            x (torch.Tensor): Batched input tensor with shape (N, `self.input_dim`).
+            x (torch.Tensor): Batched input tensor with shape (N, ...).
 
         Returns:
             torch.Tensor: Output tensor, with shape (N, 1).
@@ -65,7 +66,7 @@ class MeanNN(BaseRegressionNN):
         """Make a prediction with the network.
 
         Args:
-            x (torch.Tensor): Batched input tensor with shape (N, `self.input_dim`).
+            x (torch.Tensor): Batched input tensor with shape (N, ...).
 
         Returns:
             torch.Tensor: Output tensor, with shape (N, 1).
@@ -78,6 +79,6 @@ class MeanNN(BaseRegressionNN):
     def _update_test_metrics_batch(
         self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor
     ) -> dict:
-        self.mse.update(y_hat, y)
-        self.mae.update(y_hat, y)
-        self.mape.update(y_hat, y)
+        self.mse.update(y_hat.flatten(), y.flatten())
+        self.mae.update(y_hat.flatten(), y.flatten())
+        self.mape.update(y_hat.flatten(), y.flatten())

@@ -11,7 +11,7 @@ from torchmetrics import Metric
 from deep_uncertainty.enums import BackboneType
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
-from deep_uncertainty.evaluation.torchmetrics import MeanCalibration
+from deep_uncertainty.evaluation.torchmetrics import YoungCalibration
 from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
 
 
@@ -19,7 +19,8 @@ class PoissonNN(BaseRegressionNN):
     """A neural network that learns the parameters of a Poisson distribution over each regression target (conditioned on the input).
 
     Attributes:
-        input_dim (int): Dimension of input data.
+        input_dim (int | None): Dimension of input data (if applicable).
+        is_scalar (bool): Boolean indicating if input data is scalar or not.
         backbone_type (BackboneType): The backbone type to use in the neural network, e.g. "mlp", "cnn", etc.
         optim_type (OptimizerType): The type of optimizer to use for training the network, e.g. "adam", "sgd", etc.
         optim_kwargs (dict): Key-value argument specifications for the chosen optimizer, e.g. {"lr": 1e-3, "weight_decay": 1e-5}.
@@ -29,7 +30,8 @@ class PoissonNN(BaseRegressionNN):
 
     def __init__(
         self,
-        input_dim: int,
+        input_dim: int | None,
+        is_scalar: bool,
         backbone_type: BackboneType,
         optim_type: OptimizerType,
         optim_kwargs: dict,
@@ -47,7 +49,9 @@ class PoissonNN(BaseRegressionNN):
             lr_scheduler_type=lr_scheduler_type,
             lr_scheduler_kwargs=lr_scheduler_kwargs,
         )
-        self.mean_calibration = MeanCalibration(["mu"], poisson, mean_param_name="mu")
+        self.mean_calibration = YoungCalibration(
+            ["mu"], poisson, mean_param_name="mu", is_scalar=is_scalar
+        )
         self.mse = MeanSquaredError()
         self.mae = MeanAbsoluteError()
         self.mape = MeanAbsolutePercentageError()
@@ -57,7 +61,7 @@ class PoissonNN(BaseRegressionNN):
         """Make a forward pass through the network.
 
         Args:
-            x (torch.Tensor): Batched input tensor with shape (N, `self.input_dim`).
+            x (torch.Tensor): Batched input tensor with shape (N, ...).
 
         Returns:
             torch.Tensor: Output tensor, with shape (N, 1).
@@ -70,7 +74,7 @@ class PoissonNN(BaseRegressionNN):
         """Make a prediction with the network.
 
         Args:
-            x (torch.Tensor): Batched input tensor with shape (N, `self.input_dim`).
+            x (torch.Tensor): Batched input tensor with shape (N, ...).
 
         Returns:
             torch.Tensor: Output tensor, with shape (N, 1).
@@ -88,7 +92,7 @@ class PoissonNN(BaseRegressionNN):
         }
 
     def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
-        self.mse.update(y_hat, y)
-        self.mae.update(y_hat, y)
-        self.mape.update(y_hat, y)
-        self.mean_calibration.update({"mu": y_hat}, x, y)
+        self.mse.update(y_hat.flatten(), y.flatten())
+        self.mae.update(y_hat.flatten(), y.flatten())
+        self.mape.update(y_hat.flatten(), y.flatten())
+        self.mean_calibration.update({"mu": y_hat.flatten()}, x, y.flatten())

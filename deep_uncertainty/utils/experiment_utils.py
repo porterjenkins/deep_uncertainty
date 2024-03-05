@@ -5,8 +5,15 @@ import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
+from torch.utils.data import random_split
 from torch.utils.data import TensorDataset
+from torchvision.datasets import MNIST
+from torchvision.transforms import Compose
+from torchvision.transforms import RandomRotation
+from torchvision.transforms import ToTensor
 
+from deep_uncertainty.enums import DatasetName
+from deep_uncertainty.enums import DatasetType
 from deep_uncertainty.enums import HeadType
 from deep_uncertainty.experiments.config import ExperimentConfig
 from deep_uncertainty.models import DoublePoissonNN
@@ -41,8 +48,22 @@ def get_model(config: ExperimentConfig) -> BaseRegressionNN:
         else:
             initializer = DoublePoissonNN
 
+    if config.dataset_type == DatasetType.SCALAR:
+        input_dim = 1
+        is_scalar = True
+    elif config.dataset_type == DatasetType.IMAGE:
+        if config.dataset_spec == DatasetName.ROTATED_MNIST:
+            input_dim = 1
+            is_scalar = False
+        else:
+            input_dim = 3
+            is_scalar = False
+    elif config.dataset_type == DatasetType.TABULAR:
+        raise NotImplementedError("Tabular data not yet supported.")
+
     model = initializer(
-        input_dim=1,
+        input_dim=input_dim,
+        is_scalar=is_scalar,
         backbone_type=config.backbone_type,
         optim_type=config.optim_type,
         optim_kwargs=config.optim_kwargs,
@@ -53,25 +74,39 @@ def get_model(config: ExperimentConfig) -> BaseRegressionNN:
 
 
 def get_dataloaders(
-    dataset_path: str | Path, batch_size: int
+    dataset_type: DatasetType,
+    dataset_spec: Path | DatasetName,
+    batch_size: int,
 ) -> tuple[DataLoader, DataLoader, DataLoader]:
-    data = np.load(dataset_path)
-    X_train, y_train = data["X_train"], data["y_train"]
-    X_val, y_val = data["X_val"], data["y_val"]
-    X_test, y_test = data["X_test"], data["y_test"]
+    if dataset_type == DatasetType.SCALAR:
+        data = np.load(dataset_spec)
+        X_train, y_train = data["X_train"], data["y_train"]
+        X_val, y_val = data["X_val"], data["y_val"]
+        X_test, y_test = data["X_test"], data["y_test"]
 
-    train_dataset = TensorDataset(
-        torch.Tensor(X_train.reshape(-1, 1)),
-        torch.Tensor(y_train.reshape(-1, 1)),
-    )
-    val_dataset = TensorDataset(
-        torch.Tensor(X_val.reshape(-1, 1)),
-        torch.Tensor(y_val.reshape(-1, 1)),
-    )
-    test_dataset = TensorDataset(
-        torch.Tensor(X_test.reshape(-1, 1)),
-        torch.Tensor(y_test.reshape(-1, 1)),
-    )
+        train_dataset = TensorDataset(
+            torch.Tensor(X_train.reshape(-1, 1)),
+            torch.Tensor(y_train.reshape(-1, 1)),
+        )
+        val_dataset = TensorDataset(
+            torch.Tensor(X_val.reshape(-1, 1)),
+            torch.Tensor(y_val.reshape(-1, 1)),
+        )
+        test_dataset = TensorDataset(
+            torch.Tensor(X_test.reshape(-1, 1)),
+            torch.Tensor(y_test.reshape(-1, 1)),
+        )
+
+    elif dataset_type == DatasetType.IMAGE:
+        if dataset_spec == DatasetName.ROTATED_MNIST:
+            transform = Compose([ToTensor(), RandomRotation(45)])
+            dataset = MNIST(root="./data/rotated-mnist", download=True, transform=transform)
+            train_dataset, val_dataset, test_dataset = random_split(
+                dataset,
+                lengths=[0.8, 0.1, 0.1],
+                generator=torch.Generator().manual_seed(1998),  # For reproducibility.
+            )
+
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,

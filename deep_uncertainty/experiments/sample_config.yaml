@@ -1,4 +1,5 @@
 experiment_name: test-run
+random_seed: 1998
 architecture:
   backbone_type: mlp
   head:

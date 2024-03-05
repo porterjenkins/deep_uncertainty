@@ -1,8 +1,12 @@
+import math
+import random
 from argparse import ArgumentParser
 from argparse import Namespace
 from pathlib import Path
 
 import lightning as L
+import numpy as np
+import torch
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import CSVLogger
 
@@ -13,6 +17,11 @@ from deep_uncertainty.utils.experiment_utils import save_losses_plot
 
 
 def main(config: ExperimentConfig):
+
+    if config.random_seed is not None:
+        random.seed(config.random_seed)
+        np.random.seed(config.random_seed)
+        torch.manual_seed(config.random_seed)
 
     train_loader, val_loader, test_loader = get_dataloaders(
         config.dataset_type,
@@ -35,8 +44,8 @@ def main(config: ExperimentConfig):
             accelerator=config.accelerator_type.value,
             min_epochs=config.num_epochs,
             max_epochs=config.num_epochs,
-            log_every_n_steps=len(train_loader) // 2,
-            check_val_every_n_epoch=10,
+            log_every_n_steps=math.ceil(len(train_loader) / 2),
+            check_val_every_n_epoch=math.ceil(config.num_epochs / 200),
             enable_model_summary=False,
             callbacks=[checkpoint_callback],
             logger=logger,

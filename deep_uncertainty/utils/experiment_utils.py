@@ -1,16 +1,8 @@
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-import torch
 from torch.utils.data import DataLoader
-from torch.utils.data import random_split
-from torch.utils.data import TensorDataset
-from torchvision.datasets import MNIST
-from torchvision.transforms import Compose
-from torchvision.transforms import RandomRotation
-from torchvision.transforms import ToTensor
 
 from deep_uncertainty.enums import DatasetName
 from deep_uncertainty.enums import DatasetType
@@ -21,6 +13,9 @@ from deep_uncertainty.models import GaussianNN
 from deep_uncertainty.models import MeanNN
 from deep_uncertainty.models import PoissonNN
 from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
+from deep_uncertainty.utils.data_utils import get_rotated_mnist_train_val_test
+from deep_uncertainty.utils.data_utils import get_scalar_npz_train_val_test
+from deep_uncertainty.utils.data_utils import get_train_val_test_loaders
 from deep_uncertainty.utils.generic_utils import partialclass
 
 
@@ -78,53 +73,19 @@ def get_dataloaders(
     dataset_spec: Path | DatasetName,
     batch_size: int,
 ) -> tuple[DataLoader, DataLoader, DataLoader]:
-    if dataset_type == DatasetType.SCALAR:
-        data = np.load(dataset_spec)
-        X_train, y_train = data["X_train"], data["y_train"]
-        X_val, y_val = data["X_val"], data["y_val"]
-        X_test, y_test = data["X_test"], data["y_test"]
 
-        train_dataset = TensorDataset(
-            torch.Tensor(X_train.reshape(-1, 1)),
-            torch.Tensor(y_train.reshape(-1, 1)),
-        )
-        val_dataset = TensorDataset(
-            torch.Tensor(X_val.reshape(-1, 1)),
-            torch.Tensor(y_val.reshape(-1, 1)),
-        )
-        test_dataset = TensorDataset(
-            torch.Tensor(X_test.reshape(-1, 1)),
-            torch.Tensor(y_test.reshape(-1, 1)),
-        )
+    if dataset_type == DatasetType.SCALAR:
+        train_dataset, val_dataset, test_dataset = get_scalar_npz_train_val_test(dataset_spec)
 
     elif dataset_type == DatasetType.IMAGE:
         if dataset_spec == DatasetName.ROTATED_MNIST:
-            transform = Compose([ToTensor(), RandomRotation(45)])
-            dataset = MNIST(root="./data/rotated-mnist", download=True, transform=transform)
-            train_dataset, val_dataset, test_dataset = random_split(
-                dataset,
-                lengths=[0.8, 0.1, 0.1],
-                generator=torch.Generator().manual_seed(1998),  # For reproducibility.
-            )
+            train_dataset, val_dataset, test_dataset = get_rotated_mnist_train_val_test()
 
-    train_loader = DataLoader(
+    train_loader, val_loader, test_loader = get_train_val_test_loaders(
         train_dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=9,
-        persistent_workers=True,
-    )
-    val_loader = DataLoader(
         val_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=9,
-        persistent_workers=True,
-    )
-    test_loader = DataLoader(
         test_dataset,
-        batch_size=batch_size,
-        shuffle=False,
+        batch_size,
         num_workers=9,
         persistent_workers=True,
     )
@@ -133,7 +94,6 @@ def get_dataloaders(
 
 
 def save_losses_plot(log_dir: Path):
-
     metrics = pd.read_csv(log_dir / "metrics.csv")
     train_loss = metrics.iloc[:-1]["train_loss"].dropna()
     val_loss = metrics.iloc[:-1]["val_loss"].dropna()

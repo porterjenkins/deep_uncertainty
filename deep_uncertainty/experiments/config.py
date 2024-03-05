@@ -38,6 +38,7 @@ class ExperimentConfig:
         num_trials (int): Number of trials to run for this experiment.
         log_dir (Path): Directory to log results to.
         source_dict (dict): Dictionary from which config was constructed.
+        random_seed (int | None, optional): If specified, the random seed to use for reproducibility. Defaults to None.
     """
 
     def __init__(
@@ -61,6 +62,7 @@ class ExperimentConfig:
         num_trials: int,
         log_dir: Path,
         source_dict: dict,
+        random_seed: int | None = None,
     ):
         self.experiment_name = experiment_name
         self.accelerator_type = accelerator_type
@@ -81,6 +83,7 @@ class ExperimentConfig:
         self.num_trials = num_trials
         self.log_dir = log_dir
         self.source_dict = source_dict
+        self.random_seed = random_seed
 
     @staticmethod
     def from_yaml(config_path: str | Path) -> ExperimentConfig:
@@ -120,6 +123,9 @@ class ExperimentConfig:
             beta_scheduler_kwargs = training_dict["beta_scheduler"]["kwargs"]
             if beta_scheduler_kwargs.get("last_epoch", None) == -1:
                 beta_scheduler_kwargs["last_epoch"] = num_epochs
+        else:
+            beta_scheduler_type = None
+            beta_scheduler_kwargs = None
 
         dataset_type = DatasetType(config_dict["dataset"]["type"])
         if dataset_type in [DatasetType.SCALAR, DatasetType.TABULAR]:
@@ -129,6 +135,7 @@ class ExperimentConfig:
 
         num_trials = eval_dict["num_trials"]
         log_dir = Path(eval_dict["log_dir"])
+        random_seed = config_dict.get("random_seed")
 
         return ExperimentConfig(
             experiment_name=experiment_name,
@@ -150,6 +157,7 @@ class ExperimentConfig:
             num_trials=num_trials,
             log_dir=log_dir,
             source_dict=config_dict,
+            random_seed=random_seed,
         )
 
     def to_yaml(self, filepath: str | Path):

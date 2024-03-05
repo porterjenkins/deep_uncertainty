@@ -14,7 +14,11 @@ from deep_uncertainty.utils.experiment_utils import save_losses_plot
 
 def main(config: ExperimentConfig):
 
-    train_loader, val_loader, test_loader = get_dataloaders(config.dataset_path, config.batch_size)
+    train_loader, val_loader, test_loader = get_dataloaders(
+        config.dataset_type,
+        config.dataset_spec,
+        config.batch_size,
+    )
 
     for i in range(config.num_trials):
 

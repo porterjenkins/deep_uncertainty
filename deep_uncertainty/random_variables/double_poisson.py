@@ -54,7 +54,7 @@ class DoublePoisson(DiscreteRandomVariable):
         return (
             0.5 * np.log(self.phi)
             - self.phi * self.mu
-            - np.log(self.C)
+            - np.log(np.maximum(self.C, eps))
             - x
             + x * np.log(np.maximum(x, eps))
             - loggamma(x + 1)

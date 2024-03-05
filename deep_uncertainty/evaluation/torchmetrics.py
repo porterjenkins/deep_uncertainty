@@ -10,10 +10,10 @@ from deep_uncertainty.evaluation.plotting import plot_posterior_predictive
 from deep_uncertainty.evaluation.plotting import plot_regression_calibration_curve
 
 
-class MeanCalibration(Metric):
-    """A custom `torchmetric` for computing mean calibration over multiple test batches in `lightning`.
+class YoungCalibration(Metric):
+    """A custom `torchmetric` for computing the Young calibration over multiple test batches in `lightning`.
 
-    The mean calibration requires specifying a posterior predictive distribution over all test regression targets,
+    The Young calibration requires specifying a posterior predictive distribution over all test regression targets,
     and thus does not lend itself to the typical "collect, update, and aggregate" framework. This implementation
     accumulates distribution parameters output by a neural network and constructs the posterior predictive distribution
     at the final step. Invoking this class's `__call__` method will update its internal state with the specified parameters.
@@ -24,15 +24,24 @@ class MeanCalibration(Metric):
         mean_param_name (str): For the specified RV, name of the parameter to treat as the mean, e.g. `"loc"`.
     """
 
-    def __init__(self, param_list: list, rv_class_type: Type, mean_param_name: str, **kwargs):
+    def __init__(
+        self,
+        param_list: list,
+        rv_class_type: Type,
+        mean_param_name: str,
+        is_scalar: bool = True,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.param_list = param_list
         self.rv_class_type = rv_class_type
         self.mean_param_name = mean_param_name
+        self.is_scalar = is_scalar
 
         for param in param_list:
             self.add_state(param, default=[], dist_reduce_fx="cat")
-        self.add_state("x", default=[], dist_reduce_fx="cat")
+        if self.is_scalar:
+            self.add_state("x", default=[], dist_reduce_fx="cat")
         self.add_state("y", default=[], dist_reduce_fx="cat")
 
     def update(self, params: dict[str, torch.Tensor], x: torch.Tensor, y: torch.Tensor):
@@ -46,7 +55,8 @@ class MeanCalibration(Metric):
 
         for param_name, param_value in params.items():
             getattr(self, param_name).append(param_value)
-        self.x.append(x)
+        if self.is_scalar:
+            self.x.append(x)
         self.y.append(y)
 
     def compute(self) -> torch.Tensor:
@@ -61,25 +71,32 @@ class MeanCalibration(Metric):
     def plot(self) -> Figure:
         if not self._computed:
             raise ValueError("Must call `compute` before calling `plot`.")
-        self.all_inputs = torch.cat(self.x).flatten().detach().numpy()
-        fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+
+        num_subplots = 2 if self.is_scalar else 1
+        fig, axs = plt.subplots(1, num_subplots, figsize=(5 * num_subplots, 5))
 
         if hasattr(self.posterior_predictive, self.mean_param_name):
             mean_preds = getattr(self.posterior_predictive, self.mean_param_name)
         else:
             mean_preds = self.posterior_predictive.kwds[self.mean_param_name]
 
-        plot_regression_calibration_curve(
-            self.all_targets, self.posterior_predictive, ax=axs[0], show=False
-        )
-        plot_posterior_predictive(
-            x_test=self.all_inputs,
-            y_test=self.all_targets,
-            preds=mean_preds,
-            upper=self.posterior_predictive.ppf(0.025),
-            lower=self.posterior_predictive.ppf(0.975),
-            show=False,
-            ax=axs[1],
-            title="Posterior Predictive",
-        )
+        if self.is_scalar:
+            plot_regression_calibration_curve(
+                self.all_targets, self.posterior_predictive, ax=axs[0], show=False
+            )
+            self.all_inputs = torch.cat(self.x).flatten().detach().numpy()
+            plot_posterior_predictive(
+                x_test=self.all_inputs,
+                y_test=self.all_targets,
+                preds=mean_preds,
+                upper=self.posterior_predictive.ppf(0.025),
+                lower=self.posterior_predictive.ppf(0.975),
+                show=False,
+                ax=axs[1],
+                title="Posterior Predictive",
+            )
+        else:
+            plot_regression_calibration_curve(
+                self.all_targets, self.posterior_predictive, ax=axs, show=False
+            )
         return fig

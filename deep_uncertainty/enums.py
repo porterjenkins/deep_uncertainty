@@ -36,3 +36,13 @@ class LRSchedulerType(Enum):
 class BetaSchedulerType(Enum):
     COSINE_ANNEALING = "cosine_annealing"
     LINEAR = "linear"
+
+
+class DatasetType(Enum):
+    SCALAR = "scalar"
+    TABULAR = "tabular"
+    IMAGE = "image"
+
+
+class DatasetName(Enum):
+    ROTATED_MNIST = "rotated_mnist"

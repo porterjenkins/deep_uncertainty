@@ -3,9 +3,9 @@ architecture:
   backbone_type: mlp
   head:
     type: double_poisson
-
 dataset:
-  path: /Users/spenceryoung/Desktop/DAI/code/deep_uncertainty/data/nonlinear_count_data/toy_data_nonlinear_count.npz
+  type: scalar
+  spec: /Users/spenceryoung/Desktop/DAI/code/deep_uncertainty/data/nonlinear_count_data/toy_data_nonlinear_count.npz
 training:
   accelerator: cpu
   batch_size: 32

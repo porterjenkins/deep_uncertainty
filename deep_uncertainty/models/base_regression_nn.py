@@ -9,6 +9,7 @@ from torchmetrics import Metric
 from deep_uncertainty.enums import BackboneType
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
+from deep_uncertainty.models.backbones import CNNBackbone
 from deep_uncertainty.models.backbones import MLPBackbone
 
 
@@ -28,7 +29,7 @@ class BaseRegressionNN(L.LightningModule):
 
     def __init__(
         self,
-        input_dim: int,
+        input_dim: int | None,
         intermediate_dim: int,
         output_dim: int,
         backbone_type: BackboneType,
@@ -50,7 +51,12 @@ class BaseRegressionNN(L.LightningModule):
         self.loss_fn = loss_fn
 
         if backbone_type == BackboneType.MLP:
-            self.backbone = MLPBackbone(input_dim=input_dim, output_dim=intermediate_dim)
+            if input_dim is not None:
+                self.backbone = MLPBackbone(input_dim=input_dim, output_dim=intermediate_dim)
+            else:
+                raise ValueError("Must specify input dim to use MLPBackbone.")
+        elif backbone_type == BackboneType.CNN:
+            self.backbone = CNNBackbone(in_channels=input_dim, output_dim=intermediate_dim)
         else:
             raise NotImplementedError(f"Backbone type '{backbone_type}' not yet supported.")
         self.head = nn.Linear(intermediate_dim, output_dim)
@@ -76,14 +82,14 @@ class BaseRegressionNN(L.LightningModule):
     def training_step(self, batch: torch.Tensor) -> torch.Tensor:
         x, y = batch
         y_hat = self._forward_impl(x)
-        loss = self.loss_fn(y_hat, y)
+        loss = self.loss_fn(y_hat.squeeze(), y.squeeze().float())
         self.log("train_loss", loss, prog_bar=True)
         return loss
 
     def validation_step(self, batch: torch.Tensor) -> torch.Tensor:
         x, y = batch
         y_hat = self._forward_impl(x)
-        loss = self.loss_fn(y_hat, y)
+        loss = self.loss_fn(y_hat.squeeze(), y.squeeze().float())
         self.log("val_loss", loss, prog_bar=True)
         return loss
 

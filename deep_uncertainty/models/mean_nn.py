@@ -1,3 +1,5 @@
+from typing import Type
+
 import torch
 from torch import nn
 from torch.nn.functional import mse_loss
@@ -15,6 +17,9 @@ from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
 class MeanNN(BaseRegressionNN):
     """A neural network that fits to regression targets using mean squared error.
 
+    Args:
+        backbone_type (Type[Backbone]): Type of backbone to use for feature extraction (can be initialized with backbone_type()).
+
     Attributes:
         backbone (Backbone): Backbone to use for feature extraction.
         optim_type (OptimizerType): The type of optimizer to use for training the network, e.g. "adam", "sgd", etc.
@@ -25,7 +30,7 @@ class MeanNN(BaseRegressionNN):
 
     def __init__(
         self,
-        backbone: Backbone,
+        backbone_type: Type[Backbone],
         optim_type: OptimizerType,
         optim_kwargs: dict,
         lr_scheduler_type: LRSchedulerType | None = None,
@@ -38,12 +43,12 @@ class MeanNN(BaseRegressionNN):
             lr_scheduler_type=lr_scheduler_type,
             lr_scheduler_kwargs=lr_scheduler_kwargs,
         )
-        self.backbone = backbone
-        self.head = nn.Linear(backbone.output_dim, 1)
+        self.backbone = backbone_type()
+        self.head = nn.Linear(self.backbone.output_dim, 1)
         self.mse = MeanSquaredError()
         self.mae = MeanAbsoluteError()
         self.mape = MeanAbsolutePercentageError()
-        self.save_hyperparameters(ignore=["backbone"])
+        self.save_hyperparameters()
 
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
         """Make a forward pass through the network.
@@ -67,7 +72,11 @@ class MeanNN(BaseRegressionNN):
         Returns:
             torch.Tensor: Output tensor, with shape (N, 1).
         """
-        return self._forward_impl(x)
+        self.backbone.eval()
+        y_hat = self._forward_impl(x)
+        self.backbone.train()
+
+        return y_hat
 
     def _test_metrics_dict(self) -> dict[str, Metric]:
         return {"mse": self.mse, "mae": self.mae, "mape": self.mape}

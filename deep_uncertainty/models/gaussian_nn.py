@@ -1,4 +1,5 @@
 from functools import partial
+from typing import Type
 
 import torch
 from scipy.stats import norm
@@ -24,6 +25,9 @@ from deep_uncertainty.training.losses import gaussian_nll
 class GaussianNN(BaseRegressionNN):
     """A neural network that learns the parameters of a Gaussian distribution over each regression target (conditioned on the input).
 
+    Args:
+        backbone_type (Type[Backbone]): Type of backbone to use for feature extraction (can be initialized with backbone_type()).
+
     Attributes:
         backbone (Backbone): Backbone to use for feature extraction.
         optim_type (OptimizerType): The type of optimizer to use for training the network, e.g. "adam", "sgd", etc.
@@ -36,7 +40,7 @@ class GaussianNN(BaseRegressionNN):
 
     def __init__(
         self,
-        backbone: Backbone,
+        backbone_type: Type[Backbone],
         optim_type: OptimizerType,
         optim_kwargs: dict,
         lr_scheduler_type: LRSchedulerType | None = None,
@@ -63,14 +67,14 @@ class GaussianNN(BaseRegressionNN):
             lr_scheduler_type=lr_scheduler_type,
             lr_scheduler_kwargs=lr_scheduler_kwargs,
         )
-        self.backbone = backbone
-        self.head = nn.Linear(backbone.output_dim, 2)
+        self.backbone = backbone_type()
+        self.head = nn.Linear(self.backbone.output_dim, 2)
 
         self.mean_calibration = YoungCalibration(
             param_list=["loc", "scale"],
             rv_class_type=norm,
             mean_param_name="loc",
-            is_scalar=isinstance(backbone, ScalarMLP),
+            is_scalar=isinstance(self.backbone, ScalarMLP),
         )
         self.ece = ExpectedCalibrationError(
             param_list=["loc", "scale"],
@@ -79,7 +83,7 @@ class GaussianNN(BaseRegressionNN):
         self.mse = MeanSquaredError()
         self.mae = MeanAbsoluteError()
         self.mape = MeanAbsolutePercentageError()
-        self.save_hyperparameters(ignore=["backbone"])
+        self.save_hyperparameters()
 
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
         """Make a forward pass through the network.
@@ -107,7 +111,9 @@ class GaussianNN(BaseRegressionNN):
 
         If viewing outputs as (mu, var), use `torch.split(y_hat, [1, 1], dim=-1)` to separate.
         """
+        self.backbone.eval()
         y_hat = self._forward_impl(x)
+        self.backbone.train()
 
         # Apply torch.exp to the logvar dimension.
         output_shape = y_hat.shape

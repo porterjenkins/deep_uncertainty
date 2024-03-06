@@ -1,5 +1,7 @@
 from functools import partial
+from typing import Type
 
+import numpy as np
 import torch
 from torch import nn
 from torchmetrics import MeanAbsoluteError
@@ -24,6 +26,9 @@ from deep_uncertainty.training.losses import double_poisson_nll
 class DoublePoissonNN(BaseRegressionNN):
     """A neural network that learns the parameters of a Double Poisson distribution over each regression target (conditioned on the input).
 
+    Args:
+        backbone_type (Type[Backbone]): Type of backbone to use for feature extraction (can be initialized with backbone_type()).
+
     Attributes:
         backbone (Backbone): Backbone to use for feature extraction.
         optim_type (OptimizerType): The type of optimizer to use for training the network, e.g. "adam", "sgd", etc.
@@ -36,7 +41,7 @@ class DoublePoissonNN(BaseRegressionNN):
 
     def __init__(
         self,
-        backbone: Backbone,
+        backbone_type: Type[Backbone],
         optim_type: OptimizerType,
         optim_kwargs: dict,
         lr_scheduler_type: LRSchedulerType | None = None,
@@ -63,14 +68,14 @@ class DoublePoissonNN(BaseRegressionNN):
             lr_scheduler_type=lr_scheduler_type,
             lr_scheduler_kwargs=lr_scheduler_kwargs,
         )
-        self.backbone = backbone
-        self.head = nn.Linear(backbone.output_dim, 2)
+        self.backbone = backbone_type()
+        self.head = nn.Linear(self.backbone.output_dim, 2)
 
         self.mean_calibration = YoungCalibration(
             param_list=["mu", "phi"],
             rv_class_type=DoublePoisson,
             mean_param_name="mu",
-            is_scalar=isinstance(backbone, ScalarMLP),
+            is_scalar=isinstance(self.backbone, ScalarMLP),
         )
         self.ece = ExpectedCalibrationError(
             param_list=["mu", "phi"],
@@ -79,7 +84,7 @@ class DoublePoissonNN(BaseRegressionNN):
         self.mse = MeanSquaredError()
         self.mae = MeanAbsoluteError()
         self.mape = MeanAbsolutePercentageError()
-        self.save_hyperparameters(ignore=["backbone"])
+        self.save_hyperparameters()
 
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
         """Make a forward pass through the network.
@@ -107,8 +112,10 @@ class DoublePoissonNN(BaseRegressionNN):
 
         If viewing outputs as (mu, phi), use `torch.split(y_hat, [1, 1], dim=-1)` to separate.
         """
-        h = self.backbone(x)
-        y_hat = self.head(h)  # Interpreted as (logmu, logphi)
+        self.backbone.eval()
+        y_hat = self._forward_impl(x)  # Interpreted as (logmu, logphi)
+        self.backbone.train()
+
         return torch.exp(y_hat)
 
     def _test_metrics_dict(self) -> dict[str, Metric]:
@@ -124,9 +131,11 @@ class DoublePoissonNN(BaseRegressionNN):
         mu, phi = torch.split(y_hat, [1, 1], dim=-1)
         mu = mu.flatten()
         phi = phi.flatten()
-        self.mse.update(mu, y.flatten())
-        self.mae.update(mu, y.flatten())
-        self.mape.update(mu, y.flatten())
+        dist = DoublePoisson(mu=mu.detach().cpu().numpy(), phi=phi.detach().cpu().numpy())
+        mode = torch.tensor(np.argmax(dist.masses, axis=0), device=self.mse.device)
+        self.mse.update(mode, y.flatten())
+        self.mae.update(mode, y.flatten())
+        self.mape.update(mode, y.flatten())
         self.mean_calibration.update({"mu": mu, "phi": phi}, x, y.flatten())
         self.ece.update({"mu": mu, "phi": phi}, y.flatten())
 

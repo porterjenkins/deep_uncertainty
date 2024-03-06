@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Type
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -25,6 +26,8 @@ from deep_uncertainty.utils.generic_utils import partialclass
 
 def get_model(config: ExperimentConfig) -> BaseRegressionNN:
 
+    initializer: Type[BaseRegressionNN]
+
     if config.head_type == HeadType.MEAN:
         initializer = MeanNN
     elif config.head_type == HeadType.GAUSSIAN:
@@ -49,17 +52,17 @@ def get_model(config: ExperimentConfig) -> BaseRegressionNN:
             initializer = DoublePoissonNN
 
     if config.dataset_type == DatasetType.SCALAR:
-        backbone = ScalarMLP()
+        backbone_type = ScalarMLP
     elif config.dataset_type == DatasetType.IMAGE:
         if config.dataset_spec == ImageDatasetName.ROTATED_MNIST:
-            backbone = MNISTCNN()
+            backbone_type = MNISTCNN
         else:
-            backbone = CNN()
+            backbone_type = CNN
     elif config.dataset_type == DatasetType.TABULAR:
         raise NotImplementedError("Tabular data not yet supported.")
 
     model = initializer(
-        backbone=backbone,
+        backbone_type=backbone_type,
         optim_type=config.optim_type,
         optim_kwargs=config.optim_kwargs,
         lr_scheduler_type=config.lr_scheduler_type,

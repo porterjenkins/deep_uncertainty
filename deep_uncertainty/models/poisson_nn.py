@@ -2,17 +2,19 @@ from functools import partial
 
 import torch
 from scipy.stats import poisson
+from torch import nn
 from torch.nn.functional import poisson_nll_loss
 from torchmetrics import MeanAbsoluteError
 from torchmetrics import MeanAbsolutePercentageError
 from torchmetrics import MeanSquaredError
 from torchmetrics import Metric
 
-from deep_uncertainty.enums import BackboneType
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
 from deep_uncertainty.evaluation.torchmetrics import ExpectedCalibrationError
 from deep_uncertainty.evaluation.torchmetrics import YoungCalibration
+from deep_uncertainty.models.backbones import Backbone
+from deep_uncertainty.models.backbones import ScalarMLP
 from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
 
 
@@ -20,9 +22,7 @@ class PoissonNN(BaseRegressionNN):
     """A neural network that learns the parameters of a Poisson distribution over each regression target (conditioned on the input).
 
     Attributes:
-        input_dim (int | None): Dimension of input data (if applicable).
-        is_scalar (bool): Boolean indicating if input data is scalar or not.
-        backbone_type (BackboneType): The backbone type to use in the neural network, e.g. "mlp", "cnn", etc.
+        backbone (Backbone): Backbone to use for feature extraction.
         optim_type (OptimizerType): The type of optimizer to use for training the network, e.g. "adam", "sgd", etc.
         optim_kwargs (dict): Key-value argument specifications for the chosen optimizer, e.g. {"lr": 1e-3, "weight_decay": 1e-5}.
         lr_scheduler_type (LRSchedulerType | None): If specified, the type of learning rate scheduler to use during training, e.g. "cosine_annealing".
@@ -31,33 +31,29 @@ class PoissonNN(BaseRegressionNN):
 
     def __init__(
         self,
-        input_dim: int | None,
-        is_scalar: bool,
-        backbone_type: BackboneType,
+        backbone: Backbone,
         optim_type: OptimizerType,
         optim_kwargs: dict,
         lr_scheduler_type: LRSchedulerType | None = None,
         lr_scheduler_kwargs: dict | None = None,
     ):
         super(PoissonNN, self).__init__(
-            input_dim=input_dim,
-            intermediate_dim=64,
-            output_dim=1,
-            backbone_type=backbone_type,
             loss_fn=partial(poisson_nll_loss, log_input=True),
             optim_type=optim_type,
             optim_kwargs=optim_kwargs,
             lr_scheduler_type=lr_scheduler_type,
             lr_scheduler_kwargs=lr_scheduler_kwargs,
         )
+        self.backbone = backbone
+        self.head = nn.Linear(backbone.output_dim, 1)
         self.mean_calibration = YoungCalibration(
-            ["mu"], poisson, mean_param_name="mu", is_scalar=is_scalar
+            ["mu"], poisson, mean_param_name="mu", is_scalar=isinstance(backbone, ScalarMLP)
         )
         self.ece = ExpectedCalibrationError(["mu"], poisson)
         self.mse = MeanSquaredError()
         self.mae = MeanAbsoluteError()
         self.mape = MeanAbsolutePercentageError()
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=["backbone"])
 
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
         """Make a forward pass through the network.

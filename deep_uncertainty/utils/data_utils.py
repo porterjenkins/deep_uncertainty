@@ -8,9 +8,14 @@ from torch.utils.data import random_split
 from torch.utils.data import Subset
 from torch.utils.data import TensorDataset
 from torchvision.datasets import MNIST
+from torchvision.transforms import AutoAugment
 from torchvision.transforms import Compose
 from torchvision.transforms import RandomRotation
+from torchvision.transforms import Resize
 from torchvision.transforms import ToTensor
+
+from deep_uncertainty.datasets import CoinCountingDataset
+from deep_uncertainty.datasets import ImageDatasetWrapper
 
 
 def get_scalar_npz_train_val_test(
@@ -43,6 +48,25 @@ def get_rotated_mnist_train_val_test() -> tuple[Subset, Subset, Subset]:
         dataset,
         lengths=[0.8, 0.1, 0.1],
     )
+    train_dataset
+    return train_dataset, val_dataset, test_dataset
+
+
+def get_coin_counting_train_val_test() -> tuple[Subset, Subset, Subset]:
+    dataset = CoinCountingDataset(root_dir="./data/coin-counting")
+
+    train_transforms = Compose([Resize((128, 128)), AutoAugment(), ToTensor()])
+    inference_transforms = Compose([Resize((128, 128)), ToTensor()])
+
+    train_indices = np.load("./data/coin-counting/train_indices.npy")
+    train_dataset = ImageDatasetWrapper(Subset(dataset, train_indices), train_transforms)
+
+    val_indices = np.load("./data/coin-counting/val_indices.npy")
+    val_dataset = ImageDatasetWrapper(Subset(dataset, val_indices), inference_transforms)
+
+    test_indices = np.load("./data/coin-counting/test_indices.npy")
+    test_dataset = ImageDatasetWrapper(Subset(dataset, test_indices), inference_transforms)
+
     return train_dataset, val_dataset, test_dataset
 
 

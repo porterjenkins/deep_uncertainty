@@ -4,15 +4,19 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from torch.utils.data import DataLoader
 
-from deep_uncertainty.enums import DatasetName
 from deep_uncertainty.enums import DatasetType
 from deep_uncertainty.enums import HeadType
+from deep_uncertainty.enums import ImageDatasetName
 from deep_uncertainty.experiments.config import ExperimentConfig
 from deep_uncertainty.models import DoublePoissonNN
 from deep_uncertainty.models import GaussianNN
 from deep_uncertainty.models import MeanNN
 from deep_uncertainty.models import PoissonNN
+from deep_uncertainty.models.backbones import CNN
+from deep_uncertainty.models.backbones import MNISTCNN
+from deep_uncertainty.models.backbones import ScalarMLP
 from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
+from deep_uncertainty.utils.data_utils import get_coin_counting_train_val_test
 from deep_uncertainty.utils.data_utils import get_rotated_mnist_train_val_test
 from deep_uncertainty.utils.data_utils import get_scalar_npz_train_val_test
 from deep_uncertainty.utils.data_utils import get_train_val_test_loaders
@@ -20,6 +24,7 @@ from deep_uncertainty.utils.generic_utils import partialclass
 
 
 def get_model(config: ExperimentConfig) -> BaseRegressionNN:
+
     if config.head_type == HeadType.MEAN:
         initializer = MeanNN
     elif config.head_type == HeadType.GAUSSIAN:
@@ -44,22 +49,17 @@ def get_model(config: ExperimentConfig) -> BaseRegressionNN:
             initializer = DoublePoissonNN
 
     if config.dataset_type == DatasetType.SCALAR:
-        input_dim = 1
-        is_scalar = True
+        backbone = ScalarMLP()
     elif config.dataset_type == DatasetType.IMAGE:
-        if config.dataset_spec == DatasetName.ROTATED_MNIST:
-            input_dim = 1
-            is_scalar = False
+        if config.dataset_spec == ImageDatasetName.ROTATED_MNIST:
+            backbone = MNISTCNN()
         else:
-            input_dim = 3
-            is_scalar = False
+            backbone = CNN()
     elif config.dataset_type == DatasetType.TABULAR:
         raise NotImplementedError("Tabular data not yet supported.")
 
     model = initializer(
-        input_dim=input_dim,
-        is_scalar=is_scalar,
-        backbone_type=config.backbone_type,
+        backbone=backbone,
         optim_type=config.optim_type,
         optim_kwargs=config.optim_kwargs,
         lr_scheduler_type=config.lr_scheduler_type,
@@ -70,7 +70,7 @@ def get_model(config: ExperimentConfig) -> BaseRegressionNN:
 
 def get_dataloaders(
     dataset_type: DatasetType,
-    dataset_spec: Path | DatasetName,
+    dataset_spec: Path | ImageDatasetName,
     batch_size: int,
 ) -> tuple[DataLoader, DataLoader, DataLoader]:
 
@@ -78,8 +78,10 @@ def get_dataloaders(
         train_dataset, val_dataset, test_dataset = get_scalar_npz_train_val_test(dataset_spec)
 
     elif dataset_type == DatasetType.IMAGE:
-        if dataset_spec == DatasetName.ROTATED_MNIST:
+        if dataset_spec == ImageDatasetName.ROTATED_MNIST:
             train_dataset, val_dataset, test_dataset = get_rotated_mnist_train_val_test()
+        elif dataset_spec == ImageDatasetName.COIN_COUNTING:
+            train_dataset, val_dataset, test_dataset = get_coin_counting_train_val_test()
 
     train_loader, val_loader, test_loader = get_train_val_test_loaders(
         train_dataset,

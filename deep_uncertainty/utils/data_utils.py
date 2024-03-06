@@ -52,19 +52,21 @@ def get_rotated_mnist_train_val_test() -> tuple[Subset, Subset, Subset]:
     return train_dataset, val_dataset, test_dataset
 
 
-def get_coin_counting_train_val_test() -> tuple[Subset, Subset, Subset]:
-    dataset = CoinCountingDataset(root_dir="./data/coin-counting")
+def get_coin_counting_train_val_test(reduced: bool = True) -> tuple[Subset, Subset, Subset]:
+    # Reduced dataset filters all counts higher than 10.
+    root_dir = Path(f"./data/coin-counting{'-reduced' if reduced else ''}")
+    dataset = CoinCountingDataset(root_dir)
 
     train_transforms = Compose([Resize((128, 128)), AutoAugment(), ToTensor()])
     inference_transforms = Compose([Resize((128, 128)), ToTensor()])
 
-    train_indices = np.load("./data/coin-counting/train_indices.npy")
+    train_indices = np.load(root_dir / "train_indices.npy")
     train_dataset = ImageDatasetWrapper(Subset(dataset, train_indices), train_transforms)
 
-    val_indices = np.load("./data/coin-counting/val_indices.npy")
+    val_indices = np.load(root_dir / "val_indices.npy")
     val_dataset = ImageDatasetWrapper(Subset(dataset, val_indices), inference_transforms)
 
-    test_indices = np.load("./data/coin-counting/test_indices.npy")
+    test_indices = np.load(root_dir / "test_indices.npy")
     test_dataset = ImageDatasetWrapper(Subset(dataset, test_indices), inference_transforms)
 
     return train_dataset, val_dataset, test_dataset

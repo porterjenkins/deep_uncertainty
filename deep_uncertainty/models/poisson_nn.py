@@ -1,4 +1,5 @@
 from functools import partial
+from typing import Type
 
 import torch
 from scipy.stats import poisson
@@ -21,6 +22,9 @@ from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
 class PoissonNN(BaseRegressionNN):
     """A neural network that learns the parameters of a Poisson distribution over each regression target (conditioned on the input).
 
+    Args:
+        backbone_type (Type[Backbone]): Type of backbone to use for feature extraction (can be initialized with backbone_type()).
+
     Attributes:
         backbone (Backbone): Backbone to use for feature extraction.
         optim_type (OptimizerType): The type of optimizer to use for training the network, e.g. "adam", "sgd", etc.
@@ -31,7 +35,7 @@ class PoissonNN(BaseRegressionNN):
 
     def __init__(
         self,
-        backbone: Backbone,
+        backbone_type: Type[Backbone],
         optim_type: OptimizerType,
         optim_kwargs: dict,
         lr_scheduler_type: LRSchedulerType | None = None,
@@ -44,16 +48,16 @@ class PoissonNN(BaseRegressionNN):
             lr_scheduler_type=lr_scheduler_type,
             lr_scheduler_kwargs=lr_scheduler_kwargs,
         )
-        self.backbone = backbone
-        self.head = nn.Linear(backbone.output_dim, 1)
+        self.backbone = backbone_type()
+        self.head = nn.Linear(self.backbone.output_dim, 1)
         self.mean_calibration = YoungCalibration(
-            ["mu"], poisson, mean_param_name="mu", is_scalar=isinstance(backbone, ScalarMLP)
+            ["mu"], poisson, mean_param_name="mu", is_scalar=isinstance(self.backbone, ScalarMLP)
         )
         self.ece = ExpectedCalibrationError(["mu"], poisson)
         self.mse = MeanSquaredError()
         self.mae = MeanAbsoluteError()
         self.mape = MeanAbsolutePercentageError()
-        self.save_hyperparameters(ignore=["backbone"])
+        self.save_hyperparameters()
 
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
         """Make a forward pass through the network.
@@ -77,8 +81,10 @@ class PoissonNN(BaseRegressionNN):
         Returns:
             torch.Tensor: Output tensor, with shape (N, 1).
         """
-        h = self.backbone(x)
-        y_hat = self.head(h)  # Interpreted as log(mu)
+        self.backbone.eval()
+        y_hat = self._forward_impl(x)  # Interpreted as log(mu)
+        self.backbone.train()
+
         return torch.exp(y_hat)
 
     def _test_metrics_dict(self) -> dict[str, Metric]:

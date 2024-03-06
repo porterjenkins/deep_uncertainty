@@ -5,11 +5,10 @@ from pathlib import Path
 import yaml
 
 from deep_uncertainty.enums import AcceleratorType
-from deep_uncertainty.enums import BackboneType
 from deep_uncertainty.enums import BetaSchedulerType
-from deep_uncertainty.enums import DatasetName
 from deep_uncertainty.enums import DatasetType
 from deep_uncertainty.enums import HeadType
+from deep_uncertainty.enums import ImageDatasetName
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
 from deep_uncertainty.utils.generic_utils import get_yaml
@@ -21,7 +20,6 @@ class ExperimentConfig:
 
     Attributes:
         experiment_name (str): The name of the experiment (used for identifying chkp weights / eval logs), automatically cast to snake case.
-        backbone_type (BackboneType): The backbone type to use in the neural network, e.g. "mlp", "cnn", etc.
         head_type (HeadType): The output head to use in the neural network, e.g. "gaussian", "mean", "poisson", etc.
         chkp_dir (Path): Directory to checkpoint model weights in.
         chkp_freq (int): Number of epochs to wait in between checkpointing model weights.
@@ -45,7 +43,6 @@ class ExperimentConfig:
         self,
         experiment_name: str,
         accelerator_type: AcceleratorType,
-        backbone_type: BackboneType,
         head_type: HeadType,
         chkp_dir: Path,
         chkp_freq: int,
@@ -58,7 +55,7 @@ class ExperimentConfig:
         beta_scheduler_type: BetaSchedulerType | None,
         beta_scheduler_kwargs: dict | None,
         dataset_type: DatasetType,
-        dataset_spec: Path | DatasetName,
+        dataset_spec: Path | ImageDatasetName,
         num_trials: int,
         log_dir: Path,
         source_dict: dict,
@@ -66,7 +63,6 @@ class ExperimentConfig:
     ):
         self.experiment_name = experiment_name
         self.accelerator_type = accelerator_type
-        self.backbone_type = backbone_type
         self.head_type = head_type
         self.chkp_dir = chkp_dir
         self.chkp_freq = chkp_freq
@@ -96,14 +92,12 @@ class ExperimentConfig:
             ExperimentConfig: The specified config.
         """
         config_dict = get_yaml(config_path)
-        architecture_dict = config_dict["architecture"]
         training_dict = config_dict["training"]
         eval_dict = config_dict["evaluation"]
 
         experiment_name = to_snake_case(config_dict["experiment_name"])
         accelerator_type = AcceleratorType(training_dict["accelerator"])
-        backbone_type = BackboneType(architecture_dict["backbone_type"])
-        head_type = HeadType(architecture_dict["head"]["type"])
+        head_type = HeadType(config_dict["head_type"])
         chkp_dir = Path(training_dict["chkp_dir"])
         chkp_freq = training_dict["chkp_freq"]
         batch_size = training_dict["batch_size"]
@@ -131,7 +125,7 @@ class ExperimentConfig:
         if dataset_type in [DatasetType.SCALAR, DatasetType.TABULAR]:
             dataset_spec = Path(config_dict["dataset"]["spec"])
         elif dataset_type == DatasetType.IMAGE:
-            dataset_spec = DatasetName(config_dict["dataset"]["spec"])
+            dataset_spec = ImageDatasetName(config_dict["dataset"]["spec"])
 
         num_trials = eval_dict["num_trials"]
         log_dir = Path(eval_dict["log_dir"])
@@ -140,7 +134,6 @@ class ExperimentConfig:
         return ExperimentConfig(
             experiment_name=experiment_name,
             accelerator_type=accelerator_type,
-            backbone_type=backbone_type,
             head_type=head_type,
             chkp_dir=chkp_dir,
             chkp_freq=chkp_freq,

@@ -3,24 +3,16 @@ from typing import Callable
 import lightning as L
 import torch
 from matplotlib.figure import Figure
-from torch import nn
 from torchmetrics import Metric
 
-from deep_uncertainty.enums import BackboneType
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
-from deep_uncertainty.models.backbones import CNNBackbone
-from deep_uncertainty.models.backbones import MLPBackbone
 
 
 class BaseRegressionNN(L.LightningModule):
     """Base class for regression neural networks. Should not actually be used for prediction (needs to define `training_step` and whatnot).
 
     Attributes:
-        input_dim (int): Dimension of input data.
-        intermediate_dim (int): Output dimension of backbone (feature extractor).
-        output_dim (int): Desired dimension of model outputs (e.g. 1 if training with MSE loss).
-        backbone_type (BackboneType): The backbone type to use in the neural network, e.g. "mlp", "cnn", etc.
         optim_type (OptimizerType): The type of optimizer to use for training the network, e.g. "adam", "sgd", etc.
         optim_kwargs (dict): Key-value argument specifications for the chosen optimizer, e.g. {"lr": 1e-3, "weight_decay": 1e-5}.
         lr_scheduler_type (LRSchedulerType | None): If specified, the type of learning rate scheduler to use during training, e.g. "cosine_annealing".
@@ -29,10 +21,6 @@ class BaseRegressionNN(L.LightningModule):
 
     def __init__(
         self,
-        input_dim: int | None,
-        intermediate_dim: int,
-        output_dim: int,
-        backbone_type: BackboneType,
         loss_fn: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
         optim_type: OptimizerType,
         optim_kwargs: dict,
@@ -42,24 +30,12 @@ class BaseRegressionNN(L.LightningModule):
         """Create a regression NN."""
         super(BaseRegressionNN, self).__init__()
 
-        self.input_dim = input_dim
         self.optim_type = optim_type
         self.optim_kwargs = optim_kwargs
         self.lr_scheduler_type = lr_scheduler_type
         self.lr_scheduler_kwargs = lr_scheduler_kwargs
 
         self.loss_fn = loss_fn
-
-        if backbone_type == BackboneType.MLP:
-            if input_dim is not None:
-                self.backbone = MLPBackbone(input_dim=input_dim, output_dim=intermediate_dim)
-            else:
-                raise ValueError("Must specify input dim to use MLPBackbone.")
-        elif backbone_type == BackboneType.CNN:
-            self.backbone = CNNBackbone(in_channels=input_dim, output_dim=intermediate_dim)
-        else:
-            raise NotImplementedError(f"Backbone type '{backbone_type}' not yet supported.")
-        self.head = nn.Linear(intermediate_dim, output_dim)
 
     def configure_optimizers(self) -> dict:
         if self.optim_type == OptimizerType.ADAM:

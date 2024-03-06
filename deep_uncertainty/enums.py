@@ -15,14 +15,6 @@ class HeadType(Enum):
     DOUBLE_POISSON = "double_poisson"
 
 
-class BackboneType(Enum):
-    MLP = "mlp"
-    RESIDUAL_MLP = "residual_mlp"
-    CNN = "cnn"
-    RESIDUAL_CNN = "residual_cnn"
-    TRANSFORMER = "transformer"
-
-
 class OptimizerType(Enum):
     ADAM = "adam"
     SGD = "sgd"
@@ -44,5 +36,6 @@ class DatasetType(Enum):
     IMAGE = "image"
 
 
-class DatasetName(Enum):
+class ImageDatasetName(Enum):
     ROTATED_MNIST = "rotated_mnist"
+    COIN_COUNTING = "coin_counting"

@@ -1,6 +1,7 @@
 from functools import partial
 from typing import Type
 
+import numpy as np
 import torch
 from scipy.stats import poisson
 from torch import nn
@@ -97,8 +98,11 @@ class PoissonNN(BaseRegressionNN):
         }
 
     def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
-        self.mse.update(y_hat.flatten(), y.flatten())
-        self.mae.update(y_hat.flatten(), y.flatten())
-        self.mape.update(y_hat.flatten(), y.flatten())
+        dist = poisson(mu=y_hat.flatten().detach().cpu().numpy())
+        mass = dist.pmf(np.arange(2000).reshape(-1, 1))
+        mode = torch.tensor(np.argmax(mass, axis=0), device=self.mse.device)
+        self.mse.update(mode, y.flatten())
+        self.mae.update(mode, y.flatten())
+        self.mape.update(mode, y.flatten())
         self.mean_calibration.update({"mu": y_hat.flatten()}, x, y.flatten())
         self.ece.update({"mu": y_hat.flatten()}, y.flatten())

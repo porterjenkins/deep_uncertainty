@@ -5,5 +5,7 @@ __pycache__
 *.env
 */.ipynb_checkpoints
 .vscode
-*logs*
-*chkp*
+/logs/
+/chkp/
+*.png
+/ignore/

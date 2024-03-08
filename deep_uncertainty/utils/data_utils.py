@@ -10,7 +10,6 @@ from torch.utils.data import TensorDataset
 from torchvision.datasets import MNIST
 from torchvision.transforms import AutoAugment
 from torchvision.transforms import Compose
-from torchvision.transforms import RandomRotation
 from torchvision.transforms import Resize
 from torchvision.transforms import ToTensor
 
@@ -41,14 +40,13 @@ def get_scalar_npz_train_val_test(
     return train_dataset, val_dataset, test_dataset
 
 
-def get_rotated_mnist_train_val_test() -> tuple[Subset, Subset, Subset]:
-    transform = Compose([ToTensor(), RandomRotation(45)])
-    dataset = MNIST(root="./data/rotated-mnist", download=True, transform=transform)
-    train_dataset, val_dataset, test_dataset = random_split(
-        dataset,
-        lengths=[0.8, 0.1, 0.1],
+def get_mnist_train_val_test() -> tuple[Dataset, Subset, Subset]:
+    transform = ToTensor()
+    train_dataset = MNIST(root="./data/mnist", train=True, download=True, transform=transform)
+    val_dataset, test_dataset = random_split(
+        MNIST(root="./data/mnist", train=False, download=True, transform=transform),
+        lengths=[0.3, 0.7],
     )
-    train_dataset
     return train_dataset, val_dataset, test_dataset
 
 

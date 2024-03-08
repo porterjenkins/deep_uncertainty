@@ -17,7 +17,6 @@ from deep_uncertainty.models import DoublePoissonNN
 from deep_uncertainty.models import GaussianNN
 from deep_uncertainty.models import MeanNN
 from deep_uncertainty.models import NegBinomNN
-from deep_uncertainty.models import NegBinomNN
 from deep_uncertainty.models import PoissonNN
 from deep_uncertainty.models.backbones import MLP
 from deep_uncertainty.models.backbones import MNISTCNN
@@ -62,14 +61,11 @@ def get_model(
             initializer = DoublePoissonNN
     elif config.head_type == HeadType.NEGATIVE_BINOMIAL:
         initializer = NegBinomNN
-    elif config.head_type == HeadType.NEGATIVE_BINOMIAL:
-        initializer = NegBinomNN
 
     if config.dataset_type == DatasetType.TABULAR:
         backbone_type = MLP
         backbone_kwargs = {"input_dim": input_dim}
     elif config.dataset_type == DatasetType.IMAGE:
-        if config.dataset_spec == ImageDatasetName.MNIST:
         if config.dataset_spec == ImageDatasetName.MNIST:
             backbone_type = MNISTCNN
         elif config.dataset_spec == ImageDatasetName.COINS:

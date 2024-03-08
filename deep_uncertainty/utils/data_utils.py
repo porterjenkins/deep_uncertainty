@@ -53,12 +53,6 @@ def get_mnist_train_val_test() -> tuple[Dataset, Subset, Subset]:
     val_dataset, test_dataset = random_split(
         MNIST(root="./data/mnist", train=False, download=True, transform=transform),
         lengths=[0.3, 0.7],
-def get_mnist_train_val_test() -> tuple[Dataset, Subset, Subset]:
-    transform = ToTensor()
-    train_dataset = MNIST(root="./data/mnist", train=True, download=True, transform=transform)
-    val_dataset, test_dataset = random_split(
-        MNIST(root="./data/mnist", train=False, download=True, transform=transform),
-        lengths=[0.3, 0.7],
     )
     return train_dataset, val_dataset, test_dataset
 

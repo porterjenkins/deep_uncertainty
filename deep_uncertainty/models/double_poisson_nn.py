@@ -12,10 +12,8 @@ from torchmetrics import Metric
 from deep_uncertainty.enums import BetaSchedulerType
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
-from deep_uncertainty.evaluation.torchmetrics import ExpectedCalibrationError
-from deep_uncertainty.evaluation.torchmetrics import YoungCalibration
+from deep_uncertainty.evaluation.torchmetrics import DiscreteExpectedCalibrationError
 from deep_uncertainty.models.backbones import Backbone
-from deep_uncertainty.models.backbones import ScalarMLP
 from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
 from deep_uncertainty.random_variables import DoublePoisson
 from deep_uncertainty.training.beta_schedulers import CosineAnnealingBetaScheduler
@@ -71,16 +69,7 @@ class DoublePoissonNN(BaseRegressionNN):
         self.backbone = backbone_type()
         self.head = nn.Linear(self.backbone.output_dim, 2)
 
-        self.mean_calibration = YoungCalibration(
-            param_list=["mu", "phi"],
-            rv_class_type=DoublePoisson,
-            mean_param_name="mu",
-            is_scalar=isinstance(self.backbone, ScalarMLP),
-        )
-        self.ece = ExpectedCalibrationError(
-            param_list=["mu", "phi"],
-            rv_class_type=DoublePoisson,
-        )
+        self.discrete_ece = DiscreteExpectedCalibrationError()
         self.mse = MeanSquaredError()
         self.mae = MeanAbsoluteError()
         self.mape = MeanAbsolutePercentageError()
@@ -123,21 +112,24 @@ class DoublePoissonNN(BaseRegressionNN):
             "mse": self.mse,
             "mae": self.mae,
             "mape": self.mape,
-            "mean_calibration": self.mean_calibration,
-            "ece": self.ece,
+            "discrete_ece": self.discrete_ece,
         }
 
     def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
         mu, phi = torch.split(y_hat, [1, 1], dim=-1)
         mu = mu.flatten()
         phi = phi.flatten()
+
         dist = DoublePoisson(mu=mu.detach().cpu().numpy(), phi=phi.detach().cpu().numpy())
-        mode = torch.tensor(np.argmax(dist.masses, axis=0), device=self.mse.device)
-        self.mse.update(mode, y.flatten())
-        self.mae.update(mode, y.flatten())
-        self.mape.update(mode, y.flatten())
-        self.mean_calibration.update({"mu": mu, "phi": phi}, x, y.flatten())
-        self.ece.update({"mu": mu, "phi": phi}, y.flatten())
+        preds_numpy = np.argmax(dist.pmf(np.arange(2000).reshape(-1, 1)), axis=0)
+        preds = torch.tensor(preds_numpy, device=self.mse.device)
+        probs = torch.tensor(dist.pmf(preds_numpy), device=self.discrete_ece.device)
+        targets = y.flatten()
+
+        self.mse.update(preds, targets)
+        self.mae.update(preds, targets)
+        self.mape.update(preds, targets)
+        self.discrete_ece.update(preds=preds, probs=probs, targets=targets)
 
     def on_train_epoch_end(self):
         if self.beta_scheduler is not None:

@@ -24,7 +24,7 @@ from deep_uncertainty.models.backbones import MobileNetV3
 from deep_uncertainty.models.backbones import SmallCNN
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
 from deep_uncertainty.utils.data_utils import get_coin_counting_train_val_test
-from deep_uncertainty.utils.data_utils import get_rotated_mnist_train_val_test
+from deep_uncertainty.utils.data_utils import get_mnist_train_val_test
 from deep_uncertainty.utils.data_utils import get_scalar_npz_train_val_test
 from deep_uncertainty.utils.data_utils import get_train_val_test_loaders
 from deep_uncertainty.utils.data_utils import get_vehicles_train_val_test
@@ -97,8 +97,8 @@ def get_dataloaders(
     if dataset_type == DatasetType.TABULAR:
         train_dataset, val_dataset, test_dataset = get_tabular_npz_train_val_test(dataset_spec)
     elif dataset_type == DatasetType.IMAGE:
-        if dataset_spec == ImageDatasetName.ROTATED_MNIST:
-            train_dataset, val_dataset, test_dataset = get_rotated_mnist_train_val_test()
+        if dataset_spec == ImageDatasetName.MNIST:
+            train_dataset, val_dataset, test_dataset = get_mnist_train_val_test()
         elif dataset_spec == ImageDatasetName.COIN_COUNTING:
             train_dataset, val_dataset, test_dataset = get_coin_counting_train_val_test()
         elif dataset_spec == ImageDatasetName.VEHICLES:

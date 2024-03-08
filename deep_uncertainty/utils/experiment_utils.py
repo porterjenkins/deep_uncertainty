@@ -97,9 +97,9 @@ def get_dataloaders(
     if dataset_type == DatasetType.TABULAR:
         train_dataset, val_dataset, test_dataset = get_tabular_npz_train_val_test(dataset_spec)
     elif dataset_type == DatasetType.IMAGE:
-        if dataset_spec == ImageDatasetName.MNIST:
-            train_dataset, val_dataset, test_dataset = get_mnist_train_val_test()
-        elif dataset_spec == ImageDatasetName.COINS:
+        if dataset_spec == ImageDatasetName.ROTATED_MNIST:
+            train_dataset, val_dataset, test_dataset = get_rotated_mnist_train_val_test()
+        elif dataset_spec == ImageDatasetName.COIN_COUNTING:
             train_dataset, val_dataset, test_dataset = get_coin_counting_train_val_test()
         elif dataset_spec == ImageDatasetName.VEHICLES:
             train_dataset, val_dataset, test_dataset = get_vehicles_train_val_test()

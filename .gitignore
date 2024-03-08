@@ -10,7 +10,10 @@ __pycache__
 *.png
 /ignore/
 <<<<<<< HEAD
+<<<<<<< HEAD
 *logs*
 *chkp*
 =======
 >>>>>>> d2f547d (Added big csv's to gitignore)
+=======
+>>>>>>> b21ddfd (Added Negative Binomial NN)

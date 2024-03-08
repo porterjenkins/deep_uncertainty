@@ -10,7 +10,6 @@ from torch.utils.data import TensorDataset
 from torchvision.datasets import MNIST
 from torchvision.transforms import AutoAugment
 from torchvision.transforms import Compose
-from torchvision.transforms import Normalize
 from torchvision.transforms import Resize
 from torchvision.transforms import ToTensor
 

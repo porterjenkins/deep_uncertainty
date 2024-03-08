@@ -11,4 +11,3 @@ __pycache__
 /ignore/
 *logs*
 *chkp*
-deep_uncertainty/data/*

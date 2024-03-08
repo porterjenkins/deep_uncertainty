@@ -24,8 +24,8 @@ from deep_uncertainty.models.backbones import MobileNetV3
 from deep_uncertainty.models.backbones import SmallCNN
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
 from deep_uncertainty.utils.data_utils import get_coin_counting_train_val_test
-from deep_uncertainty.utils.data_utils import get_mnist_train_val_test
-from deep_uncertainty.utils.data_utils import get_tabular_npz_train_val_test
+from deep_uncertainty.utils.data_utils import get_rotated_mnist_train_val_test
+from deep_uncertainty.utils.data_utils import get_scalar_npz_train_val_test
 from deep_uncertainty.utils.data_utils import get_train_val_test_loaders
 from deep_uncertainty.utils.data_utils import get_vehicles_train_val_test
 from deep_uncertainty.utils.generic_utils import partialclass

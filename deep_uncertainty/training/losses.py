@@ -94,7 +94,7 @@ def neg_binom_nll(outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         )
 
     mu, alpha = torch.split(outputs, [1, 1], dim=-1)
-    eps = torch.tensor(1e-5, device=alpha.device)
+    eps = torch.tensor(1e-5)
     alpha_recip = torch.pow(torch.maximum(alpha, eps), -1)
     alphamu = torch.maximum(alpha * mu, eps)
 

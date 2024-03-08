@@ -12,7 +12,7 @@ from torchmetrics import Metric
 from deep_uncertainty.enums import BetaSchedulerType
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
-from deep_uncertainty.evaluation.torchmetrics import ExpectedCalibrationError
+from deep_uncertainty.evaluation.torchmetrics import ContinuousExpectedCalibrationError
 from deep_uncertainty.evaluation.torchmetrics import YoungCalibration
 from deep_uncertainty.models.backbones import Backbone
 from deep_uncertainty.models.backbones import ScalarMLP
@@ -76,7 +76,7 @@ class GaussianNN(BaseRegressionNN):
             mean_param_name="loc",
             is_scalar=isinstance(self.backbone, ScalarMLP),
         )
-        self.ece = ExpectedCalibrationError(
+        self.ece = ContinuousExpectedCalibrationError(
             param_list=["loc", "scale"],
             rv_class_type=norm,
         )
@@ -135,9 +135,10 @@ class GaussianNN(BaseRegressionNN):
         mu, var = torch.split(y_hat, [1, 1], dim=-1)
         mu = mu.flatten()
         var = var.flatten()
-        self.mse.update(mu, y.flatten())
-        self.mae.update(mu, y.flatten())
-        self.mape.update(mu, y.flatten())
+        preds = torch.round(mu)  # Since we have to predict counts.
+        self.mse.update(preds, y.flatten())
+        self.mae.update(preds, y.flatten())
+        self.mape.update(preds, y.flatten())
 
         std = torch.sqrt(var)
         self.mean_calibration.update({"loc": mu, "scale": std}, x, y.flatten())

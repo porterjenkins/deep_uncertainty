@@ -84,6 +84,9 @@ class MeanNN(BaseRegressionNN):
     def _update_test_metrics_batch(
         self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor
     ) -> dict:
-        self.mse.update(y_hat.flatten(), y.flatten())
-        self.mae.update(y_hat.flatten(), y.flatten())
-        self.mape.update(y_hat.flatten(), y.flatten())
+        preds = y_hat.flatten()
+        targets = y.flatten()
+
+        self.mse.update(preds, targets)
+        self.mae.update(preds, targets)
+        self.mape.update(preds, targets)

@@ -1,37 +1,32 @@
-from typing import TypeAlias
-
 import numpy as np
+import pandas as pd
 from scipy.stats import norm
 from scipy.stats import rv_continuous
-from scipy.stats import rv_discrete
-
-from deep_uncertainty.random_variables.discrete_random_variable import DiscreteRandomVariable
 
 
-RandomVariable: TypeAlias = rv_discrete | rv_continuous | DiscreteRandomVariable
-
-
-def compute_expected_calibration_error(
+def compute_continuous_ece(
     y_true: np.ndarray,
-    posterior_predictive: RandomVariable,
+    posterior_predictive: rv_continuous,
     num_bins: int = 100,
     weights: str = "uniform",
     alpha: float = 1.0,
 ) -> float:
-    """Given targets and a probabilistic regression model (represented as a random variable over the targets), compute the expected calibration error of the model.
+    """Given targets and a probabilistic regression model (represented as a continuous random variable over the targets), compute the expected calibration error of the model.
 
     Given a set of probability values {p_1, ..., p_m} spanning [0, 1], and a set of regression targets {y_i | 1 <= i <= n}, the expected calibration error is defined as follows:
 
-    If F_i denotes the posterior predictive cdf for y_i, p denotes the type of norm to take, and q_j = |{y_i | F_i(y_i) <= p_j, i = 1, 2, ..., n}| / n, we have
+        If F_i denotes the posterior predictive cdf for y_i and q_j = |{y_i | F_i(y_i) <= p_j, i = 1, 2, ..., n}| / n, we have
 
-        ECE = sum(w_j * abs(p_j - q_j)^alpha)
+            ECE = sum(w_j * abs(p_j - q_j)^alpha)
+
+        where alpha controls the severity of penalty for a given probability residual.
 
     Args:
         y_true (np.ndarray): The true values of the regression targets.
         posterior_predictive (RandomVariable): Random variable representing the posterior predictive distribution over the targets.
         num_bins (int): The number of bins to use for the ECE. Defaults to 100.
         weights (str, optional): Strategy for choosing the weights in the ECE sum. Must be either "uniform" or "frequency" (terms are weighted by the numerator of q_j). Defaults to "uniform".
-        alpha (int, optional): Controls how severely we penalize the model for the distance between p_j and q_j. Defaults to 1 (error term is |p_j - q_j|^1).
+        alpha (float, optional): Controls how severely we penalize the model for the distance between p_j and q_j. Defaults to 1 (error term is |p_j - q_j|).
 
     Returns:
         float: The expected calibration error.
@@ -55,15 +50,68 @@ def compute_expected_calibration_error(
     return ece
 
 
-def compute_young_calibration(y_true: np.ndarray, posterior_predictive: RandomVariable) -> float:
-    """Given targets and a probabilistic regression model (represented as a random variable over the targets), compute the Young calibration of the model.
+def compute_discrete_ece(
+    targets: np.ndarray,
+    preds: np.ndarray,
+    probs: np.ndarray,
+    bin_strategy: str = "adaptive",
+    alpha: float = 1.0,
+    num_bins: int = 30,
+):
+    """Given targets and predictions from a discrete probabilistic regression model, compute the expected calibration error.
+
+    Suppose we discretize [0, 1] into a set of m bins and assign each target {y_i | 1 <= i <= n} to a bin based on P(\\hat{y_i}),
+    the probability of the model's prediction for that target. Define acc(B) to be the probability, within bin B, that y_i = \\hat{y_i}.
+    Define conf(B) to be the average of P(\\hat{y_i}) within bin B. Then we have
+
+        ECE = mean([ |acc(B) - conf(B))|^alpha for B in bins ])
+
+    where alpha controls the severity of the penalty for the magnitude of a given probability residual.
+
+    Bin boundaries can either be selected uniformly across [0, 1] or chosen such that each bin has the same number of targets.
+
+    Args:
+        targets (np.ndarray): The regression targets.
+        preds (np.ndarray): The model's predictions for the targets (mode of the posterior predictive distribution).
+        probs (np.ndarray): The model's probabilities for each of its predictions (probability of the mode of the posterior predictive distribution).
+        bin_strategy (str, optional): Strategy for choosing bin boundaries. Must be either "uniform" or "adaptive". Defaults to "adaptive" (same # of targets in each bin).
+        alpha (int, optional): Controls how severely we penalize the model for the magnitude of a probability residual. Defaults to 1 (error term is |acc(B) - conf(B)|).
+        num_bins (int): The number of bins to use. Defaults to 30.
+
+    Returns:
+        float: The expected calibration error.
+    """
+    if bin_strategy == "uniform":
+        bin_boundaries = np.linspace(0, 1, num=num_bins)
+        weights = None
+    elif bin_strategy == "adaptive":
+        bin_boundaries = pd.qcut(probs, num_bins, retbins=True, duplicates="drop")[1]
+        n = len(bin_boundaries) - 1
+        weights = np.ones(n) / n
+    else:
+        raise ValueError('Invalid bin strategy specified. Must be "uniform" or "adaptive".')
+
+    mask_matrix = (bin_boundaries[:-1, None] <= probs) & (probs <= bin_boundaries[1:, None])
+    bin_counts = mask_matrix.sum(axis=1) + 1e-16
+    bin_confidences = np.where(mask_matrix, probs, 0).sum(axis=1) / bin_counts
+
+    if weights is None:
+        weights = 1 / bin_counts
+
+    bin_accuracies = np.where(mask_matrix, (preds == targets), 0).sum(axis=1) / bin_counts
+    ece = np.dot(weights, np.abs(bin_accuracies - bin_confidences) ** alpha)
+    return ece
+
+
+def compute_young_calibration(y_true: np.ndarray, posterior_predictive: rv_continuous) -> float:
+    """Given targets and a probabilistic regression model (represented as a continuous random variable over the targets), compute the Young calibration of the model.
 
     The Young calibration is defined as 1 minus 4/3 the area between the calibration curve of a perfectly calibrated model (y = x)
     and the given model (the 4/3 multiplier is so that the score lives between 0 and 1)
 
     Args:
         y_true (ndarray, (n,)): The true values of the regression targets.
-        posterior_predictive (RandomVariable): Random variable representing the posterior predictive distribution over the targets.
+        posterior_predictive (rv_continuous): Random variable representing the posterior predictive distribution over the targets.
     """
     epsilon = 1e-4
     n = 1000
@@ -93,4 +141,4 @@ if __name__ == "__main__":
 
     # Should be close to 1.
     print(f"Mean Calibration: {compute_young_calibration(y_true, posterior)}")
-    print(f"Expected Calibration Error: {compute_expected_calibration_error(y_true, posterior)}")
+    print(f"Expected Calibration Error: {compute_continuous_ece(y_true, posterior)}")

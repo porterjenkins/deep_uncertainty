@@ -113,16 +113,16 @@ def display_bayes_credible_interval(
 
 def plot_regression_calibration_curve(
     y_true: np.ndarray,
-    posterior_predictive: RandomVariable,
+    posterior_predictive: rv_continuous,
     num_bins: int = 9,
     ax: plt.Axes | None = None,
     show: bool = True,
 ):
-    """Given targets and a probabilistic regression model (represented as a random variable over the targets), plot a calibration curve.
+    """Given targets and a probabilistic regression model (represented as a continuous random variable over the targets), plot a calibration curve.
 
     Args:
         y_true (ndarray, (n,)): The true values of the regression targets.
-        posterior_predictive (RandomVariable): Random variable representing the posterior predictive distribution over the targets.
+        posterior_predictive (rv_continuous): Random variable representing the posterior predictive distribution over the targets.
         num_bins (int): Specifies how many probability thresholds to use for checking CDF calibration. This
                         corresponds to how many points will be plotted to form the calibration curve.
         ax (plt.Axes | None): The axis to plot on (if provided). If None is passed in, an axis is created.

@@ -11,6 +11,7 @@ from torchmetrics import Metric
 
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
+from deep_uncertainty.evaluation.torchmetrics import DiscreteExpectedCalibrationError
 from deep_uncertainty.models.backbones import Backbone
 from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
 from deep_uncertainty.training.losses import neg_binom_nll
@@ -56,6 +57,7 @@ class NegBinomNN(BaseRegressionNN):
         self.mse = MeanSquaredError()
         self.mae = MeanAbsoluteError()
         self.mape = MeanAbsolutePercentageError()
+        self.discrete_ece = DiscreteExpectedCalibrationError()
         self.save_hyperparameters()
 
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
@@ -94,6 +96,7 @@ class NegBinomNN(BaseRegressionNN):
             "mse": self.mse,
             "mae": self.mae,
             "mape": self.mape,
+            "discrete_ece": self.discrete_ece,
         }
 
     def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
@@ -105,12 +108,14 @@ class NegBinomNN(BaseRegressionNN):
         var = mu + alpha * mu**2
         p = mu / var
         n = mu**2 / (var - mu)
+        dist = nbinom(n=n.detach().cpu().numpy(), p=p.detach().cpu().numpy())
 
-        probs = nbinom.pmf(
-            np.arange(2000).reshape(-1, 1), n=n.detach().cpu().numpy(), p=p.detach().cpu().numpy()
-        )
-        mode = torch.tensor(np.argmax(probs, axis=0), device=self.mse.device)
+        numpy_preds = np.argmax(dist.pmf(np.arange(2000).reshape(-1, 1)), axis=0)
+        preds = torch.tensor(numpy_preds, device=self.mse.device)
+        probs = torch.tensor(dist.pmf(numpy_preds), device=self.discrete_ece.device)
+        targets = y.flatten()
 
-        self.mse.update(mode, y.flatten())
-        self.mae.update(mode, y.flatten())
-        self.mape.update(mode, y.flatten())
+        self.mse.update(preds, targets)
+        self.mae.update(preds, targets)
+        self.mape.update(preds, targets)
+        self.discrete_ece.update(preds=preds, probs=probs, targets=targets)

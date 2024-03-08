@@ -13,10 +13,8 @@ from torchmetrics import Metric
 
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
-from deep_uncertainty.evaluation.torchmetrics import ExpectedCalibrationError
-from deep_uncertainty.evaluation.torchmetrics import YoungCalibration
+from deep_uncertainty.evaluation.torchmetrics import DiscreteExpectedCalibrationError
 from deep_uncertainty.models.backbones import Backbone
-from deep_uncertainty.models.backbones import ScalarMLP
 from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
 
 
@@ -51,10 +49,8 @@ class PoissonNN(BaseRegressionNN):
         )
         self.backbone = backbone_type()
         self.head = nn.Linear(self.backbone.output_dim, 1)
-        self.mean_calibration = YoungCalibration(
-            ["mu"], poisson, mean_param_name="mu", is_scalar=isinstance(self.backbone, ScalarMLP)
-        )
-        self.ece = ExpectedCalibrationError(["mu"], poisson)
+
+        self.discrete_ece = DiscreteExpectedCalibrationError()
         self.mse = MeanSquaredError()
         self.mae = MeanAbsoluteError()
         self.mape = MeanAbsolutePercentageError()
@@ -93,16 +89,17 @@ class PoissonNN(BaseRegressionNN):
             "mse": self.mse,
             "mae": self.mae,
             "mape": self.mape,
-            "mean_calibration": self.mean_calibration,
-            "ece": self.ece,
+            "discrete_ece": self.discrete_ece,
         }
 
     def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
         dist = poisson(mu=y_hat.flatten().detach().cpu().numpy())
-        mass = dist.pmf(np.arange(2000).reshape(-1, 1))
-        mode = torch.tensor(np.argmax(mass, axis=0), device=self.mse.device)
-        self.mse.update(mode, y.flatten())
-        self.mae.update(mode, y.flatten())
-        self.mape.update(mode, y.flatten())
-        self.mean_calibration.update({"mu": y_hat.flatten()}, x, y.flatten())
-        self.ece.update({"mu": y_hat.flatten()}, y.flatten())
+        preds_numpy = np.argmax(dist.pmf(np.arange(2000).reshape(-1, 1)), axis=0)
+        preds = torch.tensor(preds_numpy, device=self.mse.device)
+        probs = torch.tensor(dist.pmf(preds_numpy), device=self.discrete_ece.device)
+        targets = y.flatten()
+
+        self.mse.update(preds, targets)
+        self.mae.update(preds, targets)
+        self.mape.update(preds, targets)
+        self.discrete_ece.update(preds=preds, probs=probs, targets=targets)

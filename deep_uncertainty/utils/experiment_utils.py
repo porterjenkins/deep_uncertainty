@@ -12,13 +12,14 @@ from deep_uncertainty.experiments.config import ExperimentConfig
 from deep_uncertainty.models import DoublePoissonNN
 from deep_uncertainty.models import GaussianNN
 from deep_uncertainty.models import MeanNN
+from deep_uncertainty.models import NegBinomNN
 from deep_uncertainty.models import PoissonNN
 from deep_uncertainty.models.backbones import CNN
 from deep_uncertainty.models.backbones import MNISTCNN
 from deep_uncertainty.models.backbones import ScalarMLP
 from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
 from deep_uncertainty.utils.data_utils import get_coin_counting_train_val_test
-from deep_uncertainty.utils.data_utils import get_rotated_mnist_train_val_test
+from deep_uncertainty.utils.data_utils import get_mnist_train_val_test
 from deep_uncertainty.utils.data_utils import get_scalar_npz_train_val_test
 from deep_uncertainty.utils.data_utils import get_train_val_test_loaders
 from deep_uncertainty.utils.generic_utils import partialclass
@@ -50,11 +51,13 @@ def get_model(config: ExperimentConfig) -> BaseRegressionNN:
             )
         else:
             initializer = DoublePoissonNN
+    elif config.head_type == HeadType.NEGATIVE_BINOMIAL:
+        initializer = NegBinomNN
 
     if config.dataset_type == DatasetType.SCALAR:
         backbone_type = ScalarMLP
     elif config.dataset_type == DatasetType.IMAGE:
-        if config.dataset_spec == ImageDatasetName.ROTATED_MNIST:
+        if config.dataset_spec == ImageDatasetName.MNIST:
             backbone_type = MNISTCNN
         else:
             backbone_type = CNN
@@ -81,8 +84,8 @@ def get_dataloaders(
         train_dataset, val_dataset, test_dataset = get_scalar_npz_train_val_test(dataset_spec)
 
     elif dataset_type == DatasetType.IMAGE:
-        if dataset_spec == ImageDatasetName.ROTATED_MNIST:
-            train_dataset, val_dataset, test_dataset = get_rotated_mnist_train_val_test()
+        if dataset_spec == ImageDatasetName.MNIST:
+            train_dataset, val_dataset, test_dataset = get_mnist_train_val_test()
         elif dataset_spec == ImageDatasetName.COIN_COUNTING:
             train_dataset, val_dataset, test_dataset = get_coin_counting_train_val_test()
 

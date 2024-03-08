@@ -7,4 +7,3 @@ __pycache__
 .vscode
 *logs*
 *chkp*
-deep_uncertainty/data/*

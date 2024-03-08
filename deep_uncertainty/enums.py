@@ -14,6 +14,7 @@ class HeadType(Enum):
     POISSON = "poisson"
     DOUBLE_POISSON = "double_poisson"
     NEGATIVE_BINOMIAL = "negative_binomial"
+    NEGATIVE_BINOMIAL = "negative_binomial"
 
 
 class OptimizerType(Enum):
@@ -38,5 +39,4 @@ class DatasetType(Enum):
 
 class ImageDatasetName(Enum):
     MNIST = "mnist"
-    COINS = "coin_counting"
-    VEHICLES = "vehicles"
+    COIN_COUNTING = "coin_counting"

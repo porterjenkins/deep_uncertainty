@@ -136,13 +136,14 @@ class GaussianNN(BaseRegressionNN):
         mu = mu.flatten()
         var = var.flatten()
         preds = torch.round(mu)  # Since we have to predict counts.
-        self.mse.update(preds, y.flatten())
-        self.mae.update(preds, y.flatten())
-        self.mape.update(preds, y.flatten())
+        targets = y.flatten()
+        self.mse.update(preds, targets)
+        self.mae.update(preds, targets)
+        self.mape.update(preds, targets)
 
         std = torch.sqrt(var)
-        self.mean_calibration.update({"loc": mu, "scale": std}, x, y.flatten())
-        self.ece.update({"loc": mu, "scale": std}, y.flatten())
+        self.mean_calibration.update({"loc": mu, "scale": std}, x, targets)
+        self.ece.update({"loc": mu, "scale": std}, targets)
 
     def on_train_epoch_end(self):
         if self.beta_scheduler is not None:

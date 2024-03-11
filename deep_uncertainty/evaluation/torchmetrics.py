@@ -196,13 +196,13 @@ class DiscreteExpectedCalibrationError(Metric):
         self.all_targets.append(targets)
 
     def compute(self) -> torch.Tensor:
-        self.all_preds = torch.cat(self.all_preds).long().flatten().detach().cpu().numpy()
-        self.all_probs = torch.cat(self.all_probs).flatten().detach().cpu().numpy()
-        self.all_targets = torch.cat(self.all_targets).long().flatten().detach().cpu().numpy()
+        all_preds = torch.cat(self.all_preds).long().flatten().detach().cpu().numpy()
+        all_probs = torch.cat(self.all_probs).flatten().detach().cpu().numpy()
+        all_targets = torch.cat(self.all_targets).long().flatten().detach().cpu().numpy()
         return compute_discrete_ece(
-            targets=self.all_targets,
-            preds=self.all_preds,
-            probs=self.all_probs,
+            targets=all_targets,
+            preds=all_preds,
+            probs=all_probs,
             bin_strategy=self.bin_strategy,
             alpha=self.alpha,
             num_bins=self.num_bins,

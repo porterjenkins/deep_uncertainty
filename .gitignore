@@ -5,7 +5,14 @@ __pycache__
 *.env
 */.ipynb_checkpoints
 .vscode
+<<<<<<< HEAD
 /logs/
 /chkp/
 *.png
 /ignore/
+=======
+*logs*
+*chkp*
+deep_uncertainty/data/bikes/hour.csv
+deep_uncertainty/data/dominicks/cleaned_bath_counts.csv
+>>>>>>> 9b37b15 (Added big csv's to gitignore)

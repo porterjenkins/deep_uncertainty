@@ -9,5 +9,8 @@ __pycache__
 /chkp/
 *.png
 /ignore/
+<<<<<<< HEAD
 *logs*
 *chkp*
+=======
+>>>>>>> d2f547d (Added big csv's to gitignore)

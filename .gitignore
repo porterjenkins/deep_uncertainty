@@ -7,3 +7,5 @@ __pycache__
 .vscode
 *logs*
 *chkp*
+deep_uncertainty/data/bikes/hour.csv
+deep_uncertainty/data/dominicks/cleaned_bath_counts.csv

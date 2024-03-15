@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.special import loggamma
+from scipy.special import xlogy
 
 from deep_uncertainty.random_variables.discrete_random_variable import DiscreteRandomVariable
 
@@ -17,8 +18,12 @@ class DoublePoisson(DiscreteRandomVariable):
     def __init__(
         self, mu: float | int | np.ndarray, phi: float | int | np.ndarray, max_value: int = 2000
     ):
-        self.mu = np.array(mu)
+        # For numerical stability, we only allow mu to be as small as 1e-6 (and mu/phi to be as small as 1e-4).
+        self.mu = np.clip(np.array(mu), a_min=1e-6, a_max=None)
         self.phi = np.array(phi)
+        var = np.clip(mu / phi, a_min=1e-4, a_max=None)
+        self.phi = self.mu / var
+
         super().__init__(dimension=self.mu.size, max_value=max_value)
 
     def expected_value(self) -> float | np.ndarray:
@@ -29,13 +34,12 @@ class DoublePoisson(DiscreteRandomVariable):
 
     def _logpmf(self, x: int | np.ndarray) -> float | np.ndarray:
         x = np.array(x)
-        eps = 1e-6
 
         return (
             0.5 * np.log(self.phi)
             - self.phi * self.mu
             - x
-            + x * np.log(np.maximum(x, eps))
+            + xlogy(x, x)
             - loggamma(x + 1)
-            + self.phi * x * (1 + np.log(self.mu) - np.log(np.maximum(x, eps)))
+            + self.phi * (x + xlogy(x, self.mu) - xlogy(x, x))
         )

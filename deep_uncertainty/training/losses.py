@@ -24,14 +24,24 @@ def double_poisson_nll(
         if beta < 0 or beta > 1:
             raise ValueError(f"Invalid value of beta specified. Must be in [0, 1]. Got {beta}")
 
-    eps = torch.tensor(1e-5)
     logmu, logphi = torch.split(output, [1, 1], dim=-1)
-    phi = torch.exp(logphi)
+
+    # Clamp logmu and logphi so the implied mu/phi ratio isn't too small (leading to stability issues).
+    logmu = logmu.clone()
+    logphi = logphi.clone()
+    with torch.no_grad():
+        ln10 = torch.tensor(10.0).log()
+        logmu.clamp_(-6.0 * ln10)
+        logvar = (logmu - logphi).clamp_(-4.0 * ln10)
+        logphi = logmu - logvar
+
     mu = torch.exp(logmu)
+    phi = torch.exp(logphi)
+
     losses = (
         (-0.5 * logphi)
         + phi * mu
-        - (targets * phi * (1 + logmu - torch.log(torch.maximum(targets, eps))))
+        - phi * (targets + torch.xlogy(targets, mu) - torch.xlogy(targets, targets))
     )
 
     if beta is not None and beta != 0:

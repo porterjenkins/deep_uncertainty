@@ -52,7 +52,7 @@ def get_mnist_train_val_test() -> tuple[Dataset, Subset, Subset]:
 
 def get_coin_counting_train_val_test(reduced: bool = True) -> tuple[Subset, Subset, Subset]:
     # Reduced dataset filters all counts higher than 10.
-    root_dir = Path(f"./data/coin-counting{'-reduced' if reduced else ''}")
+    root_dir = Path(f"../data/coin-counting{'-reduced' if reduced else ''}")
     dataset = CoinCountingDataset(root_dir)
 
     train_transforms = Compose([Resize((128, 128)), AutoAugment(), ToTensor()])

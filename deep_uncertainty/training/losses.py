@@ -27,19 +27,16 @@ def double_poisson_nll(
     logmu, logphi = torch.split(output, [1, 1], dim=-1)
 
     # Clamp logmu and logphi so the implied mu/phi ratio isn't too small (leading to stability issues).
-    logmu = logmu.clone()
-    logphi = logphi.clone()
-    with torch.no_grad():
-        ln10 = torch.tensor(10.0).log()
-        logmu.clamp_(-6.0 * ln10)
-        logvar = (logmu - logphi).clamp_(-4.0 * ln10)
-        logphi = logmu - logvar
+    ln10 = torch.tensor(10.0, device=logmu.device).log()
+    logmu_clamped = torch.clamp(logmu, min=-6.0 * ln10)
+    logvar = torch.clamp(logmu_clamped - logphi, min=-4.0 * ln10)
+    logphi_clamped = logmu_clamped - logvar
 
-    mu = torch.exp(logmu)
-    phi = torch.exp(logphi)
+    mu = torch.exp(logmu_clamped)
+    phi = torch.exp(logphi_clamped)
 
     losses = (
-        (-0.5 * logphi)
+        (-0.5 * logphi_clamped)
         + phi * mu
         - phi * (targets + torch.xlogy(targets, mu) - torch.xlogy(targets, targets))
     )

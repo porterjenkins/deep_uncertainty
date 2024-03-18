@@ -21,7 +21,7 @@ class DoublePoisson(DiscreteRandomVariable):
         # For numerical stability, we only allow mu to be as small as 1e-6 (and mu/phi to be as small as 1e-4).
         self.mu = np.clip(np.array(mu), a_min=1e-6, a_max=None)
         self.phi = np.array(phi)
-        var = np.clip(mu / phi, a_min=1e-4, a_max=None)
+        var = np.clip(np.array(mu) / np.array(phi), a_min=1e-4, a_max=None)
         self.phi = self.mu / var
 
         super().__init__(dimension=self.mu.size, max_value=max_value)

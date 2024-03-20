@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+from scipy.special import loggamma
+from scipy.special import xlogy
 from scipy.stats import norm
 from scipy.stats import rv_continuous
 
@@ -126,6 +128,36 @@ def compute_young_calibration(y_true: np.ndarray, posterior_predictive: rv_conti
 
     calibration_score = 1 - ((4 / 3) * area_between_model_and_perfect_calibration_curve)
     return calibration_score
+
+
+def compute_double_poisson_nll(y_true: np.ndarray, mu: np.ndarray, phi: np.ndarray) -> float:
+    """Compute the average negative log likelihood of the data given the parameters of a Double Poisson distribution.
+
+    This NLL is computed without the normalizing constant for numerical convenience, but can
+    still provide a score describing how well the distribution fits the data.
+
+    Args:
+        y_true (np.ndarray): The regression targets.
+        mu (np.ndarray): The predicted `mu` values for the regression targets.
+        phi (np.ndarray): The predicted `phi` values for the regression targets.
+
+    Returns:
+        float: The average NLL over the given regression targets.
+    """
+    # For numerical stability, we only allow mu to be as small as 1e-6 (and mu/phi to be as small as 1e-4).
+    stable_mu = np.clip(np.array(mu), a_min=1e-6, a_max=None)
+    stable_phi = phi
+    var = np.clip(stable_mu / stable_phi, a_min=1e-4, a_max=None)
+    stable_phi = stable_mu / var
+
+    return np.mean(
+        -0.5 * np.log(stable_phi)
+        + stable_phi * stable_mu
+        + y_true
+        - xlogy(y_true, y_true)
+        + loggamma(y_true + 1)
+        - stable_phi * (y_true + xlogy(y_true, stable_mu) - xlogy(y_true, y_true))
+    )
 
 
 if __name__ == "__main__":

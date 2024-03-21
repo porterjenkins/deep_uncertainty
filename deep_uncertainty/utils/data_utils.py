@@ -17,25 +17,30 @@ from deep_uncertainty.datasets import CoinCountingDataset
 from deep_uncertainty.datasets import ImageDatasetWrapper
 
 
-def get_scalar_npz_train_val_test(
+def get_tabular_npz_train_val_test(
     dataset_path: str | Path,
 ) -> tuple[TensorDataset, TensorDataset, TensorDataset]:
-    data = np.load(dataset_path)
+    data: dict[str, np.ndarray] = np.load(dataset_path)
     X_train, y_train = data["X_train"], data["y_train"]
     X_val, y_val = data["X_val"], data["y_val"]
     X_test, y_test = data["X_test"], data["y_test"]
 
+    if X_train.ndim == 1:
+        X_train = X_train.reshape(-1, 1)
+        X_val = X_val.reshape(-1, 1)
+        X_test = X_test.reshape(-1, 1)
+
     train_dataset = TensorDataset(
-        torch.Tensor(X_train.reshape(-1, 1)),
-        torch.Tensor(y_train.reshape(-1, 1)),
+        torch.Tensor(X_train),
+        torch.Tensor(y_train).unsqueeze(1),
     )
     val_dataset = TensorDataset(
-        torch.Tensor(X_val.reshape(-1, 1)),
-        torch.Tensor(y_val.reshape(-1, 1)),
+        torch.Tensor(X_val),
+        torch.Tensor(y_val).unsqueeze(1),
     )
     test_dataset = TensorDataset(
-        torch.Tensor(X_test.reshape(-1, 1)),
-        torch.Tensor(y_test.reshape(-1, 1)),
+        torch.Tensor(X_test),
+        torch.Tensor(y_test).unsqueeze(1),
     )
     return train_dataset, val_dataset, test_dataset
 

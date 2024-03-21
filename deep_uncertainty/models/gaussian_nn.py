@@ -157,7 +157,9 @@ class GaussianNN(BaseRegressionNN):
         all_discrete_probs = all_discrete_probs / all_discrete_probs.sum(dim=0)
         self.discrete_ece.update(
             preds=preds,
-            probs=all_discrete_probs[preds.long(), torch.arange(6, device=device)],
+            probs=all_discrete_probs[
+                preds.long(), torch.arange(all_discrete_probs.size(1), device=device)
+            ],
             targets=targets,
         )
         self.rmse.update(preds, targets)

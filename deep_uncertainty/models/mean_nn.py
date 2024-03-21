@@ -4,7 +4,6 @@ import torch
 from torch import nn
 from torch.nn.functional import mse_loss
 from torchmetrics import MeanAbsoluteError
-from torchmetrics import MeanAbsolutePercentageError
 from torchmetrics import MeanSquaredError
 from torchmetrics import Metric
 
@@ -45,9 +44,9 @@ class MeanNN(BaseRegressionNN):
         )
         self.backbone = backbone_type()
         self.head = nn.Linear(self.backbone.output_dim, 1)
-        self.mse = MeanSquaredError()
+        self.rmse = MeanSquaredError(squared=False)
         self.mae = MeanAbsoluteError()
-        self.mape = MeanAbsolutePercentageError()
+
         self.save_hyperparameters()
 
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
@@ -79,7 +78,7 @@ class MeanNN(BaseRegressionNN):
         return y_hat
 
     def _test_metrics_dict(self) -> dict[str, Metric]:
-        return {"mse": self.mse, "mae": self.mae, "mape": self.mape}
+        return {"rmse": self.rmse, "mae": self.mae}
 
     def _update_test_metrics_batch(
         self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor
@@ -87,6 +86,5 @@ class MeanNN(BaseRegressionNN):
         preds = y_hat.flatten()
         targets = y.flatten()
 
-        self.mse.update(preds, targets)
+        self.rmse.update(preds, targets)
         self.mae.update(preds, targets)
-        self.mape.update(preds, targets)

@@ -5,15 +5,16 @@ import torch
 from scipy.stats import norm
 from torch import nn
 from torchmetrics import MeanAbsoluteError
-from torchmetrics import MeanAbsolutePercentageError
 from torchmetrics import MeanSquaredError
 from torchmetrics import Metric
 
 from deep_uncertainty.enums import BetaSchedulerType
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
-from deep_uncertainty.evaluation.torchmetrics import ContinuousExpectedCalibrationError
-from deep_uncertainty.evaluation.torchmetrics import YoungCalibration
+from deep_uncertainty.evaluation.custom_torchmetrics import ContinuousExpectedCalibrationError
+from deep_uncertainty.evaluation.custom_torchmetrics import DiscreteExpectedCalibrationError
+from deep_uncertainty.evaluation.custom_torchmetrics import DoublePoissonNLL
+from deep_uncertainty.evaluation.custom_torchmetrics import YoungCalibration
 from deep_uncertainty.models.backbones import Backbone
 from deep_uncertainty.models.backbones import ScalarMLP
 from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
@@ -76,13 +77,14 @@ class GaussianNN(BaseRegressionNN):
             mean_param_name="loc",
             is_scalar=isinstance(self.backbone, ScalarMLP),
         )
-        self.ece = ContinuousExpectedCalibrationError(
+        self.continuous_ece = ContinuousExpectedCalibrationError(
             param_list=["loc", "scale"],
             rv_class_type=norm,
         )
-        self.mse = MeanSquaredError()
+        self.rmse = MeanSquaredError(squared=False)
         self.mae = MeanAbsoluteError()
-        self.mape = MeanAbsolutePercentageError()
+        self.discrete_ece = DiscreteExpectedCalibrationError(alpha=2)
+        self.nll = DoublePoissonNLL()
         self.save_hyperparameters()
 
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
@@ -124,26 +126,43 @@ class GaussianNN(BaseRegressionNN):
 
     def _test_metrics_dict(self) -> dict[str, Metric]:
         return {
-            "mse": self.mse,
+            "rmse": self.rmse,
             "mae": self.mae,
-            "mape": self.mape,
             "mean_calibration": self.mean_calibration,
-            "ece": self.ece,
+            "continuous_ece": self.continuous_ece,
+            "discrete_ece": self.discrete_ece,
+            "nll": self.nll,
         }
 
     def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
         mu, var = torch.split(y_hat, [1, 1], dim=-1)
         mu = mu.flatten()
         var = var.flatten()
-        preds = torch.round(mu)  # Since we have to predict counts.
-        targets = y.flatten()
-        self.mse.update(preds, targets)
-        self.mae.update(preds, targets)
-        self.mape.update(preds, targets)
-
         std = torch.sqrt(var)
+        targets = y.flatten()
+
+        # --- CONTINUOUS METRICS ---
         self.mean_calibration.update({"loc": mu, "scale": std}, x, targets)
-        self.ece.update({"loc": mu, "scale": std}, targets)
+        self.continuous_ece.update({"loc": mu, "scale": std}, targets)
+
+        # --- DISCRETE METRICS ---
+        preds = torch.round(mu)  # Since we have to predict counts.
+        device = y_hat.device
+
+        # We compute "probability" by normalizing density over the discrete counts.
+        dist = torch.distributions.Normal(loc=mu, scale=std)
+        all_discrete_probs = torch.exp(
+            dist.log_prob(torch.arange(2000, device=device).reshape(-1, 1))
+        )
+        all_discrete_probs = all_discrete_probs / all_discrete_probs.sum(dim=0)
+        self.discrete_ece.update(
+            preds=preds,
+            probs=all_discrete_probs[preds.long(), torch.arange(6, device=device)],
+            targets=targets,
+        )
+        self.rmse.update(preds, targets)
+        self.mae.update(preds, targets)
+        self.nll.update(mu=mu, phi=mu / var, targets=targets)
 
     def on_train_epoch_end(self):
         if self.beta_scheduler is not None:

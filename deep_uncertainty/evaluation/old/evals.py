@@ -1,6 +1,6 @@
 import torch
 
-from deep_uncertainty.evaluation.torchmetrics import get_mse
+from deep_uncertainty.evaluation.old.metrics import get_mse
 
 
 def evaluate_model_mse(val_loader, model, device):

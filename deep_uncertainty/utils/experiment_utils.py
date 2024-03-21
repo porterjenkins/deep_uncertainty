@@ -15,17 +15,17 @@ from deep_uncertainty.models import MeanNN
 from deep_uncertainty.models import NegBinomNN
 from deep_uncertainty.models import PoissonNN
 from deep_uncertainty.models.backbones import CNN
+from deep_uncertainty.models.backbones import MLP
 from deep_uncertainty.models.backbones import MNISTCNN
-from deep_uncertainty.models.backbones import ScalarMLP
 from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
 from deep_uncertainty.utils.data_utils import get_coin_counting_train_val_test
 from deep_uncertainty.utils.data_utils import get_mnist_train_val_test
-from deep_uncertainty.utils.data_utils import get_scalar_npz_train_val_test
+from deep_uncertainty.utils.data_utils import get_tabular_npz_train_val_test
 from deep_uncertainty.utils.data_utils import get_train_val_test_loaders
 from deep_uncertainty.utils.generic_utils import partialclass
 
 
-def get_model(config: ExperimentConfig) -> BaseRegressionNN:
+def get_model(config: ExperimentConfig, input_dim: int | None = None) -> BaseRegressionNN:
 
     initializer: Type[BaseRegressionNN]
 
@@ -54,18 +54,19 @@ def get_model(config: ExperimentConfig) -> BaseRegressionNN:
     elif config.head_type == HeadType.NEGATIVE_BINOMIAL:
         initializer = NegBinomNN
 
-    if config.dataset_type == DatasetType.SCALAR:
-        backbone_type = ScalarMLP
+    if config.dataset_type == DatasetType.TABULAR:
+        backbone_type = MLP
+        backbone_kwargs = {"input_dim": input_dim}
     elif config.dataset_type == DatasetType.IMAGE:
         if config.dataset_spec == ImageDatasetName.MNIST:
             backbone_type = MNISTCNN
         else:
             backbone_type = CNN
-    elif config.dataset_type == DatasetType.TABULAR:
-        raise NotImplementedError("Tabular data not yet supported.")
+        backbone_kwargs = {}
 
     model = initializer(
         backbone_type=backbone_type,
+        backbone_kwargs=backbone_kwargs,
         optim_type=config.optim_type,
         optim_kwargs=config.optim_kwargs,
         lr_scheduler_type=config.lr_scheduler_type,
@@ -80,9 +81,8 @@ def get_dataloaders(
     batch_size: int,
 ) -> tuple[DataLoader, DataLoader, DataLoader]:
 
-    if dataset_type == DatasetType.SCALAR:
-        train_dataset, val_dataset, test_dataset = get_scalar_npz_train_val_test(dataset_spec)
-
+    if dataset_type == DatasetType.TABULAR:
+        train_dataset, val_dataset, test_dataset = get_tabular_npz_train_val_test(dataset_spec)
     elif dataset_type == DatasetType.IMAGE:
         if dataset_spec == ImageDatasetName.MNIST:
             train_dataset, val_dataset, test_dataset = get_mnist_train_val_test()

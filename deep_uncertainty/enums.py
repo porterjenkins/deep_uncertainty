@@ -32,7 +32,6 @@ class BetaSchedulerType(Enum):
 
 
 class DatasetType(Enum):
-    SCALAR = "scalar"
     TABULAR = "tabular"
     IMAGE = "image"
 

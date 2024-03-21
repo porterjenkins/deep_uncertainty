@@ -6,7 +6,7 @@ from pyro.nn import PyroModule
 from pyro.nn import PyroSample
 from torch import nn
 
-from deep_uncertainty.models.backbones import ScalarMLP
+from deep_uncertainty.models.backbones import MLP
 
 
 class RegressionNN(nn.Module):
@@ -32,7 +32,7 @@ class RegressionNN(nn.Module):
                 raise ValueError("Number of elements in `log_dims` should match `output_dim`.")
         self.log_dims = log_dims
 
-        self.backbone = ScalarMLP(input_dim)
+        self.backbone = MLP(input_dim)
         self.head = nn.Linear(self.backbone.output_dim, output_dim)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

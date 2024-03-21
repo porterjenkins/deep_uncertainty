@@ -1,19 +1,17 @@
 from functools import partial
 from typing import Type
 
-import numpy as np
 import torch
-from scipy.stats import poisson
 from torch import nn
 from torch.nn.functional import poisson_nll_loss
 from torchmetrics import MeanAbsoluteError
-from torchmetrics import MeanAbsolutePercentageError
 from torchmetrics import MeanSquaredError
 from torchmetrics import Metric
 
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
-from deep_uncertainty.evaluation.torchmetrics import DiscreteExpectedCalibrationError
+from deep_uncertainty.evaluation.custom_torchmetrics import DiscreteExpectedCalibrationError
+from deep_uncertainty.evaluation.custom_torchmetrics import DoublePoissonNLL
 from deep_uncertainty.models.backbones import Backbone
 from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
 
@@ -50,10 +48,11 @@ class PoissonNN(BaseRegressionNN):
         self.backbone = backbone_type()
         self.head = nn.Linear(self.backbone.output_dim, 1)
 
-        self.discrete_ece = DiscreteExpectedCalibrationError()
-        self.mse = MeanSquaredError()
+        self.rmse = MeanSquaredError(squared=False)
         self.mae = MeanAbsoluteError()
-        self.mape = MeanAbsolutePercentageError()
+        self.discrete_ece = DiscreteExpectedCalibrationError(alpha=2)
+        self.nll = DoublePoissonNLL()
+
         self.save_hyperparameters()
 
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
@@ -86,20 +85,19 @@ class PoissonNN(BaseRegressionNN):
 
     def _test_metrics_dict(self) -> dict[str, Metric]:
         return {
-            "mse": self.mse,
+            "rmse": self.rmse,
             "mae": self.mae,
-            "mape": self.mape,
             "discrete_ece": self.discrete_ece,
+            "nll": self.nll,
         }
 
     def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
-        dist = poisson(mu=y_hat.flatten().detach().cpu().numpy())
-        preds_numpy = np.argmax(dist.pmf(np.arange(2000).reshape(-1, 1)), axis=0)
-        preds = torch.tensor(preds_numpy, device=self.mse.device)
-        probs = torch.tensor(dist.pmf(preds_numpy), device=self.discrete_ece.device)
+        dist = torch.distributions.Poisson(y_hat)
+        preds = dist.mode
+        probs = torch.exp(dist.log_prob(preds))
         targets = y.flatten()
 
-        self.mse.update(preds, targets)
+        self.rmse.update(preds, targets)
         self.mae.update(preds, targets)
-        self.mape.update(preds, targets)
         self.discrete_ece.update(preds=preds, probs=probs, targets=targets)
+        self.nll.update(mu=y_hat, phi=torch.tensor(1, device=y_hat.device))

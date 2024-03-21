@@ -7,6 +7,7 @@ from torchmetrics import Metric
 
 from deep_uncertainty.evaluation.calibration import compute_continuous_ece
 from deep_uncertainty.evaluation.calibration import compute_discrete_ece
+from deep_uncertainty.evaluation.calibration import compute_double_poisson_nll
 from deep_uncertainty.evaluation.calibration import compute_young_calibration
 from deep_uncertainty.evaluation.plotting import plot_posterior_predictive
 from deep_uncertainty.evaluation.plotting import plot_regression_calibration_curve
@@ -177,7 +178,7 @@ class DiscreteExpectedCalibrationError(Metric):
     def __init__(
         self,
         bin_strategy: str = "adaptive",
-        alpha: float = 1.0,
+        alpha: float = 2.0,
         num_bins: int = 30,
         **kwargs,
     ):
@@ -206,4 +207,33 @@ class DiscreteExpectedCalibrationError(Metric):
             bin_strategy=self.bin_strategy,
             alpha=self.alpha,
             num_bins=self.num_bins,
+        )
+
+
+class DoublePoissonNLL(Metric):
+    """A custom `torchmetric` for computing the expected calibration error (for count regression) over multiple test batches in `lightning`."""
+
+    def __init__(
+        self,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+
+        self.add_state("mu_vals", default=[], dist_reduce_fx="cat")
+        self.add_state("phi_vals", default=[], dist_reduce_fx="cat")
+        self.add_state("all_targets", default=[], dist_reduce_fx="cat")
+
+    def update(self, mu: torch.Tensor, phi: torch.Tensor, targets: torch.Tensor):
+        self.mu_vals.append(mu)
+        self.phi_vals.append(phi)
+        self.all_targets.append(targets)
+
+    def compute(self) -> torch.Tensor:
+        mu_vals = torch.cat(self.mu_vals).long().flatten().detach().cpu().numpy()
+        phi_vals = torch.cat(self.phi_vals).flatten().detach().cpu().numpy()
+        all_targets = torch.cat(self.all_targets).long().flatten().detach().cpu().numpy()
+        return compute_double_poisson_nll(
+            y_true=all_targets,
+            mu=mu_vals,
+            phi=phi_vals,
         )

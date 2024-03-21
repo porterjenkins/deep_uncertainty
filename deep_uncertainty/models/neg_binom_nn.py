@@ -117,4 +117,4 @@ class NegBinomNN(BaseRegressionNN):
         self.rmse.update(preds, targets)
         self.mae.update(preds, targets)
         self.discrete_ece.update(preds=preds, probs=probs, targets=targets)
-        self.nll.update(mu=mu, phi=mu / var)
+        self.nll.update(mu=mu, phi=mu / var, targets=targets)

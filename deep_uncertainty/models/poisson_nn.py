@@ -92,7 +92,7 @@ class PoissonNN(BaseRegressionNN):
         }
 
     def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
-        dist = torch.distributions.Poisson(y_hat)
+        dist = torch.distributions.Poisson(y_hat.flatten())
         preds = dist.mode
         probs = torch.exp(dist.log_prob(preds))
         targets = y.flatten()
@@ -100,4 +100,4 @@ class PoissonNN(BaseRegressionNN):
         self.rmse.update(preds, targets)
         self.mae.update(preds, targets)
         self.discrete_ece.update(preds=preds, probs=probs, targets=targets)
-        self.nll.update(mu=y_hat, phi=torch.tensor(1, device=y_hat.device))
+        self.nll.update(mu=y_hat, phi=torch.ones_like(y_hat), targets=targets)

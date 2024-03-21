@@ -20,6 +20,16 @@ pre-commit install
 
 When you commit new code, the pre-commit hook will run a series of scripts to standardize formatting. There will also be a flake8 check that provides warnings about various Python styling violations. These must be resolved for the commit to go through. If you need to bypass the linters for a specific commit, add the `--no-verify` flag to your git commit command.
 
+### Downloading Data
+
+Some of the datasets we are using to run experiments are in a non-standard format online. ETL code for this data has been pre-defined in the `etl` module and can be invoked from the command line.
+
+For example, to get a `.npz` file for the Sales dataset, run the following:
+
+```bash
+python deep_uncertainty/etl/get_sales_data.py --output-dir path/to/your/data/dir
+```
+
 ### Running Experiments
 
 To run an experiment, first fill out a config (using [this config](deep_uncertainty/experiments/sample_config.yaml) as a template). Then, from the terminal, run
@@ -30,7 +40,15 @@ python deep_uncertainty/experiments/run_experiment.py --config path/to/your/conf
 
 Results / saved model weights will log to the locations specified in your config.
 
-The current experimental code assumes tabular data, structured in `.npz` files with `X_train`, `y_train`, `X_val`, `y_val`, `X_test`, and `y_test` splits (these files are automatically produced by our [data generating code](deep_uncertainty/data_generator.py)). Future modifications will have to be made for less structured data such as images.
+#### Experiments with Tabular Datasets
+
+If running an experiment with tabular data, the experiment script assumes the dataset will be stored locally in `.npz` files with `X_train`, `y_train`, `X_val`, `y_val`, `X_test`, and `y_test` splits (these files are automatically produced by our [data generating code](deep_uncertainty/data_generator.py)). Pass a path to this `.npz` file in the `dataset` `spec` key in the config (also ensure that the `dataset` `type` is set to `scalar`).
+
+#### Experiments with Image Datasets
+
+Currently, the only supported image datasets are MNIST and Coin Counting. To run an experiment with MNIST, simply specify `image` for the `dataset` `type` key in the experiment config, then set `dataset` `spec` to `mnist`.
+
+For Coin Counting, things are a bit hard-coded at the moment. Talk to Spencer if you want to run experiments with this dataset.
 
 ### Adding New Models
 

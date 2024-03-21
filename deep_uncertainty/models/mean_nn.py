@@ -16,11 +16,9 @@ from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
 class MeanNN(BaseRegressionNN):
     """A neural network that fits to regression targets using mean squared error.
 
-    Args:
-        backbone_type (Type[Backbone]): Type of backbone to use for feature extraction (can be initialized with backbone_type()).
-
     Attributes:
         backbone (Backbone): Backbone to use for feature extraction.
+        loss_fn (Callable): The loss function to use for training this NN.
         optim_type (OptimizerType): The type of optimizer to use for training the network, e.g. "adam", "sgd", etc.
         optim_kwargs (dict): Key-value argument specifications for the chosen optimizer, e.g. {"lr": 1e-3, "weight_decay": 1e-5}.
         lr_scheduler_type (LRSchedulerType | None): If specified, the type of learning rate scheduler to use during training, e.g. "cosine_annealing".
@@ -30,19 +28,31 @@ class MeanNN(BaseRegressionNN):
     def __init__(
         self,
         backbone_type: Type[Backbone],
+        backbone_kwargs: dict,
         optim_type: OptimizerType,
         optim_kwargs: dict,
         lr_scheduler_type: LRSchedulerType | None = None,
         lr_scheduler_kwargs: dict | None = None,
     ):
+        """Instantiate a MeanNN.
+
+        Args:
+            backbone_type (Type[Backbone]): Type of backbone to use for feature extraction (can be initialized with backbone_type()).
+            backbone_kwargs (dict): Keyword arguments to instantiate the backbone.
+            optim_type (OptimizerType): The type of optimizer to use for training the network, e.g. "adam", "sgd", etc.
+            optim_kwargs (dict): Key-value argument specifications for the chosen optimizer, e.g. {"lr": 1e-3, "weight_decay": 1e-5}.
+            lr_scheduler_type (LRSchedulerType | None): If specified, the type of learning rate scheduler to use during training, e.g. "cosine_annealing".
+            lr_scheduler_kwargs (dict | None): If specified, key-value argument specifications for the chosen lr scheduler, e.g. {"T_max": 500}.
+        """
         super(MeanNN, self).__init__(
             loss_fn=mse_loss,
+            backbone_type=backbone_type,
+            backbone_kwargs=backbone_kwargs,
             optim_type=optim_type,
             optim_kwargs=optim_kwargs,
             lr_scheduler_type=lr_scheduler_type,
             lr_scheduler_kwargs=lr_scheduler_kwargs,
         )
-        self.backbone = backbone_type()
         self.head = nn.Linear(self.backbone.output_dim, 1)
         self.rmse = MeanSquaredError(squared=False)
         self.mae = MeanAbsoluteError()

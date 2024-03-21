@@ -122,7 +122,7 @@ class ExperimentConfig:
             beta_scheduler_kwargs = None
 
         dataset_type = DatasetType(config_dict["dataset"]["type"])
-        if dataset_type in [DatasetType.SCALAR, DatasetType.TABULAR]:
+        if dataset_type == DatasetType.TABULAR:
             dataset_spec = Path(config_dict["dataset"]["spec"])
         elif dataset_type == DatasetType.IMAGE:
             dataset_spec = ImageDatasetName(config_dict["dataset"]["spec"])

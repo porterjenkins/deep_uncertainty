@@ -10,6 +10,7 @@ import torch
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import CSVLogger
 
+from deep_uncertainty.enums import DatasetType
 from deep_uncertainty.experiments.config import ExperimentConfig
 from deep_uncertainty.utils.experiment_utils import get_dataloaders
 from deep_uncertainty.utils.experiment_utils import get_model
@@ -28,10 +29,14 @@ def main(config: ExperimentConfig):
         config.dataset_spec,
         config.batch_size,
     )
+    if config.dataset_type == DatasetType.TABULAR:
+        input_dim = train_loader.dataset.__getitem__(0)[0].size(-1)
+    else:
+        input_dim = None
 
     for i in range(config.num_trials):
 
-        model = get_model(config)
+        model = get_model(config, input_dim)
         checkpoint_callback = ModelCheckpoint(
             dirpath=config.chkp_dir / config.experiment_name / f"version_{i}",
             every_n_epochs=config.chkp_freq,

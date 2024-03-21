@@ -1,4 +1,5 @@
 from typing import Callable
+from typing import Type
 
 import lightning as L
 import torch
@@ -7,12 +8,15 @@ from torchmetrics import Metric
 
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
+from deep_uncertainty.models.backbones import Backbone
 
 
 class BaseRegressionNN(L.LightningModule):
     """Base class for regression neural networks. Should not actually be used for prediction (needs to define `training_step` and whatnot).
 
     Attributes:
+        backbone (Backbone): The backbone to use for feature extraction (before applying the regression head).
+        loss_fn (Callable): The loss function to use for training this NN.
         optim_type (OptimizerType): The type of optimizer to use for training the network, e.g. "adam", "sgd", etc.
         optim_kwargs (dict): Key-value argument specifications for the chosen optimizer, e.g. {"lr": 1e-3, "weight_decay": 1e-5}.
         lr_scheduler_type (LRSchedulerType | None): If specified, the type of learning rate scheduler to use during training, e.g. "cosine_annealing".
@@ -22,14 +26,27 @@ class BaseRegressionNN(L.LightningModule):
     def __init__(
         self,
         loss_fn: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
+        backbone_type: Type[Backbone],
+        backbone_kwargs: dict,
         optim_type: OptimizerType,
         optim_kwargs: dict,
         lr_scheduler_type: LRSchedulerType | None = None,
         lr_scheduler_kwargs: dict | None = None,
     ):
-        """Create a regression NN."""
+        """Instantiate a regression NN.
+
+        Args:
+            loss_fn (Callable): The loss function to use for training this NN.
+            backbone_type (Type[Backbone]): Type of backbone to use for feature extraction (can be initialized with backbone_type()).
+            backbone_kwargs (dict): Keyword arguments to instantiate the backbone.
+            optim_type (OptimizerType): The type of optimizer to use for training the network, e.g. "adam", "sgd", etc.
+            optim_kwargs (dict): Key-value argument specifications for the chosen optimizer, e.g. {"lr": 1e-3, "weight_decay": 1e-5}.
+            lr_scheduler_type (LRSchedulerType | None): If specified, the type of learning rate scheduler to use during training, e.g. "cosine_annealing".
+            lr_scheduler_kwargs (dict | None): If specified, key-value argument specifications for the chosen lr scheduler, e.g. {"T_max": 500}.
+        """
         super(BaseRegressionNN, self).__init__()
 
+        self.backbone = backbone_type(**backbone_kwargs)
         self.optim_type = optim_type
         self.optim_kwargs = optim_kwargs
         self.lr_scheduler_type = lr_scheduler_type

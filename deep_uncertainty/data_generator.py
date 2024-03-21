@@ -19,6 +19,7 @@ class DataGenerator:
         data_gen_function: Callable[..., tuple[np.ndarray, np.ndarray]],
         data_gen_params: dict,
         split_pcts: list[float] = [0.8, 0.1, 0.1],
+        random_seed: int | None = None,
     ) -> dict[str, np.ndarray]:
         """Pipe a data generation function into a train/val/test split for experiments.
 
@@ -26,6 +27,7 @@ class DataGenerator:
             data_gen_function (Callable[..., tuple[np.ndarray, np.ndarray]]): A data generation function that outputs an X and y array.
             data_gen_params (dict): Dictionary with keyword params for `data_gen_function`.
             split_pcts (list[float], optional): Percentage of data to put in each split (in train, val, test order). Defaults to [0.8, 0.1, 0.1].
+            random_seed (int | None, optional): Random seed for reproducibility (if desired).
 
         Raises:
             ValueError: If `split_pcts` does not sum to 1.
@@ -38,7 +40,8 @@ class DataGenerator:
         X, y = data_gen_function(**data_gen_params)
         n = len(X)
         indices = np.arange(n)
-        np.random.shuffle(indices)
+        generator = np.random.default_rng(random_seed)
+        generator.shuffle(indices)
         train_cutoff = int(split_pcts[0] * n)
         val_cutoff = int((split_pcts[0] + split_pcts[1]) * n)
         train_indices, val_indices, test_indices = np.split(indices, [train_cutoff, val_cutoff])

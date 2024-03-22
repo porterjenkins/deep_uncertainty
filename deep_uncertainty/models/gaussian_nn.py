@@ -87,7 +87,7 @@ class GaussianNN(BaseRegressionNN):
             param_list=["loc", "scale"],
             rv_class_type=norm,
             mean_param_name="loc",
-            is_scalar=isinstance(self.backbone, MLP),
+            is_scalar=isinstance(self.backbone, MLP) and self.backbone.input_dim == 1,
         )
         self.continuous_ece = ContinuousExpectedCalibrationError(
             param_list=["loc", "scale"],

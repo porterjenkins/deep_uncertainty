@@ -7,6 +7,7 @@ from pathlib import Path
 import lightning as L
 import numpy as np
 import torch
+import yaml
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import CSVLogger
 
@@ -60,6 +61,8 @@ def main(config: ExperimentConfig):
         metrics = trainer.test(model=model, dataloaders=test_loader)[0]
         logger.log_metrics(metrics)
         log_dir = Path(logger.log_dir)
+        with open(log_dir / "test_metrics.yaml", "w") as f:
+            yaml.dump(metrics, f)
         config.to_yaml(log_dir / "config.yaml")
         save_losses_plot(log_dir)
 

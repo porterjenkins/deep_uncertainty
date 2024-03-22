@@ -28,6 +28,7 @@ class MLP(Backbone):
             input_dim (int, optional): Dimension of input feature vectors. Defaults to 1.
             output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
         """
+        self.input_dim = input_dim
         super(MLP, self).__init__(output_dim=output_dim)
 
         self.layers = nn.Sequential(

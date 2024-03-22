@@ -15,7 +15,7 @@ class DataGenerator:
     """
 
     @staticmethod
-    def generate_train_test_val_split(
+    def generate_train_val_test_split(
         data_gen_function: Callable[..., tuple[np.ndarray, np.ndarray]],
         data_gen_params: dict,
         split_pcts: list[float] = [0.8, 0.1, 0.1],

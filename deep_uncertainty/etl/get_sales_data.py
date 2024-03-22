@@ -160,7 +160,7 @@ def save_train_val_test_split(output_dir: str = "."):
         arr = df.to_numpy()
         return arr[:, :-1], arr[:, -1]
 
-    train_val_test_dict = DataGenerator.generate_train_test_val_split(
+    train_val_test_dict = DataGenerator.generate_train_val_test_split(
         df_to_X_y_array, {"df": combined_df}, random_seed=1998
     )
 

@@ -30,7 +30,13 @@ class DoublePoisson(DiscreteRandomVariable):
             phi (float | int | np.ndarray | torch.Tensor): The phi parameter of the distribution (can be vectorized).
             max_value (int, optional): The highest value to assume support for (since the DPO support is infinite). For numerical purposes. Defaults to 2000.
         """
-        use_torch = isinstance(mu, torch.Tensor)
+        if isinstance(mu, torch.Tensor):
+            use_torch = True
+            device = mu.device
+        else:
+            use_torch = False
+            device = None
+
         if not use_torch:
             self.mu = np.clip(np.array(mu), a_min=1e-6, a_max=None)
             self.phi = np.array(phi)
@@ -43,7 +49,9 @@ class DoublePoisson(DiscreteRandomVariable):
             self.phi = self.mu / var
             dimension = self.mu.numel()
 
-        super().__init__(dimension=dimension, max_value=max_value, use_torch=use_torch)
+        super().__init__(
+            dimension=dimension, max_value=max_value, use_torch=use_torch, device=device
+        )
 
     def expected_value(self) -> float | np.ndarray | torch.Tensor:
         """Return the expected value of this DoublePoisson distribution."""

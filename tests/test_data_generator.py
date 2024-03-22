@@ -7,7 +7,7 @@ def test_random_data_generator_train_test_val_split_is_valid():
     def data_gen_function():
         return np.random.random(100), np.random.random(100)
 
-    data_splits = DataGenerator.generate_train_test_val_split(
+    data_splits = DataGenerator.generate_train_val_test_split(
         data_gen_function, {}, split_pcts=[0.8, 0.1, 0.1]
     )
     assert set(data_splits.keys()) == {"X_train", "X_val", "X_test", "y_train", "y_val", "y_test"}

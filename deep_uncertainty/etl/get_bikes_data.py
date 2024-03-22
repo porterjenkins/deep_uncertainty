@@ -65,7 +65,7 @@ def save_train_val_test_split(output_dir: str = "."):
         bikes_df.drop(col, axis="columns", inplace=True)
 
     X, y = bikes_df.loc[:, bikes_df.columns != "cnt"].to_numpy(), bikes_df["cnt"].to_numpy()
-    train_val_test_dict = DataGenerator.generate_train_test_val_split(
+    train_val_test_dict = DataGenerator.generate_train_val_test_split(
         lambda: (X, y), {}, random_seed=1998
     )
     np.savez(output_dir / "bikes.npz", **train_val_test_dict)

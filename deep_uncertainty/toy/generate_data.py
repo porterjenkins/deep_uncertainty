@@ -24,7 +24,7 @@ def main(config: dict):
 
     generation_function = GENERATORS[config["task"]]
     train_val_test_pcts = [config["train_pct"], config["val_pct"], config["test_pct"]]
-    datasets = DataGenerator.generate_train_test_val_split(
+    datasets = DataGenerator.generate_train_val_test_split(
         generation_function,
         config["generation_params"],
         split_pcts=train_val_test_pcts,

@@ -19,14 +19,14 @@ def main(log_dir: Path, chkp_path: Path):
         config.dataset_type,
         config.dataset_spec,
         config.batch_size,
-    )[1]
+    )[2]
     if config.dataset_type == DatasetType.TABULAR:
         input_dim = test_loader.dataset.__getitem__(0)[0].size(-1)
     else:
         input_dim = None
 
-    model = get_model(config, input_dim)
-    model.load_from_checkpoint(chkp_path)
+    initializer = get_model(config, input_dim, return_initializer=True)[1]
+    model = initializer.load_from_checkpoint(chkp_path)
 
     evaluator = L.Trainer(
         accelerator=config.accelerator_type.value,
@@ -54,4 +54,4 @@ def parse_args() -> Namespace:
 
 if __name__ == "__main__":
     args = parse_args()
-    main(log_dir=args.log_dir, chkp_path=args.chkp_path)
+    main(log_dir=Path(args.log_dir), chkp_path=Path(args.chkp_path))

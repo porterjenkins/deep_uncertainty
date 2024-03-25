@@ -25,7 +25,9 @@ from deep_uncertainty.utils.data_utils import get_train_val_test_loaders
 from deep_uncertainty.utils.generic_utils import partialclass
 
 
-def get_model(config: ExperimentConfig, input_dim: int | None = None) -> BaseRegressionNN:
+def get_model(
+    config: ExperimentConfig, input_dim: int | None = None, return_initializer: bool = False
+) -> BaseRegressionNN:
 
     initializer: Type[BaseRegressionNN]
 
@@ -72,7 +74,10 @@ def get_model(config: ExperimentConfig, input_dim: int | None = None) -> BaseReg
         lr_scheduler_type=config.lr_scheduler_type,
         lr_scheduler_kwargs=config.lr_scheduler_kwargs,
     )
-    return model
+    if return_initializer:
+        return model, initializer
+    else:
+        return model
 
 
 def get_dataloaders(

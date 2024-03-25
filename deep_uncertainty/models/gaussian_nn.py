@@ -14,6 +14,7 @@ from deep_uncertainty.enums import OptimizerType
 from deep_uncertainty.evaluation.custom_torchmetrics import ContinuousExpectedCalibrationError
 from deep_uncertainty.evaluation.custom_torchmetrics import DiscreteExpectedCalibrationError
 from deep_uncertainty.evaluation.custom_torchmetrics import DoublePoissonNLL
+from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.evaluation.custom_torchmetrics import YoungCalibration
 from deep_uncertainty.models.backbones import Backbone
 from deep_uncertainty.models.backbones import MLP
@@ -97,6 +98,7 @@ class GaussianNN(BaseRegressionNN):
         self.mae = MeanAbsoluteError()
         self.discrete_ece = DiscreteExpectedCalibrationError(alpha=2)
         self.nll = DoublePoissonNLL()
+        self.mp = MedianPrecision()
         self.save_hyperparameters()
 
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
@@ -144,12 +146,14 @@ class GaussianNN(BaseRegressionNN):
             "continuous_ece": self.continuous_ece,
             "discrete_ece": self.discrete_ece,
             "nll": self.nll,
+            "mp": self.mp,
         }
 
     def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
         mu, var = torch.split(y_hat, [1, 1], dim=-1)
         mu = mu.flatten()
         var = var.flatten()
+        precision = 1 / var
         std = torch.sqrt(var)
         targets = y.flatten()
 
@@ -177,6 +181,7 @@ class GaussianNN(BaseRegressionNN):
         self.rmse.update(preds, targets)
         self.mae.update(preds, targets)
         self.nll.update(mu=mu, phi=mu / var, targets=targets)
+        self.mp.update(precision)
 
     def on_train_epoch_end(self):
         if self.beta_scheduler is not None:

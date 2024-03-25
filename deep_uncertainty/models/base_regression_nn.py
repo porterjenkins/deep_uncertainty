@@ -102,9 +102,13 @@ class BaseRegressionNN(L.LightningModule):
     def on_test_epoch_end(self):
         for name, metric_tracker in self._test_metrics_dict().items():
             self.log(name, metric_tracker.compute())
-            if name == "mean_calibration":
+            if name in {"mean_calibration", "mp"}:
                 fig: Figure = metric_tracker.plot()
-                fig.savefig(self.logger.log_dir + "/calibration_plot.png")
+                if self.logger is not None:
+                    root = self.logger.log_dir or "."
+                else:
+                    root = "."
+                fig.savefig(root + f"/{name}_plot.png")
 
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
         """Make a forward pass through the network.

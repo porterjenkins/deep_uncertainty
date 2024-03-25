@@ -10,6 +10,7 @@ from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
 from deep_uncertainty.evaluation.custom_torchmetrics import DiscreteExpectedCalibrationError
 from deep_uncertainty.evaluation.custom_torchmetrics import DoublePoissonNLL
+from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.backbones import Backbone
 from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
 from deep_uncertainty.training.losses import neg_binom_nll
@@ -68,6 +69,7 @@ class NegBinomNN(BaseRegressionNN):
         self.mae = MeanAbsoluteError()
         self.discrete_ece = DiscreteExpectedCalibrationError(alpha=2)
         self.nll = DoublePoissonNLL()
+        self.mp = MedianPrecision()
 
         self.save_hyperparameters()
 
@@ -108,6 +110,7 @@ class NegBinomNN(BaseRegressionNN):
             "mae": self.mae,
             "discrete_ece": self.discrete_ece,
             "nll": self.nll,
+            "mp": self.mp,
         }
 
     def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
@@ -118,6 +121,7 @@ class NegBinomNN(BaseRegressionNN):
         # Convert to standard parametrization.
         eps = torch.tensor(1e-6, device=mu.device)
         var = mu + alpha * mu**2
+        precision = 1 / var
         p = mu / torch.maximum(var, eps)
         failure_prob = torch.minimum(
             1 - p, 1 - eps
@@ -133,3 +137,4 @@ class NegBinomNN(BaseRegressionNN):
         self.mae.update(preds, targets)
         self.discrete_ece.update(preds=preds, probs=probs, targets=targets)
         self.nll.update(mu=mu, phi=mu / var, targets=targets)
+        self.mp.update(precision)

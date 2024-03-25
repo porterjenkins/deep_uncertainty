@@ -1,6 +1,7 @@
 from typing import Type
 
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 from matplotlib.figure import Figure
 from torchmetrics import Metric
@@ -237,3 +238,30 @@ class DoublePoissonNLL(Metric):
             mu=mu_vals,
             phi=phi_vals,
         )
+
+
+class MedianPrecision(Metric):
+    """A custom `torchmetric` for computing the median precision (1 / variance) of posterior predictive distributions."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.add_state("all_precisions", default=[], dist_reduce_fx="cat")
+
+    def update(self, precision: torch.Tensor):
+        self.all_precisions.append(precision)
+
+    def compute(self) -> torch.Tensor:
+        all_precisions = torch.cat(self.all_precisions).flatten()
+        return torch.median(all_precisions)
+
+    def plot(self) -> Figure:
+        precisions = torch.cat(self.all_precisions).flatten().detach().cpu().numpy()
+        fig, ax = plt.subplots(1, 1)
+
+        upper = np.quantile(precisions, q=0.99)
+        ax.hist(precisions[precisions <= upper], density=True)
+        ax.set_title("Precision of Posterior Predictive")
+        ax.set_xlabel("Precision")
+        ax.set_ylabel("Density")
+
+        return fig

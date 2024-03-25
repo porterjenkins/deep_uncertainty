@@ -27,12 +27,12 @@ def main(log_dir: Path, chkp_path: Path):
 
     initializer = get_model(config, input_dim, return_initializer=True)[1]
     model = initializer.load_from_checkpoint(chkp_path)
-
     evaluator = L.Trainer(
         accelerator=config.accelerator_type.value,
         min_epochs=config.num_epochs,
         max_epochs=config.num_epochs,
         enable_model_summary=False,
+        logger=False,
     )
     metrics = evaluator.test(model=model, dataloaders=test_loader)[0]
     with open(log_dir / "test_metrics.yaml", "w") as f:

@@ -12,6 +12,7 @@ from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
 from deep_uncertainty.evaluation.custom_torchmetrics import DiscreteExpectedCalibrationError
 from deep_uncertainty.evaluation.custom_torchmetrics import DoublePoissonNLL
+from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.backbones import Backbone
 from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
 
@@ -64,6 +65,7 @@ class PoissonNN(BaseRegressionNN):
         self.mae = MeanAbsoluteError()
         self.discrete_ece = DiscreteExpectedCalibrationError(alpha=2)
         self.nll = DoublePoissonNLL()
+        self.mp = MedianPrecision()
 
         self.save_hyperparameters()
 
@@ -101,15 +103,19 @@ class PoissonNN(BaseRegressionNN):
             "mae": self.mae,
             "discrete_ece": self.discrete_ece,
             "nll": self.nll,
+            "mp": self.mp,
         }
 
     def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
-        dist = torch.distributions.Poisson(y_hat.flatten())
+        lmbda = y_hat.flatten()
+        dist = torch.distributions.Poisson(lmbda)
         preds = dist.mode
         probs = torch.exp(dist.log_prob(preds))
         targets = y.flatten()
+        precision = 1 / lmbda
 
         self.rmse.update(preds, targets)
         self.mae.update(preds, targets)
         self.discrete_ece.update(preds=preds, probs=probs, targets=targets)
-        self.nll.update(mu=y_hat, phi=torch.ones_like(y_hat), targets=targets)
+        self.nll.update(mu=lmbda, phi=torch.ones_like(lmbda), targets=targets)
+        self.mp.update(precision)

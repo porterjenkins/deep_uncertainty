@@ -88,12 +88,17 @@ def compute_discrete_ece(
         weights = None
     elif bin_strategy == "adaptive":
         bin_boundaries = pd.qcut(probs, num_bins, retbins=True, duplicates="drop")[1]
-        n = len(bin_boundaries) - 1
-        weights = np.ones(n) / n
+        actual_num_bins = len(bin_boundaries) - 1
+        weights = np.ones(actual_num_bins) / actual_num_bins
     else:
         raise ValueError('Invalid bin strategy specified. Must be "uniform" or "adaptive".')
 
-    mask_matrix = (bin_boundaries[:-1, None] <= probs) & (probs <= bin_boundaries[1:, None])
+    # Handle if all probabilities are in the same bin.
+    if len(bin_boundaries) == 1:
+        return np.abs((targets == preds).mean() - probs.mean()) ** alpha
+
+    bin_boundaries[-1] += 1e-5  # Make rightmost bin boundary inclusive.
+    mask_matrix = (bin_boundaries[:-1, None] <= probs) & (probs < bin_boundaries[1:, None])
     bin_counts = mask_matrix.sum(axis=1) + 1e-16
     bin_confidences = np.where(mask_matrix, probs, 0).sum(axis=1) / bin_counts
 

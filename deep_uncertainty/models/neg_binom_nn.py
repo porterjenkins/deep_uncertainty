@@ -119,7 +119,9 @@ class NegBinomNN(BaseRegressionNN):
         eps = torch.tensor(1e-6, device=mu.device)
         var = mu + alpha * mu**2
         p = mu / torch.maximum(var, eps)
-        failure_prob = 1 - p  # Torch docs lie and say this should be P(success).
+        failure_prob = torch.minimum(
+            1 - p, 1 - eps
+        )  # Torch docs lie and say this should be P(success).
         n = mu**2 / torch.maximum(var - mu, eps)
         dist = torch.distributions.NegativeBinomial(total_count=n, probs=failure_prob)
         preds = dist.mode

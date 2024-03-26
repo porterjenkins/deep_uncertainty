@@ -111,24 +111,15 @@ def get_train_val_test_loaders(
 def get_vehicles_train_val_test() -> tuple[VEDAIDataset, VEDAIDataset, VEDAIDataset]:
     root_dir = Path("../data/vehicles")
 
-    resize = Resize((224, 224))
-    augment = AutoAugment()
-    normalize = Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
-    to_tensor = ToTensor()
-    train_transforms = Compose([resize, augment, to_tensor, normalize])
-    inference_transforms = Compose([resize, to_tensor, normalize])
+    # TODO: Normalize?
+    train_transforms = Compose(
+        [Resize((224, 224)), AutoAugment(), ToTensor()]
+    )  # May want a larger image size.
+    inference_transforms = Compose([Resize((224, 224)), ToTensor()])
 
-    # Split into train/val is somewhat arbitrary since randomization has already occurred.
-    orig_train_dataset = VEDAIDataset(root_dir, train=True, fold_num=1)
-    orig_train_indices = np.arange(len(orig_train_dataset))
-    train_dataset = ImageDatasetWrapper(
-        base_dataset=Subset(orig_train_dataset, orig_train_indices[:-100]),
-        transforms=train_transforms,
-    )
-    val_dataset = ImageDatasetWrapper(
-        base_dataset=Subset(orig_train_dataset, orig_train_indices[-100:]),
-        transforms=inference_transforms,
-    )
+    # TODO: Customize which fold?
+    train_dataset = VEDAIDataset(root_dir, train=True, fold_num=1, transform=train_transforms)
     test_dataset = VEDAIDataset(root_dir, train=False, fold_num=1, transform=inference_transforms)
+    val_dataset = test_dataset
 
     return train_dataset, val_dataset, test_dataset

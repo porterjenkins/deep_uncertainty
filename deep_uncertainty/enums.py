@@ -38,4 +38,5 @@ class DatasetType(Enum):
 
 class ImageDatasetName(Enum):
     MNIST = "mnist"
-    COIN_COUNTING = "coin_counting"
+    COINS = "coin_counting"
+    VEHICLES = "vehicles"

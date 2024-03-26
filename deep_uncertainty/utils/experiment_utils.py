@@ -99,7 +99,7 @@ def get_dataloaders(
     elif dataset_type == DatasetType.IMAGE:
         if dataset_spec == ImageDatasetName.MNIST:
             train_dataset, val_dataset, test_dataset = get_mnist_train_val_test()
-        elif dataset_spec == ImageDatasetName.COIN_COUNTING:
+        elif dataset_spec == ImageDatasetName.COINS:
             train_dataset, val_dataset, test_dataset = get_coin_counting_train_val_test()
         elif dataset_spec == ImageDatasetName.VEHICLES:
             train_dataset, val_dataset, test_dataset = get_vehicles_train_val_test()

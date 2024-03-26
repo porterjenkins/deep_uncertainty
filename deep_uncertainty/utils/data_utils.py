@@ -17,6 +17,7 @@ from torchvision.transforms import ToTensor
 from deep_uncertainty.datasets import CoinCountingDataset
 from deep_uncertainty.datasets import ImageDatasetWrapper
 from deep_uncertainty.datasets import VEDAIDataset
+from deep_uncertainty.datasets import VEDAIDataset
 
 
 def get_tabular_npz_train_val_test(
@@ -110,7 +111,7 @@ def get_train_val_test_loaders(
 
 
 def get_vehicles_train_val_test() -> tuple[VEDAIDataset, VEDAIDataset, VEDAIDataset]:
-    root_dir = Path("./data/vehicles")
+    root_dir = Path("../data/vehicles")
 
     resize = Resize((224, 224))
     augment = AutoAugment()

@@ -109,7 +109,7 @@ def get_train_val_test_loaders(
 
 
 def get_vehicles_train_val_test() -> tuple[VEDAIDataset, VEDAIDataset, VEDAIDataset]:
-    root_dir = Path("../data/vehicles")
+    root_dir = Path("./data/vehicles")
 
     # TODO: Normalize?
     train_transforms = Compose(

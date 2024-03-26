@@ -61,7 +61,7 @@ class VEDAIDataset(Dataset):
         self.fold_num = fold_num
         self.transform = transform
         self.target_transform = target_transform
-        self._instances = None
+        self.instances = self._get_instances_df()
 
     def _already_downloaded(self) -> bool:
         return (self.root_dir / "Annotations1024").exists() and (
@@ -83,30 +83,29 @@ class VEDAIDataset(Dataset):
         os.system(f"rm {self.root_dir.absolute() / '*tar*'}")
         os.system(f"rm {self.root_dir.absolute() / 'Vehicules1024' / '*_ir.png'}")
 
-    @property
-    def instances(self) -> pd.DataFrame:
-        if self._instances is None:
-            fold_file = (
-                self.annotations_dir
-                / f"fold{self.fold_num:02d}{'test' if not self.train else ''}.txt"
-            )
-            with open(fold_file, "r") as f:
-                images_in_fold = [x.strip() for x in f.readlines()]
-            instances = []
-            for img in images_in_fold:
-                image_path = self.image_dir / f"{img}_co.png"
-                with open(self.annotations_dir / f"{img}.txt", "r") as f:
-                    count = len(f.readlines())
-                instances.append({"image_path": image_path, "count": count})
-            self._instances = instances
-        else:
-            return self._instances
+    def _get_instances_df(self) -> pd.DataFrame:
+        fold_file = (
+            self.annotations_dir / f"fold{self.fold_num:02d}{'test' if not self.train else ''}.txt"
+        )
+        with open(fold_file, "r") as f:
+            images_in_fold = [x.strip() for x in f.readlines()]
+        instances = []
+        for img in images_in_fold:
+            image_path = self.image_dir / f"{img}_co.png"
+            with open(self.annotations_dir / f"{img}.txt", "r") as f:
+                count = len(f.readlines())
+            instances.append({"image_path": image_path, "count": count})
+        return pd.DataFrame(instances)
 
     def __getitem__(self, idx: int) -> tuple[PILImage, int]:
         row = self.instances.iloc[idx]
         image = Image.open(row["image_path"])
         count = row["count"]
-        return self.transform(image), self.target_transform(count)
+        if self.transform is not None:
+            image = self.transform(image)
+        if self.target_transform is not None:
+            count = self.target_transform(count)
+        return image, count
 
     def __len__(self):
         return len(self.instances)

@@ -161,3 +161,85 @@ class ExperimentConfig:
         """
         with open(filepath, "w") as f:
             yaml.dump(self.source_dict, f)
+
+
+class EnsembleConfig:
+    """Class with configuration options for evaluating an ensemble.
+
+    Attributes:
+        experiment_name (str): The name of the experiment (used for identifying chkp weights / eval logs), automatically cast to snake case.
+        accelerator_type (AcceleratorType): The type of hardware accelerator to use for model inference.
+        member_head_type (HeadType): The HeadType shared by each member of the ensemble.
+        members (list[Path]): List with checkpoint paths for each desired ensemble member.
+        batch_size (int): The batch size to perform inference with.
+        dataset_type (DatasetType): Type of dataset to use in this experiment (tabular or image).
+        dataset_spec (Path | ImageDataset): If dataset is tabular, path to the dataset .npz file to use. Otherwise, name of the image dataset to load.
+        log_dir (Path): Directory to log results to.
+    """
+
+    def __init__(
+        self,
+        experiment_name: str,
+        accelerator_type: AcceleratorType,
+        member_head_type: HeadType,
+        members: list[Path],
+        batch_size: int,
+        dataset_type: DatasetType,
+        dataset_spec: Path | ImageDatasetName,
+        log_dir: Path,
+        source_dict: dict,
+    ):
+        self.experiment_name = experiment_name
+        self.accelerator_type = accelerator_type
+        self.member_head_type = member_head_type
+        self.members = members
+        self.batch_size = batch_size
+        self.dataset_type = dataset_type
+        self.dataset_spec = dataset_spec
+        self.log_dir = log_dir
+        self.source_dict = source_dict
+
+    @staticmethod
+    def from_yaml(config_path: str | Path) -> EnsembleConfig:
+        """Factory method to construct an EnsembleConfig from a .yaml file.
+
+        Args:
+            config_path (str | Path): Path to the .yaml file with config options.
+
+        Returns:
+            EnsembleConfig: The specified config.
+        """
+        config_dict = get_yaml(config_path)
+
+        experiment_name = to_snake_case(config_dict["experiment_name"])
+        accelerator_type = AcceleratorType(config_dict["accelerator"])
+        member_head_type = HeadType(config_dict["member_head_type"])
+        members = [Path(path) for path in config_dict["members"]]
+        batch_size = config_dict["batch_size"]
+        dataset_type = DatasetType(config_dict["dataset"]["type"])
+        if dataset_type == DatasetType.TABULAR:
+            dataset_spec = Path(config_dict["dataset"]["spec"])
+        elif dataset_type == DatasetType.IMAGE:
+            dataset_spec = ImageDatasetName(config_dict["dataset"]["spec"])
+        log_dir = Path(config_dict["log_dir"])
+
+        return EnsembleConfig(
+            experiment_name=experiment_name,
+            accelerator_type=accelerator_type,
+            member_head_type=member_head_type,
+            members=members,
+            batch_size=batch_size,
+            dataset_type=dataset_type,
+            dataset_spec=dataset_spec,
+            log_dir=log_dir,
+            source_dict=config_dict,
+        )
+
+    def to_yaml(self, filepath: str | Path):
+        """Save this config as a .yaml file at the given filepath.
+
+        Args:
+            filepath (str | Path): The filepath to save this config at.
+        """
+        with open(filepath, "w") as f:
+            yaml.dump(self.source_dict, f)

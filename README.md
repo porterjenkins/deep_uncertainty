@@ -50,6 +50,26 @@ Currently, the only supported image datasets are MNIST and Coin Counting. To run
 
 For Coin Counting, things are a bit hard-coded at the moment. Talk to Spencer if you want to run experiments with this dataset.
 
+### Evaluating Models
+
+#### Individual Models
+
+The default behavior of `run_experiment.py` should pass back metrics measured on the test set. If, for any reason, you need to obtain those metrics again for a given model, use the following command:
+
+```bash
+python deep_uncertainty/evaluation/eval_model.py \
+--log-dir path/to/training/log/dir \
+--chkp-path path/to/model.ckpt
+```
+
+#### Ensembles
+
+Sometimes, we may wish to evaluate an ensemble of models. To do this, first fill out a config using [this file](deep_uncertainty/experiments/sample_ensemble_config.yaml) as a template. Then run:
+
+```bash
+python deep_uncertainty/evaluation/eval_ensemble.py --config path/to/config.yaml
+```
+
 ### Adding New Models
 
 All regression models should inherit from the `BaseRegressionNN` class (found [here](deep_uncertainty/models/base_regression_nn.py)). This base class is a `lightning` module, which allows for a lot of typical NN boilerplate code to be abstracted away. Beyond setting a few class attributes like `loss_fn` while calling the super-initializer, the only methods you need to actually write to make a new model are:

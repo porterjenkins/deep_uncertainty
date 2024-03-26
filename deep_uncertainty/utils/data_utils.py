@@ -15,6 +15,7 @@ from torchvision.transforms import ToTensor
 
 from deep_uncertainty.datasets import CoinCountingDataset
 from deep_uncertainty.datasets import ImageDatasetWrapper
+from deep_uncertainty.datasets import VEDAIDataset
 
 
 def get_tabular_npz_train_val_test(
@@ -105,3 +106,20 @@ def get_train_val_test_loaders(
         persistent_workers=persistent_workers,
     )
     return train_loader, val_loader, test_loader
+
+
+def get_vehicles_train_val_test() -> tuple[VEDAIDataset, VEDAIDataset, VEDAIDataset]:
+    root_dir = Path("../data/vehicles")
+
+    # TODO: Normalize?
+    train_transforms = Compose(
+        [Resize((224, 224)), AutoAugment(), ToTensor()]
+    )  # May want a larger image size.
+    inference_transforms = Compose([Resize((224, 224)), ToTensor()])
+
+    # TODO: Customize which fold?
+    train_dataset = VEDAIDataset(root_dir, train=True, fold_num=1, transform=train_transforms)
+    test_dataset = VEDAIDataset(root_dir, train=False, fold_num=1, transform=inference_transforms)
+    val_dataset = test_dataset
+
+    return train_dataset, val_dataset, test_dataset

@@ -50,6 +50,8 @@ Currently, the only supported image datasets are MNIST and Coin Counting. To run
 
 For Coin Counting, things are a bit hard-coded at the moment. Talk to Spencer if you want to run experiments with this dataset.
 
+The Vehicles dataset is fully supported -- just use the requisite [dataset class](deep_uncertainty/datasets/vedai_dataset.py).
+
 ### Evaluating Models
 
 #### Individual Models

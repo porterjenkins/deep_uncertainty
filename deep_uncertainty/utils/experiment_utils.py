@@ -22,6 +22,7 @@ from deep_uncertainty.utils.data_utils import get_coin_counting_train_val_test
 from deep_uncertainty.utils.data_utils import get_mnist_train_val_test
 from deep_uncertainty.utils.data_utils import get_tabular_npz_train_val_test
 from deep_uncertainty.utils.data_utils import get_train_val_test_loaders
+from deep_uncertainty.utils.data_utils import get_vehicles_train_val_test
 from deep_uncertainty.utils.generic_utils import partialclass
 
 
@@ -91,8 +92,10 @@ def get_dataloaders(
     elif dataset_type == DatasetType.IMAGE:
         if dataset_spec == ImageDatasetName.MNIST:
             train_dataset, val_dataset, test_dataset = get_mnist_train_val_test()
-        elif dataset_spec == ImageDatasetName.COIN_COUNTING:
+        elif dataset_spec == ImageDatasetName.COINS:
             train_dataset, val_dataset, test_dataset = get_coin_counting_train_val_test()
+        elif dataset_spec == ImageDatasetName.VEHICLES:
+            train_dataset, val_dataset, test_dataset = get_vehicles_train_val_test()
 
     train_loader, val_loader, test_loader = get_train_val_test_loaders(
         train_dataset,

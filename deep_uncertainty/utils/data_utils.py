@@ -16,6 +16,7 @@ from torchvision.transforms import ToTensor
 from deep_uncertainty.datasets import CoinCountingDataset
 from deep_uncertainty.datasets import ImageDatasetWrapper
 from deep_uncertainty.datasets import VEDAIDataset
+from deep_uncertainty.datasets import VEDAIDataset
 
 
 def get_tabular_npz_train_val_test(

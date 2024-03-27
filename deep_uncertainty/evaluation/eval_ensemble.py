@@ -9,6 +9,7 @@ from deep_uncertainty.enums import HeadType
 from deep_uncertainty.experiments.config import EnsembleConfig
 from deep_uncertainty.models.ensembles import DoublePoissonMixtureNN
 from deep_uncertainty.models.ensembles import GaussianMixtureNN
+from deep_uncertainty.models.ensembles import PoissonMixtureNN
 from deep_uncertainty.utils.experiment_utils import get_dataloaders
 
 
@@ -29,6 +30,8 @@ def main(config_path: str):
         ensemble = GaussianMixtureNN.from_config(config)
     elif config.member_head_type == HeadType.DOUBLE_POISSON:
         ensemble = DoublePoissonMixtureNN.from_config(config)
+    elif config.member_head_type == HeadType.POISSON:
+        ensemble = PoissonMixtureNN.from_config(config)
     else:
         raise NotImplementedError(f"Haven't implemented ensemble for {config.member_head_type}.")
 

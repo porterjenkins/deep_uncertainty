@@ -53,7 +53,7 @@ class DoublePoisson(DiscreteRandomVariable):
             dimension=dimension, max_value=max_value, use_torch=use_torch, device=device
         )
 
-    def expected_value(self) -> float | np.ndarray | torch.Tensor:
+    def _expected_value(self) -> float | np.ndarray | torch.Tensor:
         """Return the expected value of this DoublePoisson distribution."""
         return self.mu
 

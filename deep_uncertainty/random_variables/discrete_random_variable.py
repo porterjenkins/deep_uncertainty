@@ -5,6 +5,9 @@ import torch
 class DiscreteRandomVariable:
     """Base class for a discrete random variable, assumed to have support [0, infinity] (truncated at `max_value`).
 
+    To subclass a `DiscreteRandomVariable`, simply implement the internal `_pmf` and `_expected_value` methods.
+    Other methods may be overridden when necessary (such as when analytical solutions exist for the cdf).
+
     Attributes:
         dimension (int): The dimension of the random variable.
         max_value (int, optional): The value at which this random variable's support is truncated. Defaults to 2000.
@@ -139,7 +142,11 @@ class DiscreteRandomVariable:
             )
         return self._cdf_vals
 
+    @property
     def expected_value(self) -> float | np.ndarray | torch.Tensor:
+        return self._expected_value()
+
+    def _expected_value(self) -> float | np.ndarray | torch.Tensor:
         """Return the expected value of this random variable."""
         raise NotImplementedError("Should be implemented by subclass.")
 

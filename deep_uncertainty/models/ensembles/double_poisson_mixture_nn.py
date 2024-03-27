@@ -73,13 +73,12 @@ class DoublePoissonMixtureNN(L.LightningModule):
     def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
 
         preds = y_hat.argmax(dim=1)
-        probs = y_hat[torch.arange(y_hat.size(0)), preds]
+        probs = y_hat[torch.arange(y_hat.size(0), device=self.device), preds]
         targets = y.flatten()
 
-        mu = (y_hat * torch.arange(self.max_value)).sum(dim=1)
-        var = (y_hat * (torch.arange(self.max_value).unsqueeze(1) - mu).transpose(0, 1) ** 2).sum(
-            dim=1
-        )
+        support = torch.arange(self.max_value, device=self.device)
+        mu = (y_hat * support).sum(dim=1)
+        var = (y_hat * (support.unsqueeze(1) - mu).transpose(0, 1) ** 2).sum(dim=1)
         precision = 1 / var
 
         self.discrete_ece.update(

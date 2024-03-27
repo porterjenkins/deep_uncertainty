@@ -1,5 +1,7 @@
 import torch
 from torch import nn
+from torchvision.models import mobilenet_v3_large
+from torchvision.models import MobileNet_V3_Large_Weights
 
 
 class Backbone(nn.Module):
@@ -76,15 +78,15 @@ class MNISTCNN(Backbone):
         return x
 
 
-class CNN(Backbone):
-    """A CNN feature extractor for 3x128x128 image tensors.
+class SmallCNN(Backbone):
+    """A small CNN feature extractor for 3x128x128 image tensors.
 
     Attributes:
         output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
     """
 
     def __init__(self, output_dim: int = 64):
-        super(CNN, self).__init__(output_dim=output_dim)
+        super(SmallCNN, self).__init__(output_dim=output_dim)
 
         self.conv1 = nn.Conv2d(3, 32, kernel_size=3)
         self.bn1 = nn.BatchNorm2d(32)
@@ -107,3 +109,29 @@ class CNN(Backbone):
         x = self.dropout(self.relu(self.fc1(x)))
         x = self.relu(self.fc2(x))
         return x
+
+
+class MobileNetV3(Backbone):
+    """A MobileNetV3 feature extractor for 3x224x224 image tensors.
+
+    Attributes:
+        output_dim (int): Dimension of output feature vectors.
+    """
+
+    def __init__(self, output_dim: int = 64):
+        """Initialize a MobileNetV3 feature extractor.
+
+        Args:
+            output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
+        """
+        super(MobileNetV3, self).__init__(output_dim=output_dim)
+
+        self.backbone = mobilenet_v3_large(weights=MobileNet_V3_Large_Weights.DEFAULT).features
+        self.avg_pool = nn.AdaptiveAvgPool2d(output_size=(1, 1))
+        self.flatten = nn.Flatten(start_dim=2)
+        self.conv1d = nn.Conv1d(in_channels=960, out_channels=self.output_dim, kernel_size=1)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        h = self.flatten(self.avg_pool(self.backbone(x)))
+        h = self.conv1d(h).squeeze(-1)
+        return h

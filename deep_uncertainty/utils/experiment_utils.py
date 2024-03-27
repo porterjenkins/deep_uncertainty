@@ -14,9 +14,10 @@ from deep_uncertainty.models import GaussianNN
 from deep_uncertainty.models import MeanNN
 from deep_uncertainty.models import NegBinomNN
 from deep_uncertainty.models import PoissonNN
-from deep_uncertainty.models.backbones import CNN
 from deep_uncertainty.models.backbones import MLP
 from deep_uncertainty.models.backbones import MNISTCNN
+from deep_uncertainty.models.backbones import MobileNetV3
+from deep_uncertainty.models.backbones import SmallCNN
 from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
 from deep_uncertainty.utils.data_utils import get_coin_counting_train_val_test
 from deep_uncertainty.utils.data_utils import get_mnist_train_val_test
@@ -63,8 +64,10 @@ def get_model(
     elif config.dataset_type == DatasetType.IMAGE:
         if config.dataset_spec == ImageDatasetName.MNIST:
             backbone_type = MNISTCNN
+        elif config.dataset_spec == ImageDatasetName.COINS:
+            backbone_type = SmallCNN
         else:
-            backbone_type = CNN
+            backbone_type = MobileNetV3
         backbone_kwargs = {}
 
     model = initializer(

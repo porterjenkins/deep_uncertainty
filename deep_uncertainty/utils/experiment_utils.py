@@ -116,17 +116,44 @@ def get_dataloaders(
     return train_loader, val_loader, test_loader
 
 
-def save_losses_plot(log_dir: Path):
-    # TODO: Update with new metrics that are logged.
-    metrics = pd.read_csv(log_dir / "metrics.csv")
-    train_loss = metrics.iloc[:-1]["train_loss"].dropna()
-    val_loss = metrics.iloc[:-1]["val_loss"].dropna()
+def save_metrics_plots(log_dir: Path):
+    metrics = pd.read_csv(log_dir / "metrics.csv").iloc[:-1]
+    epoch = metrics["epoch"].unique()
+    train_loss = metrics["train_loss_epoch"].dropna()
+    val_loss = metrics["val_loss"].dropna()
+    train_mae = metrics["train_mae"].dropna()
+    val_mae = metrics["val_mae"].dropna()
+    train_rmse = metrics["train_rmse"].dropna()
+    val_rmse = metrics["val_rmse"].dropna()
 
+    # Losses plot.
     fig, ax = plt.subplots(1, 1)
-    ax.plot(train_loss, label="Train Loss")
-    ax.plot(val_loss, label="Validation Loss")
+    ax.plot(epoch, train_loss, label="Train")
+    ax.plot(epoch, val_loss, label="Validation")
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel("Loss")
     ax.legend()
     fig.savefig(log_dir / "losses.png")
+    plt.close(fig)
+
+    # MAE plot.
+    fig, ax = plt.subplots(1, 1)
+    ax.plot(epoch, train_mae, label="Train")
+    ax.plot(epoch, val_mae, label="Validation")
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel("MAE")
+    ax.legend()
+    fig.savefig(log_dir / "mae.png")
+    plt.close(fig)
+
+    # RMSE plot.
+    fig, ax = plt.subplots(1, 1)
+    ax.plot(epoch, train_rmse, label="Train")
+    ax.plot(epoch, val_rmse, label="Validation")
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel("RMSE")
+    ax.legend()
+    fig.savefig(log_dir / "rmse.png")
     plt.close(fig)
 
 

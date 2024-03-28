@@ -3,8 +3,6 @@ from typing import Type
 
 import torch
 from torch import nn
-from torchmetrics import MeanAbsoluteError
-from torchmetrics import MeanSquaredError
 from torchmetrics import Metric
 
 from deep_uncertainty.enums import BetaSchedulerType
@@ -14,14 +12,14 @@ from deep_uncertainty.evaluation.custom_torchmetrics import DiscreteExpectedCali
 from deep_uncertainty.evaluation.custom_torchmetrics import DoublePoissonNLL
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.backbones import Backbone
-from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
+from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
 from deep_uncertainty.random_variables import DoublePoisson
 from deep_uncertainty.training.beta_schedulers import CosineAnnealingBetaScheduler
 from deep_uncertainty.training.beta_schedulers import LinearBetaScheduler
 from deep_uncertainty.training.losses import double_poisson_nll
 
 
-class DoublePoissonNN(BaseRegressionNN):
+class DoublePoissonNN(DiscreteRegressionNN):
     """A neural network that learns the parameters of a Double Poisson distribution over each regression target (conditioned on the input).
 
     Attributes:
@@ -81,8 +79,6 @@ class DoublePoissonNN(BaseRegressionNN):
         )
         self.head = nn.Linear(self.backbone.output_dim, 2)
 
-        self.rmse = MeanSquaredError(squared=False)
-        self.mae = MeanAbsoluteError()
         self.discrete_ece = DiscreteExpectedCalibrationError(alpha=2)
         self.nll = DoublePoissonNLL()
         self.mp = MedianPrecision()
@@ -121,31 +117,48 @@ class DoublePoissonNN(BaseRegressionNN):
 
         return torch.exp(y_hat)
 
-    def _test_metrics_dict(self) -> dict[str, Metric]:
+    def _point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
+        dist = self._convert_output_to_dist(y_hat, log_output=training)
+        mode = torch.argmax(dist.pmf_vals, axis=0)
+        return mode
+
+    def _addl_test_metrics_dict(self) -> dict[str, Metric]:
         return {
-            "rmse": self.rmse,
-            "mae": self.mae,
             "discrete_ece": self.discrete_ece,
             "nll": self.nll,
             "mp": self.mp,
         }
 
-    def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
-        mu, phi = torch.split(y_hat, [1, 1], dim=-1)
-        mu = mu.flatten()
-        phi = phi.flatten()
+    def _update_addl_test_metrics_batch(
+        self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor
+    ):
+        dist = self._convert_output_to_dist(y_hat, log_output=False)
+        mu, phi = dist.mu, dist.phi
         precision = phi / mu
-
-        dist = DoublePoisson(mu, phi)
         preds = torch.argmax(dist.pmf_vals, axis=0)
         probs = dist.pmf(preds)
         targets = y.flatten()
 
-        self.rmse.update(preds, targets)
-        self.mae.update(preds, targets)
         self.discrete_ece.update(preds, probs, targets)
         self.nll.update(mu, phi, targets)
         self.mp.update(precision)
+
+    def _convert_output_to_dist(self, y_hat: torch.Tensor, log_output: bool) -> DoublePoisson:
+        """Convert a network output to the implied Double Poisson distribution.
+
+        Args:
+            y_hat (torch.Tensor): Output from a `DoublePoissonNN` (mu, phi for the predicted distribution over y).
+            log_output (bool): Whether/not output is in log space (such as during training).
+
+        Returns:
+            DoublePoisson: The implied Double Poisson distribution over y.
+        """
+        output = y_hat.exp() if log_output else y_hat
+        mu, phi = torch.split(output, [1, 1], dim=-1)
+        mu = mu.flatten()
+        phi = phi.flatten()
+        dist = DoublePoisson(mu, phi)
+        return dist
 
     def on_train_epoch_end(self):
         if self.beta_scheduler is not None:

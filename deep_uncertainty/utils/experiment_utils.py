@@ -1,8 +1,12 @@
+import random
 from pathlib import Path
 from typing import Type
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+import torch
+from lightning.pytorch.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
 
 from deep_uncertainty.enums import DatasetType
@@ -18,7 +22,7 @@ from deep_uncertainty.models.backbones import MLP
 from deep_uncertainty.models.backbones import MNISTCNN
 from deep_uncertainty.models.backbones import MobileNetV3
 from deep_uncertainty.models.backbones import SmallCNN
-from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
+from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
 from deep_uncertainty.utils.data_utils import get_coin_counting_train_val_test
 from deep_uncertainty.utils.data_utils import get_mnist_train_val_test
 from deep_uncertainty.utils.data_utils import get_tabular_npz_train_val_test
@@ -29,9 +33,9 @@ from deep_uncertainty.utils.generic_utils import partialclass
 
 def get_model(
     config: ExperimentConfig, input_dim: int | None = None, return_initializer: bool = False
-) -> BaseRegressionNN:
+) -> DiscreteRegressionNN:
 
-    initializer: Type[BaseRegressionNN]
+    initializer: Type[DiscreteRegressionNN]
 
     if config.head_type == HeadType.MEAN:
         initializer = MeanNN
@@ -113,6 +117,7 @@ def get_dataloaders(
 
 
 def save_losses_plot(log_dir: Path):
+    # TODO: Update with new metrics that are logged.
     metrics = pd.read_csv(log_dir / "metrics.csv")
     train_loss = metrics.iloc[:-1]["train_loss"].dropna()
     val_loss = metrics.iloc[:-1]["val_loss"].dropna()
@@ -123,3 +128,41 @@ def save_losses_plot(log_dir: Path):
     ax.legend()
     fig.savefig(log_dir / "losses.png")
     plt.close(fig)
+
+
+def fix_random_seed(random_seed: int | None):
+    if random_seed is not None:
+        random.seed(random_seed)
+        np.random.seed(random_seed)
+        torch.manual_seed(random_seed)
+
+
+def get_chkp_callbacks(chkp_dir: Path, chkp_freq: int) -> list[ModelCheckpoint]:
+    temporal_checkpoint_callback = ModelCheckpoint(
+        dirpath=chkp_dir,
+        every_n_epochs=chkp_freq,
+        filename="{epoch}",
+        save_top_k=-1,
+        save_last=True,
+    )
+    best_loss_checkpoint_callback = ModelCheckpoint(
+        dirpath=chkp_dir,
+        monitor="val_loss",
+        every_n_epochs=1,
+        filename="best_loss",
+        save_top_k=1,
+        enable_version_counter=False,
+    )
+    best_mae_checkpoint_callback = ModelCheckpoint(
+        dirpath=chkp_dir,
+        monitor="val_mae",
+        every_n_epochs=1,
+        filename="best_mae",
+        save_top_k=1,
+        enable_version_counter=False,
+    )
+    return [
+        temporal_checkpoint_callback,
+        best_loss_checkpoint_callback,
+        best_mae_checkpoint_callback,
+    ]

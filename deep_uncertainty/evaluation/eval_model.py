@@ -8,7 +8,7 @@ import yaml
 
 from deep_uncertainty.enums import DatasetType
 from deep_uncertainty.experiments.config import ExperimentConfig
-from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
+from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
 from deep_uncertainty.utils.experiment_utils import get_dataloaders
 from deep_uncertainty.utils.experiment_utils import get_model
 
@@ -27,7 +27,9 @@ def main(log_dir: Path, chkp_path: Path):
     else:
         input_dim = None
 
-    initializer: Type[BaseRegressionNN] = get_model(config, input_dim, return_initializer=True)[1]
+    initializer: Type[DiscreteRegressionNN] = get_model(
+        config, input_dim, return_initializer=True
+    )[1]
     model = initializer.load_from_checkpoint(chkp_path)
     evaluator = L.Trainer(
         accelerator=config.accelerator_type.value,

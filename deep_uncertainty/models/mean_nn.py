@@ -3,17 +3,15 @@ from typing import Type
 import torch
 from torch import nn
 from torch.nn.functional import mse_loss
-from torchmetrics import MeanAbsoluteError
-from torchmetrics import MeanSquaredError
 from torchmetrics import Metric
 
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
 from deep_uncertainty.models.backbones import Backbone
-from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
+from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
 
 
-class MeanNN(BaseRegressionNN):
+class MeanNN(DiscreteRegressionNN):
     """A neural network that fits to regression targets using mean squared error.
 
     Attributes:
@@ -54,9 +52,6 @@ class MeanNN(BaseRegressionNN):
             lr_scheduler_kwargs=lr_scheduler_kwargs,
         )
         self.head = nn.Linear(self.backbone.output_dim, 1)
-        self.rmse = MeanSquaredError(squared=False)
-        self.mae = MeanAbsoluteError()
-
         self.save_hyperparameters()
 
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
@@ -87,14 +82,13 @@ class MeanNN(BaseRegressionNN):
 
         return y_hat
 
-    def _test_metrics_dict(self) -> dict[str, Metric]:
-        return {"rmse": self.rmse, "mae": self.mae}
+    def _point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
+        return y_hat.round()
 
-    def _update_test_metrics_batch(
+    def _addl_test_metrics_dict(self) -> dict[str, Metric]:
+        return {}
+
+    def _update_addl_test_metrics_batch(
         self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor
-    ) -> dict:
-        preds = y_hat.flatten()
-        targets = y.flatten()
-
-        self.rmse.update(preds, targets)
-        self.mae.update(preds, targets)
+    ):
+        pass

@@ -2,8 +2,6 @@ from typing import Type
 
 import torch
 from torch import nn
-from torchmetrics import MeanAbsoluteError
-from torchmetrics import MeanSquaredError
 from torchmetrics import Metric
 
 from deep_uncertainty.enums import LRSchedulerType
@@ -12,11 +10,11 @@ from deep_uncertainty.evaluation.custom_torchmetrics import DiscreteExpectedCali
 from deep_uncertainty.evaluation.custom_torchmetrics import DoublePoissonNLL
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.backbones import Backbone
-from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
+from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
 from deep_uncertainty.training.losses import neg_binom_nll
 
 
-class NegBinomNN(BaseRegressionNN):
+class NegBinomNN(DiscreteRegressionNN):
     """A neural network that learns the parameters of a Negative Binomial distribution over each regression target (conditioned on the input).
 
     The mean-scale (mu, alpha) parametrization of the Negative Binomial is used for this network.
@@ -65,8 +63,6 @@ class NegBinomNN(BaseRegressionNN):
             nn.Softplus(),  # To ensure positivity of output params.
         )
 
-        self.rmse = MeanSquaredError(squared=False)
-        self.mae = MeanAbsoluteError()
         self.discrete_ece = DiscreteExpectedCalibrationError(alpha=2)
         self.nll = DoublePoissonNLL()
         self.mp = MedianPrecision()
@@ -104,16 +100,40 @@ class NegBinomNN(BaseRegressionNN):
         self.backbone.train()
         return y_hat
 
-    def _test_metrics_dict(self) -> dict[str, Metric]:
+    def _point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
+        dist = self._convert_output_to_dist(y_hat)
+        return dist.mode
+
+    def _addl_test_metrics_dict(self) -> dict[str, Metric]:
         return {
-            "rmse": self.rmse,
-            "mae": self.mae,
             "discrete_ece": self.discrete_ece,
             "nll": self.nll,
             "mp": self.mp,
         }
 
-    def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
+    def _update_addl_test_metrics_batch(
+        self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor
+    ):
+        dist = self._convert_output_to_dist(y_hat)
+        mu, var = dist.mean, dist.variance
+        precision = 1 / var
+        preds = dist.mode
+        probs = torch.exp(dist.log_prob(preds))
+        targets = y.flatten()
+
+        self.discrete_ece.update(preds=preds, probs=probs, targets=targets)
+        self.nll.update(mu=mu, phi=mu / var, targets=targets)
+        self.mp.update(precision)
+
+    def _convert_output_to_dist(self, y_hat: torch.Tensor) -> torch.distributions.NegativeBinomial:
+        """Convert a network output to the implied negative binomial distribution.
+
+        Args:
+            y_hat (torch.Tensor): Output from a `NegBinomNN` (nbinom parameters for the predicted distribution over y).
+
+        Returns:
+            torch.distributions.NegativeBinomial: The implied negative binomial distribution over y.
+        """
         mu, alpha = torch.split(y_hat, [1, 1], dim=-1)
         mu = mu.flatten()
         alpha = alpha.flatten()
@@ -121,20 +141,10 @@ class NegBinomNN(BaseRegressionNN):
         # Convert to standard parametrization.
         eps = torch.tensor(1e-6, device=mu.device)
         var = mu + alpha * mu**2
-        precision = 1 / var
         p = mu / torch.maximum(var, eps)
         failure_prob = torch.minimum(
             1 - p, 1 - eps
         )  # Torch docs lie and say this should be P(success).
         n = mu**2 / torch.maximum(var - mu, eps)
         dist = torch.distributions.NegativeBinomial(total_count=n, probs=failure_prob)
-        preds = dist.mode
-        probs = torch.exp(dist.log_prob(preds))
-
-        targets = y.flatten()
-
-        self.rmse.update(preds, targets)
-        self.mae.update(preds, targets)
-        self.discrete_ece.update(preds=preds, probs=probs, targets=targets)
-        self.nll.update(mu=mu, phi=mu / var, targets=targets)
-        self.mp.update(precision)
+        return dist

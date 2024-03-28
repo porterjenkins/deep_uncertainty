@@ -4,8 +4,6 @@ from typing import Type
 import torch
 from torch import nn
 from torch.nn.functional import poisson_nll_loss
-from torchmetrics import MeanAbsoluteError
-from torchmetrics import MeanSquaredError
 from torchmetrics import Metric
 
 from deep_uncertainty.enums import LRSchedulerType
@@ -14,10 +12,10 @@ from deep_uncertainty.evaluation.custom_torchmetrics import DiscreteExpectedCali
 from deep_uncertainty.evaluation.custom_torchmetrics import DoublePoissonNLL
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.backbones import Backbone
-from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
+from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
 
 
-class PoissonNN(BaseRegressionNN):
+class PoissonNN(DiscreteRegressionNN):
     """A neural network that learns the parameters of a Poisson distribution over each regression target (conditioned on the input).
 
     Attributes:
@@ -61,8 +59,6 @@ class PoissonNN(BaseRegressionNN):
         )
         self.head = nn.Linear(self.backbone.output_dim, 1)
 
-        self.rmse = MeanSquaredError(squared=False)
-        self.mae = MeanAbsoluteError()
         self.discrete_ece = DiscreteExpectedCalibrationError(alpha=2)
         self.nll = DoublePoissonNLL()
         self.mp = MedianPrecision()
@@ -97,16 +93,20 @@ class PoissonNN(BaseRegressionNN):
 
         return torch.exp(y_hat)
 
-    def _test_metrics_dict(self) -> dict[str, Metric]:
+    def _point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
+        lmbda = y_hat.exp() if training else y_hat
+        return lmbda.floor()
+
+    def _addl_test_metrics_dict(self) -> dict[str, Metric]:
         return {
-            "rmse": self.rmse,
-            "mae": self.mae,
             "discrete_ece": self.discrete_ece,
             "nll": self.nll,
             "mp": self.mp,
         }
 
-    def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
+    def _update_addl_test_metrics_batch(
+        self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor
+    ):
         lmbda = y_hat.flatten()
         dist = torch.distributions.Poisson(lmbda)
         preds = dist.mode
@@ -114,8 +114,6 @@ class PoissonNN(BaseRegressionNN):
         targets = y.flatten()
         precision = 1 / lmbda
 
-        self.rmse.update(preds, targets)
-        self.mae.update(preds, targets)
         self.discrete_ece.update(preds=preds, probs=probs, targets=targets)
         self.nll.update(mu=lmbda, phi=torch.ones_like(lmbda), targets=targets)
         self.mp.update(precision)

@@ -4,6 +4,8 @@ from typing import Type
 import lightning as L
 import torch
 from matplotlib.figure import Figure
+from torchmetrics import MeanAbsoluteError
+from torchmetrics import MeanSquaredError
 from torchmetrics import Metric
 
 from deep_uncertainty.enums import LRSchedulerType
@@ -11,8 +13,8 @@ from deep_uncertainty.enums import OptimizerType
 from deep_uncertainty.models.backbones import Backbone
 
 
-class BaseRegressionNN(L.LightningModule):
-    """Base class for regression neural networks. Should not actually be used for prediction (needs to define `training_step` and whatnot).
+class DiscreteRegressionNN(L.LightningModule):
+    """Base class for discrete regression neural networks. Should not actually be used for prediction (needs to define `training_step` and whatnot).
 
     Attributes:
         backbone (Backbone): The backbone to use for feature extraction (before applying the regression head).
@@ -44,7 +46,7 @@ class BaseRegressionNN(L.LightningModule):
             lr_scheduler_type (LRSchedulerType | None): If specified, the type of learning rate scheduler to use during training, e.g. "cosine_annealing".
             lr_scheduler_kwargs (dict | None): If specified, key-value argument specifications for the chosen lr scheduler, e.g. {"T_max": 500}.
         """
-        super(BaseRegressionNN, self).__init__()
+        super(DiscreteRegressionNN, self).__init__()
 
         self.backbone = backbone_type(**backbone_kwargs)
         self.optim_type = optim_type
@@ -53,6 +55,12 @@ class BaseRegressionNN(L.LightningModule):
         self.lr_scheduler_kwargs = lr_scheduler_kwargs
 
         self.loss_fn = loss_fn
+        self.train_rmse = MeanSquaredError(squared=False)
+        self.train_mae = MeanAbsoluteError()
+        self.val_rmse = MeanSquaredError(squared=False)
+        self.val_mae = MeanAbsoluteError()
+        self.test_rmse = MeanSquaredError(squared=False)
+        self.test_mae = MeanAbsoluteError()
 
     def configure_optimizers(self) -> dict:
         if self.optim_type == OptimizerType.ADAM:
@@ -77,6 +85,14 @@ class BaseRegressionNN(L.LightningModule):
         y_hat = self._forward_impl(x)
         loss = self.loss_fn(y_hat, y.view(-1, 1).float())
         self.log("train_loss", loss, prog_bar=True)
+
+        with torch.no_grad():
+            point_predictions = self._point_prediction(y_hat, training=True).flatten()
+            self.train_rmse(point_predictions, y.flatten().float())
+            self.train_mae(point_predictions, y.flatten().float())
+            self.log("train_rmse", self.train_rmse)
+            self.log("train_mae", self.train_mae)
+
         return loss
 
     def validation_step(self, batch: torch.Tensor) -> torch.Tensor:
@@ -84,14 +100,22 @@ class BaseRegressionNN(L.LightningModule):
         y_hat = self._forward_impl(x)
         loss = self.loss_fn(y_hat, y.view(-1, 1).float())
         self.log("val_loss", loss, prog_bar=True)
+
+        # Since we use _forward_impl, we specify training=True to get the proper transforms.
+        point_predictions = self._point_prediction(y_hat, training=True).flatten()
+        self.val_rmse(point_predictions, y.flatten().float())
+        self.val_mae(point_predictions, y.flatten().float())
+        self.log("val_rmse", self.val_rmse)
+        self.log("val_mae", self.val_mae)
         return loss
 
-    def test_step(self, batch: torch.Tensor) -> torch.Tensor:
+    def test_step(self, batch: torch.Tensor):
         x, y = batch
         y_hat = self._predict_impl(x)
-        self._update_test_metrics_batch(x, y_hat, y.view(-1, 1).float())
-
-        return y_hat
+        point_predictions = self._point_prediction(y_hat, training=False).flatten()
+        self.test_rmse.update(point_predictions, y.flatten().float())
+        self.test_mae.update(point_predictions, y.flatten().float())
+        self._update_addl_test_metrics_batch(x, y_hat, y.view(-1, 1).float())
 
     def predict_step(self, batch: torch.Tensor) -> torch.Tensor:
         x, _ = batch
@@ -100,7 +124,7 @@ class BaseRegressionNN(L.LightningModule):
         return y_hat
 
     def on_test_epoch_end(self):
-        for name, metric_tracker in self._test_metrics_dict().items():
+        for name, metric_tracker in self._addl_test_metrics_dict().items():
             self.log(name, metric_tracker.compute())
             if name in {"mean_calibration", "mp"}:
                 fig: Figure = metric_tracker.plot()
@@ -109,6 +133,8 @@ class BaseRegressionNN(L.LightningModule):
                 else:
                     root = "."
                 fig.savefig(root + f"/{name}_plot.png")
+        self.log("test_rmse", self.test_rmse.compute())
+        self.log("test_mae", self.test_mae.compute())
 
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
         """Make a forward pass through the network.
@@ -136,12 +162,29 @@ class BaseRegressionNN(L.LightningModule):
         """
         raise NotImplementedError("Should be implemented by subclass.")
 
-    def _test_metrics_dict(self) -> dict[str, Metric]:
-        """Return a dict with the metric trackers used by this model."""
+    def _point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
+        """Transform the network's output into a single discrete point prediction.
+
+        This method will vary depending on the type of regression head (probabilistic vs. deterministic).
+        For example, a gaussian regressor will return the `mean` portion of its output as its point prediction, rounded to the nearest integer.
+
+        Args:
+            y_hat (torch.Tensor): Output tensor from a regression network, with shape (N, ...).
+            training (bool): Boolean indicator specifying if `y_hat` is a training output or not. This particularly matters when outputs are in log space during training, for example.
+
+        Returns:
+            torch.Tensor: Point predictions for the true regression target, with shape (N, 1).
+        """
         raise NotImplementedError("Should be implemented by subclass.")
 
-    def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
-        """Update test metric states given a batch of outputs/targets.
+    def _addl_test_metrics_dict(self) -> dict[str, Metric]:
+        """Return a dict with the metric trackers used by this model beyond the default rmse/mae."""
+        raise NotImplementedError("Should be implemented by subclass.")
+
+    def _update_addl_test_metrics_batch(
+        self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor
+    ):
+        """Update additional test metric states (beyond default rmse/mae) given a batch of inputs/outputs/targets.
 
         Args:
             x (torch.Tensor): Model inputs.

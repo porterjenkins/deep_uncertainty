@@ -4,8 +4,6 @@ from typing import Type
 import torch
 from scipy.stats import norm
 from torch import nn
-from torchmetrics import MeanAbsoluteError
-from torchmetrics import MeanSquaredError
 from torchmetrics import Metric
 
 from deep_uncertainty.enums import BetaSchedulerType
@@ -18,13 +16,13 @@ from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.evaluation.custom_torchmetrics import YoungCalibration
 from deep_uncertainty.models.backbones import Backbone
 from deep_uncertainty.models.backbones import MLP
-from deep_uncertainty.models.base_regression_nn import BaseRegressionNN
+from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
 from deep_uncertainty.training.beta_schedulers import CosineAnnealingBetaScheduler
 from deep_uncertainty.training.beta_schedulers import LinearBetaScheduler
 from deep_uncertainty.training.losses import gaussian_nll
 
 
-class GaussianNN(BaseRegressionNN):
+class GaussianNN(DiscreteRegressionNN):
     """A neural network that learns the parameters of a Gaussian distribution over each regression target (conditioned on the input).
 
     Attributes:
@@ -94,8 +92,6 @@ class GaussianNN(BaseRegressionNN):
             param_list=["loc", "scale"],
             rv_class_type=norm,
         )
-        self.rmse = MeanSquaredError(squared=False)
-        self.mae = MeanAbsoluteError()
         self.discrete_ece = DiscreteExpectedCalibrationError(alpha=2)
         self.nll = DoublePoissonNLL()
         self.mp = MedianPrecision()
@@ -138,10 +134,13 @@ class GaussianNN(BaseRegressionNN):
 
         return y_hat
 
-    def _test_metrics_dict(self) -> dict[str, Metric]:
+    def _point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
+        output = y_hat.exp() if training else y_hat
+        mu, _ = torch.split(output, [1, 1], dim=-1)
+        return mu.round()
+
+    def _addl_test_metrics_dict(self) -> dict[str, Metric]:
         return {
-            "rmse": self.rmse,
-            "mae": self.mae,
             "mean_calibration": self.mean_calibration,
             "continuous_ece": self.continuous_ece,
             "discrete_ece": self.discrete_ece,
@@ -149,7 +148,9 @@ class GaussianNN(BaseRegressionNN):
             "mp": self.mp,
         }
 
-    def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
+    def _update_addl_test_metrics_batch(
+        self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor
+    ):
         mu, var = torch.split(y_hat, [1, 1], dim=-1)
         mu = mu.flatten()
         var = var.flatten()
@@ -178,8 +179,6 @@ class GaussianNN(BaseRegressionNN):
             ],
             targets=targets,
         )
-        self.rmse.update(preds, targets)
-        self.mae.update(preds, targets)
         self.nll.update(mu=mu, phi=mu / var, targets=targets)
         self.mp.update(precision)
 

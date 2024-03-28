@@ -135,7 +135,8 @@ class GaussianNN(DiscreteRegressionNN):
         return y_hat
 
     def _point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
-        mu, _ = torch.split(y_hat, [1, 1], dim=-1)
+        output = y_hat.exp() if training else y_hat
+        mu, _ = torch.split(output, [1, 1], dim=-1)
         return mu.round()
 
     def _addl_test_metrics_dict(self) -> dict[str, Metric]:

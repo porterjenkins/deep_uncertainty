@@ -135,8 +135,7 @@ class GaussianNN(DiscreteRegressionNN):
         return y_hat
 
     def _point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
-        output = y_hat.exp() if training else y_hat
-        mu, _ = torch.split(output, [1, 1], dim=-1)
+        mu, _ = torch.split(y_hat, [1, 1], dim=-1)
         return mu.round()
 
     def _addl_test_metrics_dict(self) -> dict[str, Metric]:
@@ -186,3 +185,4 @@ class GaussianNN(DiscreteRegressionNN):
         if self.beta_scheduler is not None:
             self.beta_scheduler.step()
             self.loss_fn = partial(gaussian_nll, beta=self.beta_scheduler.current_value)
+        super().on_train_epoch_end()

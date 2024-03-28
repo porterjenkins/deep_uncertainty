@@ -164,3 +164,4 @@ class DoublePoissonNN(DiscreteRegressionNN):
         if self.beta_scheduler is not None:
             self.beta_scheduler.step()
             self.loss_fn = partial(double_poisson_nll, beta=self.beta_scheduler.current_value)
+        super().on_train_epoch_end()

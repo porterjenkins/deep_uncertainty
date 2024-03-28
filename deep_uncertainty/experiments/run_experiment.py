@@ -13,7 +13,7 @@ from deep_uncertainty.utils.experiment_utils import fix_random_seed
 from deep_uncertainty.utils.experiment_utils import get_chkp_callbacks
 from deep_uncertainty.utils.experiment_utils import get_dataloaders
 from deep_uncertainty.utils.experiment_utils import get_model
-from deep_uncertainty.utils.experiment_utils import save_losses_plot
+from deep_uncertainty.utils.experiment_utils import save_metrics_plots
 
 
 def main(config: ExperimentConfig):
@@ -54,7 +54,7 @@ def main(config: ExperimentConfig):
         with open(log_dir / "test_metrics.yaml", "w") as f:
             yaml.dump(metrics, f)
         config.to_yaml(log_dir / "config.yaml")
-        save_losses_plot(log_dir)
+        save_metrics_plots(log_dir)
 
 
 def parse_args() -> Namespace:

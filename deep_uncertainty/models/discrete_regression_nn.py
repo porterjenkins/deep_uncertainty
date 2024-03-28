@@ -84,30 +84,39 @@ class DiscreteRegressionNN(L.LightningModule):
         x, y = batch
         y_hat = self._forward_impl(x)
         loss = self.loss_fn(y_hat, y.view(-1, 1).float())
-        self.log("train_loss", loss, prog_bar=True)
+        self.log("train_loss", loss, prog_bar=True, on_epoch=True)
 
         with torch.no_grad():
             point_predictions = self._point_prediction(y_hat, training=True).flatten()
-            self.train_rmse(point_predictions, y.flatten().float())
-            self.train_mae(point_predictions, y.flatten().float())
-            self.log("train_rmse", self.train_rmse)
-            self.log("train_mae", self.train_mae)
+            self.train_rmse.update(point_predictions, y.flatten().float())
+            self.train_mae.update(point_predictions, y.flatten().float())
 
         return loss
+
+    def on_train_epoch_end(self) -> None:
+        self.log("train_rmse", self.train_rmse.compute())
+        self.log("train_mae", self.train_mae.compute())
+        self.train_rmse.reset()
+        self.train_mae.reset()
 
     def validation_step(self, batch: torch.Tensor) -> torch.Tensor:
         x, y = batch
         y_hat = self._forward_impl(x)
         loss = self.loss_fn(y_hat, y.view(-1, 1).float())
-        self.log("val_loss", loss, prog_bar=True)
+        self.log("val_loss", loss, prog_bar=True, on_epoch=True)
 
         # Since we use _forward_impl, we specify training=True to get the proper transforms.
         point_predictions = self._point_prediction(y_hat, training=True).flatten()
-        self.val_rmse(point_predictions, y.flatten().float())
-        self.val_mae(point_predictions, y.flatten().float())
-        self.log("val_rmse", self.val_rmse)
-        self.log("val_mae", self.val_mae)
+        self.val_rmse.update(point_predictions, y.flatten().float())
+        self.val_mae.update(point_predictions, y.flatten().float())
+
         return loss
+
+    def on_validation_epoch_end(self):
+        self.log("val_rmse", self.val_rmse.compute())
+        self.log("val_mae", self.val_mae.compute())
+        self.val_rmse.reset()
+        self.val_mae.reset()
 
     def test_step(self, batch: torch.Tensor):
         x, y = batch
@@ -133,8 +142,12 @@ class DiscreteRegressionNN(L.LightningModule):
                 else:
                     root = "."
                 fig.savefig(root + f"/{name}_plot.png")
+            metric_tracker.reset()
+
         self.log("test_rmse", self.test_rmse.compute())
         self.log("test_mae", self.test_mae.compute())
+        self.test_rmse.reset()
+        self.test_mae.reset()
 
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
         """Make a forward pass through the network.

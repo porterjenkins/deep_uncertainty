@@ -1,3 +1,4 @@
+import os
 from argparse import ArgumentParser
 from argparse import Namespace
 from pathlib import Path
@@ -13,9 +14,11 @@ from deep_uncertainty.utils.experiment_utils import get_dataloaders
 from deep_uncertainty.utils.experiment_utils import get_model
 
 
-def main(log_dir: Path, chkp_path: Path):
+def main(log_dir: Path, config_path: Path, chkp_path: Path):
 
-    config = ExperimentConfig.from_yaml(log_dir / "config.yaml")
+    if not log_dir.exists():
+        os.makedirs(log_dir)
+    config = ExperimentConfig.from_yaml(config_path)
 
     test_loader = get_dataloaders(
         config.dataset_type,
@@ -46,8 +49,9 @@ def parse_args() -> Namespace:
     parser.add_argument(
         "--log-dir",
         type=str,
-        help="Directory used to log model metrics/configuration during training.",
+        help="Directory to log eval metrics in.",
     )
+    parser.add_argument("--config-path", type=str, help="Path to config.yaml used to train model.")
     parser.add_argument(
         "--chkp-path", type=str, help="Path to .ckpt where model weights are saved."
     )
@@ -56,4 +60,8 @@ def parse_args() -> Namespace:
 
 if __name__ == "__main__":
     args = parse_args()
-    main(log_dir=Path(args.log_dir), chkp_path=Path(args.chkp_path))
+    main(
+        log_dir=Path(args.log_dir),
+        config_path=Path(args.config_path),
+        chkp_path=Path(args.chkp_path),
+    )

@@ -7,6 +7,9 @@ import numpy as np
 import polars as pl
 import wget
 from pandas import read_stata
+import sys
+
+sys.path.append("/home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/deep_uncertainty/")
 
 from deep_uncertainty.data_generator import DataGenerator
 

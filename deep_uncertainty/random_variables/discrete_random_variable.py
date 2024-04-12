@@ -102,22 +102,34 @@ class DiscreteRandomVariable:
     def rvs(self, size: int | tuple) -> np.ndarray | torch.Tensor:
         """Draw a sample of the given size from this random variable.
 
+        If `self.dimension` > 1, the `size` argument must be (n, `self.dimension`) (corresponding to n samples along each dimension).
+
         Args:
             size (int | tuple): The size of the sample to return.
+
+        Raises:
+            ValueError: If the requested `size` is incorrectly specified.
 
         Returns:
             np.ndarray | torch.Tensor: The sample from this random variable.
         """
+        if self.dimension > 1:
+            if not isinstance(size, tuple) or size[1] != self.dimension:
+                raise ValueError(
+                    f"Must specify a size compatible with this RV's dimension. Received {size} but expected tuple with shape (n, {self.dimension})."
+                )
+        size = (size,) if not isinstance(size, tuple) else size
+        n = size[0]
         if not self.use_torch:
-            U = np.random.uniform(size=size)
-            draws = np.zeros((U.size, self.dimension))
+            U = np.random.uniform(size=n)
+            draws = np.zeros(shape=size)
         else:
-            U = torch.rand(size, device=self.device)
-            draws = torch.zeros(U.numel(), self.dimension, device=self.device)
+            U = torch.rand(n, device=self.device)
+            draws = torch.zeros(size=size, device=self.device)
 
-        for i, u in enumerate(U.ravel()):
-            draws[i] = self.ppf(u)
-        draws = draws.reshape(size, -1)
+        for i in range(n):
+            draws[i] = self.ppf(U[i])
+
         return draws
 
     @property

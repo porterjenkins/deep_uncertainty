@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from tqdm import tqdm
 
 
 class DiscreteRandomVariable:
@@ -99,13 +100,14 @@ class DiscreteRandomVariable:
                 return result.item()
         return result
 
-    def rvs(self, size: int | tuple) -> np.ndarray | torch.Tensor:
+    def rvs(self, size: int | tuple, verbose: bool = False) -> np.ndarray | torch.Tensor:
         """Draw a sample of the given size from this random variable.
 
         If `self.dimension` > 1, the `size` argument must be (n, `self.dimension`) (corresponding to n samples along each dimension).
 
         Args:
             size (int | tuple): The size of the sample to return.
+            verbose (bool, optional): Whether/not to show a progress bar for the sampling procedure.
 
         Raises:
             ValueError: If the requested `size` is incorrectly specified.
@@ -127,10 +129,11 @@ class DiscreteRandomVariable:
             U = torch.rand(n, device=self.device)
             draws = torch.zeros(size=size, device=self.device)
 
-        for i in range(n):
+        iterable = range(n) if not verbose else tqdm(range(n), desc="Sampling...", total=n)
+        for i in iterable:
             draws[i] = self.ppf(U[i])
 
-        return draws
+        return draws.astype(int)
 
     @property
     def pmf_vals(self) -> np.ndarray | torch.Tensor:

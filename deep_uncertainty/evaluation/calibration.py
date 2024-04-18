@@ -151,8 +151,7 @@ def compute_double_poisson_nll(y_true: np.ndarray, mu: np.ndarray, phi: np.ndarr
     """
     # For numerical stability, we only allow mu to be as small as 1e-6 (and mu/phi to be as small as 1e-4).
     stable_mu = np.clip(np.array(mu), a_min=1e-6, a_max=None)
-    stable_phi = phi
-    var = np.clip(stable_mu / stable_phi, a_min=1e-4, a_max=None)
+    var = np.clip(stable_mu / phi, a_min=1e-4, a_max=None)
     stable_phi = stable_mu / var
 
     return np.mean(

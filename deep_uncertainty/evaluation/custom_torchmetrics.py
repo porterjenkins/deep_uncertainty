@@ -265,7 +265,8 @@ class AverageNLL(Metric):
             torch.Tensor: The average NLL.
         """
         all_target_probs = torch.cat(self.all_target_probs)
-        nll = -all_target_probs.log().mean()
+        eps = torch.tensor(1e-5, device=all_target_probs.device)
+        nll = -torch.maximum(all_target_probs, eps).log().mean()
         return nll
 
 

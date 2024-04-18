@@ -138,7 +138,7 @@ class DoublePoissonNN(DiscreteRegressionNN):
         preds = torch.argmax(dist.pmf_vals, axis=0)
         probs = dist.pmf(preds)
         targets = y.flatten()
-        target_probs = dist.pmf(targets)
+        target_probs = dist.pmf(targets.long())
 
         self.discrete_ece.update(preds, probs, targets)
         self.nll.update(target_probs)

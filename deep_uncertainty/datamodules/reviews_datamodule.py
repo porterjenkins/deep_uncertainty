@@ -1,3 +1,4 @@
+import os
 from typing import Iterable
 
 import lightning as L
@@ -9,7 +10,7 @@ from transformers import DistilBertTokenizer
 
 from deep_uncertainty.custom_datasets import ReviewsDataset
 
-
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
 
 

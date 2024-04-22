@@ -4,13 +4,13 @@ import lightning as L
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
-from transformers import AutoTokenizer
 from transformers import BatchEncoding
+from transformers import DistilBertTokenizer
 
 from deep_uncertainty.custom_datasets import ReviewsDataset
 
 
-tokenizer = AutoTokenizer.from_pretrained("distilbert/distilbert-base-uncased")
+tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
 
 
 class ReviewsDataModule(L.LightningDataModule):

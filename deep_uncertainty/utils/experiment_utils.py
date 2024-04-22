@@ -71,8 +71,9 @@ def get_model(
     if config.dataset_type == DatasetType.TABULAR:
         backbone_type = MLP
         backbone_kwargs = {"input_dim": input_dim}
-    elif config.dataset_spec == DatasetType.TEXT:
+    elif config.dataset_type == DatasetType.TEXT:
         backbone_type = DistilBert
+        backbone_kwargs = {}
     elif config.dataset_type == DatasetType.IMAGE:
         if config.dataset_spec == ImageDatasetName.MNIST:
             backbone_type = MNISTCNN
@@ -121,7 +122,10 @@ def get_datamodule(
     elif dataset_type == DatasetType.TEXT:
         if dataset_spec == TextDatasetName.REVIEWS:
             return ReviewsDataModule(
-                root_dir="./data/amazon_reviews", batch_size=batch_size, num_workers=9
+                root_dir="./data/amazon_reviews",
+                batch_size=batch_size,
+                num_workers=9,
+                persistent_workers=True,
             )
 
 

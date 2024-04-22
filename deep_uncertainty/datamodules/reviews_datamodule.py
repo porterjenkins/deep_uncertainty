@@ -14,11 +14,12 @@ tokenizer = AutoTokenizer.from_pretrained("distilbert/distilbert-base-uncased")
 
 
 class ReviewsDataModule(L.LightningDataModule):
-    def __init__(self, root_dir: str, batch_size: int, num_workers: int):
+    def __init__(self, root_dir: str, batch_size: int, num_workers: int, persistent_workers: bool):
         super().__init__()
         self.root_dir = root_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
+        self.persistent_workers = persistent_workers
 
     def prepare_data(self) -> None:
         self.train, self.val, self.test = random_split(
@@ -34,6 +35,7 @@ class ReviewsDataModule(L.LightningDataModule):
             num_workers=self.num_workers,
             shuffle=True,
             collate_fn=self.collate_fn,
+            persistent_workers=self.persistent_workers,
             drop_last=True,
         )
 
@@ -44,6 +46,7 @@ class ReviewsDataModule(L.LightningDataModule):
             num_workers=self.num_workers,
             shuffle=False,
             collate_fn=self.collate_fn,
+            persistent_workers=self.persistent_workers,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -53,6 +56,7 @@ class ReviewsDataModule(L.LightningDataModule):
             num_workers=self.num_workers,
             shuffle=False,
             collate_fn=self.collate_fn,
+            persistent_workers=self.persistent_workers,
         )
 
     @staticmethod

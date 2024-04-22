@@ -34,9 +34,14 @@ class BetaSchedulerType(Enum):
 class DatasetType(Enum):
     TABULAR = "tabular"
     IMAGE = "image"
+    TEXT = "text"
 
 
 class ImageDatasetName(Enum):
     MNIST = "mnist"
     COINS = "coin_counting"
     VEHICLES = "vehicles"
+
+
+class TextDatasetName(Enum):
+    REVIEWS = "reviews"

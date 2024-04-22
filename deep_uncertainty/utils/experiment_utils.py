@@ -2,6 +2,7 @@ import random
 from pathlib import Path
 from typing import Type
 
+import lightning as L
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -9,9 +10,13 @@ import torch
 from lightning.pytorch.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
 
+from deep_uncertainty.datamodules import ReviewsDataModule
+from deep_uncertainty.datamodules import TabularDataModule
+from deep_uncertainty.datamodules import VEDAIDataModule
 from deep_uncertainty.enums import DatasetType
 from deep_uncertainty.enums import HeadType
 from deep_uncertainty.enums import ImageDatasetName
+from deep_uncertainty.enums import TextDatasetName
 from deep_uncertainty.experiments.config import ExperimentConfig
 from deep_uncertainty.models import DoublePoissonNN
 from deep_uncertainty.models import GaussianNN
@@ -86,6 +91,35 @@ def get_model(
         return model, initializer
     else:
         return model
+
+
+def get_datamodule(
+    dataset_type: DatasetType, dataset_spec: Path | ImageDatasetName, batch_size: int
+) -> L.LightningDataModule:
+    if dataset_type == DatasetType.TABULAR:
+        return TabularDataModule(
+            dataset_path=dataset_spec,
+            batch_size=batch_size,
+            num_workers=9,
+            persistent_workers=True,
+        )
+    elif dataset_type == DatasetType.IMAGE:
+        if dataset_spec == ImageDatasetName.MNIST:
+            raise NotImplementedError("MNIST not currently implemented.")
+        elif dataset_spec == ImageDatasetName.COINS:
+            raise NotImplementedError("Coins dataset not currently implemented.")
+        elif dataset_spec == ImageDatasetName.VEHICLES:
+            return VEDAIDataModule(
+                root_dir="./data/vehicles",
+                batch_size=batch_size,
+                num_workers=9,
+                persistent_workers=True,
+            )
+    elif dataset_type == DatasetType.TEXT:
+        if dataset_spec == TextDatasetName.REVIEWS:
+            return ReviewsDataModule(
+                root_dir="./data/amazon_reviews", batch_size=batch_size, num_workers=9
+            )
 
 
 def get_dataloaders(

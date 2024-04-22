@@ -23,6 +23,7 @@ from deep_uncertainty.models import GaussianNN
 from deep_uncertainty.models import MeanNN
 from deep_uncertainty.models import NegBinomNN
 from deep_uncertainty.models import PoissonNN
+from deep_uncertainty.models.backbones import DistilBert
 from deep_uncertainty.models.backbones import MLP
 from deep_uncertainty.models.backbones import MNISTCNN
 from deep_uncertainty.models.backbones import MobileNetV3
@@ -70,6 +71,8 @@ def get_model(
     if config.dataset_type == DatasetType.TABULAR:
         backbone_type = MLP
         backbone_kwargs = {"input_dim": input_dim}
+    elif config.dataset_spec == DatasetType.TEXT:
+        backbone_type = DistilBert
     elif config.dataset_type == DatasetType.IMAGE:
         if config.dataset_spec == ImageDatasetName.MNIST:
             backbone_type = MNISTCNN

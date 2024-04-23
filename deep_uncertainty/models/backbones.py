@@ -164,7 +164,7 @@ class DistilBert(Backbone):
         self.relu = nn.ReLU()
 
     def forward(self, x: BatchEncoding) -> torch.Tensor:
-        h: torch.Tensor = self.backbone(**x)[0][0][:, 0]
+        h: torch.Tensor = self.backbone(**x)[0][:, 0]
         h = self.relu(self.projection_1(h))
         h = self.relu(self.projection_2(h))
         return h

@@ -67,7 +67,10 @@ class ReviewsDataset(Dataset):
                 instances["review_text"].append(review_text)
                 instances["rating"].append(rating)
 
-        return pd.DataFrame(instances)
+        review_text = pd.Series(instances["review_text"], dtype="string")
+        rating = pd.Series(instances["rating"], dtype="int8")
+
+        return pd.DataFrame({"review_text": review_text, "rating": rating})
 
     def __getitem__(self, idx: int) -> tuple[str, int]:
         row = self.instances.iloc[idx]

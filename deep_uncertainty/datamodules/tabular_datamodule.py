@@ -11,6 +11,7 @@ class TabularDataModule(L.LightningDataModule):
     def __init__(
         self, dataset_path: str | Path, batch_size: int, num_workers: int, persistent_workers: bool
     ):
+        super().__init__()
         self.dataset_path = dataset_path
         self.batch_size = batch_size
         self.num_workers = num_workers

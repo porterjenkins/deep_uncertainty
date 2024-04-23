@@ -7,7 +7,6 @@ import lightning as L
 import yaml
 from lightning.pytorch.loggers import CSVLogger
 
-from deep_uncertainty.enums import DatasetType
 from deep_uncertainty.experiments.config import ExperimentConfig
 from deep_uncertainty.utils.experiment_utils import fix_random_seed
 from deep_uncertainty.utils.experiment_utils import get_chkp_callbacks
@@ -25,15 +24,10 @@ def main(config: ExperimentConfig):
         config.dataset_spec,
         config.batch_size,
     )
-    if config.dataset_type == DatasetType.TABULAR:
-        datamodule.prepare_data()
-        input_dim = datamodule.train_dataloader().dataset.__getitem__(0)[0].size(-1)
-    else:
-        input_dim = None
 
     for i in range(config.num_trials):
 
-        model = get_model(config, input_dim)
+        model = get_model(config)
         chkp_dir = config.chkp_dir / config.experiment_name / f"version_{i}"
         chkp_callbacks = get_chkp_callbacks(chkp_dir, config.chkp_freq)
         logger = CSVLogger(save_dir=config.log_dir, name=config.experiment_name)
@@ -44,7 +38,7 @@ def main(config: ExperimentConfig):
             max_epochs=config.num_epochs,
             log_every_n_steps=5,
             check_val_every_n_epoch=math.ceil(config.num_epochs / 200),
-            enable_model_summary=True,
+            enable_model_summary=False,
             callbacks=chkp_callbacks,
             logger=logger,
         )

@@ -44,7 +44,7 @@ def main(config: ExperimentConfig):
             max_epochs=config.num_epochs,
             log_every_n_steps=5,
             check_val_every_n_epoch=math.ceil(config.num_epochs / 200),
-            enable_model_summary=False,
+            enable_model_summary=True,
             callbacks=chkp_callbacks,
             logger=logger,
         )

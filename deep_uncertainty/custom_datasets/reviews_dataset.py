@@ -23,14 +23,16 @@ class ReviewsDataset(Dataset):
     def __init__(
         self,
         root_dir: str | Path,
+        max_instances: int | None = None,
     ):
-        """Create an instance of the VEDAI dataset.
+        """Create an instance of the Reviews dataset.
 
         Args:
             root_dir (str | Path): Root directory where dataset files should be stored.
-
+            max_instances (int | None, optional): Max number of instances to contain in dataset. Defaults to None.
         """
         self.root_dir = Path(root_dir)
+        self.max_instances = max_instances
         if not self.root_dir.exists():
             os.makedirs(self.root_dir)
 
@@ -54,6 +56,7 @@ class ReviewsDataset(Dataset):
         instances = {"review_text": [], "rating": []}
         html_pattern = re.compile(r"<[^>]+>")
         with open(self.root_dir / "Patio_Lawn_and_Garden_5.json", "r") as f:
+            num_instances = 0
             for line in f:
                 review: dict = json.loads(line)
                 review_text, rating = review.get("reviewText"), review.get("overall")
@@ -66,6 +69,10 @@ class ReviewsDataset(Dataset):
                     continue
                 instances["review_text"].append(review_text)
                 instances["rating"].append(rating)
+                num_instances += 1
+
+                if num_instances > (self.max_instances or float("inf")):
+                    break
 
         review_text = pd.Series(instances["review_text"], dtype="string")
         rating = pd.Series(instances["rating"], dtype="int8")

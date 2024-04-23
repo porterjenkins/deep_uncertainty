@@ -125,6 +125,7 @@ def get_datamodule(
                 root_dir="./data/amazon_reviews",
                 batch_size=batch_size,
                 num_workers=0,  # For some reason, lots of workers here causes issues.
+                max_instances=None,  # Tweak this for quick test runs.
                 persistent_workers=False,
             )
 

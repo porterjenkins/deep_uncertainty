@@ -1,8 +1,10 @@
 from typing import Callable
 
 import numpy as np
+import torch
 from scipy.stats import binom
 
+from deep_uncertainty.random_variables import DiscreteConflation
 from deep_uncertainty.random_variables import DoublePoisson
 from deep_uncertainty.utils.model_utils import get_binom_n
 from deep_uncertainty.utils.model_utils import get_binom_p
@@ -173,3 +175,21 @@ class DataGenerator:
         isolated_y = np.ceil(isolated_X * np.sin(isolated_X)) + 15
 
         return X, y, isolated_X, isolated_y
+
+    @staticmethod
+    def generate_discrete_conflation_sine_wave(n: int = 1000) -> tuple[np.ndarray, np.ndarray]:
+        x_vals = []
+        y_vals = []
+        for _ in range(n):
+            x = torch.rand(1) * 2 * np.pi
+            rv_list = [torch.distributions.Poisson(rate=10 * np.sin(x) + 10)] * 5
+            conflation = DiscreteConflation(rv_list)
+            y = conflation.rvs((1, 1))
+
+            x_vals.append(x)
+            y_vals.append(-y + 30)
+
+        X = np.array(x_vals)
+        y = np.array(y_vals)
+
+        return X, y

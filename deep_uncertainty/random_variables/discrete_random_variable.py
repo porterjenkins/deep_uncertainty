@@ -194,7 +194,8 @@ class DiscreteRandomVariable:
 
     def _expected_value(self) -> float | np.ndarray | torch.Tensor:
         """Return the expected value of this random variable."""
-        raise NotImplementedError("Should be implemented by subclass.")
+        support = torch.arange(0, self.max_value) if self.use_torch else np.arange(self.max_value)
+        return (self.pmf_vals * support).sum()
 
     def _pmf(self, x: int | np.ndarray | torch.Tensor) -> float | np.ndarray | torch.Tensor:
         """Calculate the probability that this random variable takes on the value(s) x. Does not need to be normalized.

@@ -17,3 +17,4 @@ torch==1.13.1
 torchvision==0.14.1
 tqdm==4.65.0
 wget==3.2
+transformers==4.40.0

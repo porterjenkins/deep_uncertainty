@@ -212,7 +212,7 @@ class DiscreteExpectedCalibrationError(Metric):
 
 
 class DoublePoissonNLL(Metric):
-    """A custom `torchmetric` for computing the expected calibration error (for count regression) over multiple test batches in `lightning`."""
+    """A custom `torchmetric` for computing the Double Poisson NLL over multiple test batches."""
 
     def __init__(
         self,
@@ -238,6 +238,36 @@ class DoublePoissonNLL(Metric):
             mu=mu_vals,
             phi=phi_vals,
         )
+
+
+class AverageNLL(Metric):
+    """A custom `torchmetric` for computing the average NLL (negative log probability of the targets) over multiple test batches."""
+
+    def __init__(
+        self,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.add_state("all_target_probs", default=[], dist_reduce_fx="cat")
+
+    def update(self, target_probs: torch.Tensor):
+        """Update the state of this `AverageNLL` with the given target probabilities.
+
+        Args:
+            target_probs (torch.Tensor): Probabilities of the test targets (w.r.t a model's predicted conditional distribution) in a batch.
+        """
+        self.all_target_probs.append(target_probs)
+
+    def compute(self) -> torch.Tensor:
+        """Get the average NLL (negative log probability of all test targets).
+
+        Returns:
+            torch.Tensor: The average NLL.
+        """
+        all_target_probs = torch.cat(self.all_target_probs)
+        eps = torch.tensor(1e-5, device=all_target_probs.device)
+        nll = -torch.maximum(all_target_probs, eps).log().mean()
+        return nll
 
 
 class MedianPrecision(Metric):

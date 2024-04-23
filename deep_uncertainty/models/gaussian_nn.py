@@ -9,9 +9,9 @@ from torchmetrics import Metric
 from deep_uncertainty.enums import BetaSchedulerType
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
+from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
 from deep_uncertainty.evaluation.custom_torchmetrics import ContinuousExpectedCalibrationError
 from deep_uncertainty.evaluation.custom_torchmetrics import DiscreteExpectedCalibrationError
-from deep_uncertainty.evaluation.custom_torchmetrics import DoublePoissonNLL
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.evaluation.custom_torchmetrics import YoungCalibration
 from deep_uncertainty.models.backbones import Backbone
@@ -93,7 +93,7 @@ class GaussianNN(DiscreteRegressionNN):
             rv_class_type=norm,
         )
         self.discrete_ece = DiscreteExpectedCalibrationError(alpha=2)
-        self.nll = DoublePoissonNLL()
+        self.nll = AverageNLL()
         self.mp = MedianPrecision()
         self.save_hyperparameters()
 
@@ -163,22 +163,17 @@ class GaussianNN(DiscreteRegressionNN):
 
         # --- DISCRETE METRICS ---
         preds = torch.round(mu)  # Since we have to predict counts.
-        device = y_hat.device
 
-        # We compute "probability" by normalizing density over the discrete counts.
+        # We compute "probability" with the continuity correction (probability of +- 0.5 of the value).
         dist = torch.distributions.Normal(loc=mu, scale=std)
-        all_discrete_probs = torch.exp(
-            dist.log_prob(torch.arange(2000, device=device).reshape(-1, 1))
-        )
-        all_discrete_probs = all_discrete_probs / all_discrete_probs.sum(dim=0)
+        probs = dist.cdf(preds + 0.5) - dist.cdf(preds - 0.5)
+        target_probs = dist.cdf(targets + 0.5) - dist.cdf(targets - 0.5)
         self.discrete_ece.update(
             preds=preds,
-            probs=all_discrete_probs[
-                preds.long(), torch.arange(all_discrete_probs.size(1), device=device)
-            ],
+            probs=probs,
             targets=targets,
         )
-        self.nll.update(mu=mu, phi=mu / var, targets=targets)
+        self.nll.update(target_probs)
         self.mp.update(precision)
 
     def on_train_epoch_end(self):

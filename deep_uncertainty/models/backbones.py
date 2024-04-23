@@ -2,6 +2,9 @@ import torch
 from torch import nn
 from torchvision.models import mobilenet_v3_large
 from torchvision.models import MobileNet_V3_Large_Weights
+from transformers import BatchEncoding
+from transformers import DistilBertConfig
+from transformers import DistilBertModel
 
 
 class Backbone(nn.Module):
@@ -134,4 +137,34 @@ class MobileNetV3(Backbone):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         h = self.flatten(self.avg_pool(self.backbone(x)))
         h = self.conv1d(h).squeeze(-1)
+        return h
+
+
+class DistilBert(Backbone):
+    """A DistilBert feature extractor for text sequences.
+
+    Attributes:
+        output_dim (int): Dimension of output feature vectors.
+    """
+
+    def __init__(self, output_dim: int = 64):
+        """Initialize a DistilBert text feature extractor.
+
+        Args:
+            output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
+        """
+        super(DistilBert, self).__init__(output_dim=output_dim)
+
+        config = DistilBertConfig(
+            output_attentions=False, output_hidden_states=False, return_dict=False
+        )
+        self.backbone = DistilBertModel(config)
+        self.projection_1 = nn.Linear(config.dim, config.dim // 2)
+        self.projection_2 = nn.Linear(config.dim // 2, self.output_dim)
+        self.relu = nn.ReLU()
+
+    def forward(self, x: BatchEncoding) -> torch.Tensor:
+        h: torch.Tensor = self.backbone(**x)[0][:, 0]
+        h = self.relu(self.projection_1(h))
+        h = self.relu(self.projection_2(h))
         return h

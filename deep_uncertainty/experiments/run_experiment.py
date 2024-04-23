@@ -11,7 +11,7 @@ from deep_uncertainty.enums import DatasetType
 from deep_uncertainty.experiments.config import ExperimentConfig
 from deep_uncertainty.utils.experiment_utils import fix_random_seed
 from deep_uncertainty.utils.experiment_utils import get_chkp_callbacks
-from deep_uncertainty.utils.experiment_utils import get_dataloaders
+from deep_uncertainty.utils.experiment_utils import get_datamodule
 from deep_uncertainty.utils.experiment_utils import get_model
 from deep_uncertainty.utils.experiment_utils import save_metrics_plots
 
@@ -20,13 +20,14 @@ def main(config: ExperimentConfig):
 
     fix_random_seed(config.random_seed)
 
-    train_loader, val_loader, test_loader = get_dataloaders(
+    datamodule = get_datamodule(
         config.dataset_type,
         config.dataset_spec,
         config.batch_size,
     )
     if config.dataset_type == DatasetType.TABULAR:
-        input_dim = train_loader.dataset.__getitem__(0)[0].size(-1)
+        datamodule.prepare_data()
+        input_dim = datamodule.train_dataloader().dataset.__getitem__(0)[0].size(-1)
     else:
         input_dim = None
 
@@ -41,15 +42,15 @@ def main(config: ExperimentConfig):
             accelerator=config.accelerator_type.value,
             min_epochs=config.num_epochs,
             max_epochs=config.num_epochs,
-            log_every_n_steps=math.ceil(len(train_loader) / 2),
+            log_every_n_steps=5,
             check_val_every_n_epoch=math.ceil(config.num_epochs / 200),
-            enable_model_summary=False,
+            enable_model_summary=True,
             callbacks=chkp_callbacks,
             logger=logger,
         )
-        trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)
+        trainer.fit(model=model, datamodule=datamodule)
 
-        metrics = trainer.test(model=model, dataloaders=test_loader)[0]
+        metrics = trainer.test(model=model, datamodule=datamodule)[0]
         log_dir = Path(logger.log_dir)
         with open(log_dir / "test_metrics.yaml", "w") as f:
             yaml.dump(metrics, f)

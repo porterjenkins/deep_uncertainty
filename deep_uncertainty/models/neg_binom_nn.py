@@ -6,8 +6,8 @@ from torchmetrics import Metric
 
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
+from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
 from deep_uncertainty.evaluation.custom_torchmetrics import DiscreteExpectedCalibrationError
-from deep_uncertainty.evaluation.custom_torchmetrics import DoublePoissonNLL
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.backbones import Backbone
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
@@ -64,7 +64,7 @@ class NegBinomNN(DiscreteRegressionNN):
         )
 
         self.discrete_ece = DiscreteExpectedCalibrationError(alpha=2)
-        self.nll = DoublePoissonNLL()
+        self.nll = AverageNLL()
         self.mp = MedianPrecision()
 
         self.save_hyperparameters()
@@ -115,14 +115,15 @@ class NegBinomNN(DiscreteRegressionNN):
         self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor
     ):
         dist = self._convert_output_to_dist(y_hat)
-        mu, var = dist.mean, dist.variance
+        var = dist.variance
         precision = 1 / var
         preds = dist.mode
         probs = torch.exp(dist.log_prob(preds))
         targets = y.flatten()
+        target_probs = torch.exp(dist.log_prob(targets))
 
         self.discrete_ece.update(preds=preds, probs=probs, targets=targets)
-        self.nll.update(mu=mu, phi=mu / var, targets=targets)
+        self.nll.update(target_probs)
         self.mp.update(precision)
 
     def _convert_output_to_dist(self, y_hat: torch.Tensor) -> torch.distributions.NegativeBinomial:

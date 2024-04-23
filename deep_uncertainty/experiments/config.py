@@ -11,6 +11,7 @@ from deep_uncertainty.enums import HeadType
 from deep_uncertainty.enums import ImageDatasetName
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
+from deep_uncertainty.enums import TextDatasetName
 from deep_uncertainty.utils.generic_utils import get_yaml
 from deep_uncertainty.utils.generic_utils import to_snake_case
 
@@ -126,6 +127,8 @@ class ExperimentConfig:
             dataset_spec = Path(config_dict["dataset"]["spec"])
         elif dataset_type == DatasetType.IMAGE:
             dataset_spec = ImageDatasetName(config_dict["dataset"]["spec"])
+        elif dataset_type == DatasetType.TEXT:
+            dataset_spec = TextDatasetName(config_dict["dataset"]["spec"])
 
         num_trials = eval_dict["num_trials"]
         log_dir = Path(eval_dict["log_dir"])

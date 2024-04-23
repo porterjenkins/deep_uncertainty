@@ -8,8 +8,8 @@ from torchmetrics import Metric
 from deep_uncertainty.enums import BetaSchedulerType
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
+from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
 from deep_uncertainty.evaluation.custom_torchmetrics import DiscreteExpectedCalibrationError
-from deep_uncertainty.evaluation.custom_torchmetrics import DoublePoissonNLL
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.backbones import Backbone
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
@@ -80,7 +80,7 @@ class DoublePoissonNN(DiscreteRegressionNN):
         self.head = nn.Linear(self.backbone.output_dim, 2)
 
         self.discrete_ece = DiscreteExpectedCalibrationError(alpha=2)
-        self.nll = DoublePoissonNLL()
+        self.nll = AverageNLL()
         self.mp = MedianPrecision()
 
         self.save_hyperparameters()
@@ -138,9 +138,10 @@ class DoublePoissonNN(DiscreteRegressionNN):
         preds = torch.argmax(dist.pmf_vals, axis=0)
         probs = dist.pmf(preds)
         targets = y.flatten()
+        target_probs = dist.pmf(targets.long())
 
         self.discrete_ece.update(preds, probs, targets)
-        self.nll.update(mu, phi, targets)
+        self.nll.update(target_probs)
         self.mp.update(precision)
 
     def _convert_output_to_dist(self, y_hat: torch.Tensor, log_output: bool) -> DoublePoisson:

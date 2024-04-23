@@ -37,9 +37,7 @@ from deep_uncertainty.utils.data_utils import get_vehicles_train_val_test
 from deep_uncertainty.utils.generic_utils import partialclass
 
 
-def get_model(
-    config: ExperimentConfig, input_dim: int | None = None, return_initializer: bool = False
-) -> DiscreteRegressionNN:
+def get_model(config: ExperimentConfig, return_initializer: bool = False) -> DiscreteRegressionNN:
 
     initializer: Type[DiscreteRegressionNN]
 
@@ -70,7 +68,7 @@ def get_model(
 
     if config.dataset_type == DatasetType.TABULAR:
         backbone_type = MLP
-        backbone_kwargs = {"input_dim": input_dim}
+        backbone_kwargs = {"input_dim": config.input_dim}
     elif config.dataset_type == DatasetType.TEXT:
         backbone_type = DistilBert
         backbone_kwargs = {}

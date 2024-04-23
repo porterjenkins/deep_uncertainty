@@ -37,6 +37,7 @@ class ExperimentConfig:
         num_trials (int): Number of trials to run for this experiment.
         log_dir (Path): Directory to log results to.
         source_dict (dict): Dictionary from which config was constructed.
+        input_dim (int | None, optional): If dataset is tabular, the input dim of the data (used to construct the MLP). Defaults to None.
         random_seed (int | None, optional): If specified, the random seed to use for reproducibility. Defaults to None.
     """
 
@@ -60,6 +61,7 @@ class ExperimentConfig:
         num_trials: int,
         log_dir: Path,
         source_dict: dict,
+        input_dim: int | None = None,
         random_seed: int | None = None,
     ):
         self.experiment_name = experiment_name
@@ -80,6 +82,7 @@ class ExperimentConfig:
         self.num_trials = num_trials
         self.log_dir = log_dir
         self.source_dict = source_dict
+        self.input_dim = input_dim
         self.random_seed = random_seed
 
     @staticmethod
@@ -132,6 +135,7 @@ class ExperimentConfig:
 
         num_trials = eval_dict["num_trials"]
         log_dir = Path(eval_dict["log_dir"])
+        input_dim = config_dict["dataset"].get("input_dim")
         random_seed = config_dict.get("random_seed")
 
         return ExperimentConfig(
@@ -153,6 +157,7 @@ class ExperimentConfig:
             num_trials=num_trials,
             log_dir=log_dir,
             source_dict=config_dict,
+            input_dim=input_dim,
             random_seed=random_seed,
         )
 

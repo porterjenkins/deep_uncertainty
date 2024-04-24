@@ -122,9 +122,9 @@ def get_datamodule(
             return ReviewsDataModule(
                 root_dir="./data/amazon_reviews",
                 batch_size=batch_size,
-                num_workers=0,  # For some reason, lots of workers here causes issues.
-                max_instances=None,  # Tweak this for quick test runs.
-                persistent_workers=False,
+                num_workers=4,
+                max_instances=None,
+                persistent_workers=True,
             )
 
 
@@ -161,9 +161,9 @@ def save_metrics_plots(log_dir: Path):
     epoch = metrics["epoch"].unique()
     train_loss = metrics["train_loss_epoch"].dropna()
     val_loss = metrics["val_loss"].dropna()
-    train_mae = metrics["train_mae"].dropna()
+    train_mae = metrics["train_mae_epoch"].dropna()
     val_mae = metrics["val_mae"].dropna()
-    train_rmse = metrics["train_rmse"].dropna()
+    train_rmse = metrics["train_rmse_epoch"].dropna()
     val_rmse = metrics["val_rmse"].dropna()
 
     # Losses plot.

@@ -17,7 +17,7 @@ class TabularDataModule(L.LightningDataModule):
         self.num_workers = num_workers
         self.persistent_workers = persistent_workers
 
-    def prepare_data(self):
+    def setup(self, stage):
         data: dict[str, np.ndarray] = np.load(self.dataset_path)
         X_train, y_train = data["X_train"], data["y_train"]
         X_val, y_val = data["X_val"], data["y_val"]

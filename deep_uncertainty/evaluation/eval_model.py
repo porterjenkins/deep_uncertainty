@@ -7,10 +7,9 @@ from typing import Type
 import lightning as L
 import yaml
 
-from deep_uncertainty.enums import DatasetType
 from deep_uncertainty.experiments.config import ExperimentConfig
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
-from deep_uncertainty.utils.experiment_utils import get_dataloaders
+from deep_uncertainty.utils.experiment_utils import get_datamodule
 from deep_uncertainty.utils.experiment_utils import get_model
 
 
@@ -20,26 +19,22 @@ def main(log_dir: Path, config_path: Path, chkp_path: Path):
         os.makedirs(log_dir)
     config = ExperimentConfig.from_yaml(config_path)
 
-    test_loader = get_dataloaders(
+    datamodule = get_datamodule(
         config.dataset_type,
         config.dataset_spec,
         config.batch_size,
-    )[2]
-    if config.dataset_type == DatasetType.TABULAR:
-        input_dim = test_loader.dataset.__getitem__(0)[0].size(-1)
-    else:
-        input_dim = None
+    )
 
-    initializer: Type[DiscreteRegressionNN] = get_model(
-        config, input_dim, return_initializer=True
-    )[1]
+    initializer: Type[DiscreteRegressionNN] = get_model(config, return_initializer=True)[1]
     model = initializer.load_from_checkpoint(chkp_path)
     evaluator = L.Trainer(
         accelerator=config.accelerator_type.value,
         enable_model_summary=False,
         logger=False,
+        devices=1,
+        num_nodes=1,
     )
-    metrics = evaluator.test(model=model, dataloaders=test_loader)[0]
+    metrics = evaluator.test(model=model, datamodule=datamodule)[0]
     with open(log_dir / "test_metrics.yaml", "w") as f:
         yaml.dump(metrics, f)
 

@@ -4,7 +4,6 @@ from argparse import Namespace
 from pathlib import Path
 
 import lightning as L
-import yaml
 from lightning.pytorch.loggers import CSVLogger
 
 from deep_uncertainty.experiments.config import ExperimentConfig
@@ -41,14 +40,10 @@ def main(config: ExperimentConfig):
             enable_model_summary=False,
             callbacks=chkp_callbacks,
             logger=logger,
+            precision=config.precision,
         )
         trainer.fit(model=model, datamodule=datamodule)
-
-        metrics = trainer.test(model=model, datamodule=datamodule)[0]
         log_dir = Path(logger.log_dir)
-        with open(log_dir / "test_metrics.yaml", "w") as f:
-            yaml.dump(metrics, f)
-        config.to_yaml(log_dir / "config.yaml")
         save_metrics_plots(log_dir)
 
 

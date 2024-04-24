@@ -37,6 +37,7 @@ class ExperimentConfig:
         num_trials (int): Number of trials to run for this experiment.
         log_dir (Path): Directory to log results to.
         source_dict (dict): Dictionary from which config was constructed.
+        precision (str | None, optional): String specifying desired floating point precision for training. Defaults to None.
         input_dim (int | None, optional): If dataset is tabular, the input dim of the data (used to construct the MLP). Defaults to None.
         random_seed (int | None, optional): If specified, the random seed to use for reproducibility. Defaults to None.
     """
@@ -62,6 +63,7 @@ class ExperimentConfig:
         log_dir: Path,
         source_dict: dict,
         input_dim: int | None = None,
+        precision: str | None = None,
         random_seed: int | None = None,
     ):
         self.experiment_name = experiment_name
@@ -83,6 +85,7 @@ class ExperimentConfig:
         self.log_dir = log_dir
         self.source_dict = source_dict
         self.input_dim = input_dim
+        self.precision = precision
         self.random_seed = random_seed
 
     @staticmethod
@@ -96,8 +99,8 @@ class ExperimentConfig:
             ExperimentConfig: The specified config.
         """
         config_dict = get_yaml(config_path)
-        training_dict = config_dict["training"]
-        eval_dict = config_dict["evaluation"]
+        training_dict: dict = config_dict["training"]
+        eval_dict: dict = config_dict["evaluation"]
 
         experiment_name = to_snake_case(config_dict["experiment_name"])
         accelerator_type = AcceleratorType(training_dict["accelerator"])
@@ -106,6 +109,7 @@ class ExperimentConfig:
         chkp_freq = training_dict["chkp_freq"]
         batch_size = training_dict["batch_size"]
         num_epochs = training_dict["num_epochs"]
+        precision = training_dict.get("precision")
         optim_type = OptimizerType(training_dict["optimizer"]["type"])
         optim_kwargs = training_dict["optimizer"]["kwargs"]
 
@@ -158,6 +162,7 @@ class ExperimentConfig:
             log_dir=log_dir,
             source_dict=config_dict,
             input_dim=input_dim,
+            precision=precision,
             random_seed=random_seed,
         )
 

@@ -18,3 +18,4 @@ torchvision==0.14.1
 tqdm==4.65.0
 wget==3.2
 transformers==4.40.0
+pycocotools==2.0.7

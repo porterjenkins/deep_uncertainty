@@ -30,7 +30,7 @@ class ReviewsDataModule(L.LightningDataModule):
         self.persistent_workers = persistent_workers
         self.max_instances = max_instances
 
-    def prepare_data(self) -> None:
+    def setup(self, stage):
         self.train, self.val, self.test = random_split(
             dataset=ReviewsDataset(self.root_dir, self.max_instances),
             lengths=[0.7, 0.1, 0.2],

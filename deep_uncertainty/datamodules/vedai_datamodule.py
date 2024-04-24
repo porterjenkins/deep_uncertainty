@@ -23,7 +23,7 @@ class VEDAIDataModule(L.LightningDataModule):
         self.num_workers = num_workers
         self.persistent_workers = persistent_workers
 
-    def prepare_data(self) -> None:
+    def setup(self, stage):
         resize = Resize((224, 224))
         augment = AutoAugment()
         normalize = Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))

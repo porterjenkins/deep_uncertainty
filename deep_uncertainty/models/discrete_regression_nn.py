@@ -3,7 +3,6 @@ from typing import Type
 
 import lightning as L
 import torch
-from matplotlib.figure import Figure
 from torchmetrics import MeanAbsoluteError
 from torchmetrics import MeanSquaredError
 from torchmetrics import Metric
@@ -90,33 +89,25 @@ class DiscreteRegressionNN(L.LightningModule):
             point_predictions = self._point_prediction(y_hat, training=True).flatten()
             self.train_rmse.update(point_predictions, y.flatten().float())
             self.train_mae.update(point_predictions, y.flatten().float())
+            self.log("train_rmse", self.train_rmse, on_epoch=True)
+            self.log("train_mae", self.train_mae, on_epoch=True)
 
         return loss
-
-    def on_train_epoch_end(self) -> None:
-        self.log("train_rmse", self.train_rmse.compute())
-        self.log("train_mae", self.train_mae.compute())
-        self.train_rmse.reset()
-        self.train_mae.reset()
 
     def validation_step(self, batch: torch.Tensor) -> torch.Tensor:
         x, y = batch
         y_hat = self._forward_impl(x)
         loss = self.loss_fn(y_hat, y.view(-1, 1).float())
-        self.log("val_loss", loss, prog_bar=True, on_epoch=True)
+        self.log("val_loss", loss, prog_bar=True, on_epoch=True, sync_dist=True)
 
         # Since we use _forward_impl, we specify training=True to get the proper transforms.
         point_predictions = self._point_prediction(y_hat, training=True).flatten()
         self.val_rmse.update(point_predictions, y.flatten().float())
         self.val_mae.update(point_predictions, y.flatten().float())
+        self.log("val_rmse", self.val_rmse, on_epoch=True)
+        self.log("val_mae", self.val_mae, on_epoch=True)
 
         return loss
-
-    def on_validation_epoch_end(self):
-        self.log("val_rmse", self.val_rmse.compute())
-        self.log("val_mae", self.val_mae.compute())
-        self.val_rmse.reset()
-        self.val_mae.reset()
 
     def test_step(self, batch: torch.Tensor):
         x, y = batch
@@ -126,28 +117,16 @@ class DiscreteRegressionNN(L.LightningModule):
         self.test_mae.update(point_predictions, y.flatten().float())
         self._update_addl_test_metrics_batch(x, y_hat, y.view(-1, 1).float())
 
+        self.log("test_rmse", self.test_rmse, on_epoch=True)
+        self.log("test_mae", self.test_mae, on_epoch=True)
+        for name, metric_tracker in self._addl_test_metrics_dict().items():
+            self.log(name, metric_tracker, on_epoch=True)
+
     def predict_step(self, batch: torch.Tensor) -> torch.Tensor:
         x, _ = batch
         y_hat = self._predict_impl(x)
 
         return y_hat
-
-    def on_test_epoch_end(self):
-        for name, metric_tracker in self._addl_test_metrics_dict().items():
-            self.log(name, metric_tracker.compute())
-            if name in {"mean_calibration", "mp"}:
-                fig: Figure = metric_tracker.plot()
-                if self.logger is not None:
-                    root = self.logger.log_dir or "."
-                else:
-                    root = "."
-                fig.savefig(root + f"/{name}_plot.png")
-            metric_tracker.reset()
-
-        self.log("test_rmse", self.test_rmse.compute())
-        self.log("test_mae", self.test_mae.compute())
-        self.test_rmse.reset()
-        self.test_mae.reset()
 
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
         """Make a forward pass through the network.

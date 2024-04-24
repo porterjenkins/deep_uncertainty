@@ -21,8 +21,10 @@ def plot_posterior_predictive(
     error_color: str = "r",
     error_alpha: float = 0.2,
     show: bool = True,
+    legend: bool = True,
     title: str = "",
     ax: plt.Axes | None = None,
+    ylims: tuple[float] | None = None,
 ):
     """Visualize a model's posterior predictive distribution over a 1d dataset (`x`, `y` both scalars) by showing the expected value and error bounds across the regression targets.
 
@@ -35,8 +37,10 @@ def plot_posterior_predictive(
         error_color (str, optional): Color with which to fill the model's error bounds. Defaults to "r".
         alpha (float, optional): Transparency value for the model's error bounds. Defaults to 0.2.
         show (bool, optional): Whether/not to show the resultant plot. Defaults to True.
+        legend (bool, optional): Whether/not to put a legend in the resultant plot. Defaults to True.
         title (str, optional): If specified, a title for the resultant plot. Defaults to "".
         ax (plt.Axes | None, optional): If given, the axis on which to plot the posterior predictive distribution. Defaults to None (axis is created).
+        ylims (tuple[float] | None, optional): If given, the lower/upper axis limits for the plot. Defaults to None.
     """
     order = x.argsort()
 
@@ -49,9 +53,13 @@ def plot_posterior_predictive(
     )
     ax.set_xlabel("x")
     ax.set_ylabel("y")
-    ax.legend()
+    if legend:
+        ax.legend()
     ax.set_title(title)
-    ax.set_ylim(y.min() - 5, y.max() + 5)
+    if ylims is None:
+        ax.set_ylim(lower.min() - 5, upper.max() + 5)
+    else:
+        ax.set_ylim(*ylims)
     if show:
         plt.show()
 

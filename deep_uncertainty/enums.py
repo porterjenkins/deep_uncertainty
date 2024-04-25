@@ -41,6 +41,7 @@ class ImageDatasetName(Enum):
     MNIST = "mnist"
     COINS = "coin_counting"
     VEHICLES = "vehicles"
+    COCO_PEOPLE = "coco_people"
 
 
 class TextDatasetName(Enum):

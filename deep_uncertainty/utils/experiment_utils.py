@@ -10,6 +10,7 @@ import torch
 from lightning.pytorch.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
 
+from deep_uncertainty.datamodules import COCOPeopleDataModule
 from deep_uncertainty.datamodules import ReviewsDataModule
 from deep_uncertainty.datamodules import TabularDataModule
 from deep_uncertainty.datamodules import VEDAIDataModule
@@ -28,6 +29,7 @@ from deep_uncertainty.models.backbones import MLP
 from deep_uncertainty.models.backbones import MNISTCNN
 from deep_uncertainty.models.backbones import MobileNetV3
 from deep_uncertainty.models.backbones import SmallCNN
+from deep_uncertainty.models.backbones import ViT
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
 from deep_uncertainty.utils.data_utils import get_coin_counting_train_val_test
 from deep_uncertainty.utils.data_utils import get_mnist_train_val_test
@@ -77,9 +79,12 @@ def get_model(config: ExperimentConfig, return_initializer: bool = False) -> Dis
             backbone_type = MNISTCNN
         elif config.dataset_spec == ImageDatasetName.COINS:
             backbone_type = SmallCNN
+        elif config.dataset_spec == ImageDatasetName.COCO_PEOPLE:
+            backbone_type = ViT
         else:
             backbone_type = MobileNetV3
         backbone_kwargs = {}
+    backbone_kwargs["output_dim"] = config.hidden_dim
 
     model = initializer(
         backbone_type=backbone_type,
@@ -113,6 +118,13 @@ def get_datamodule(
         elif dataset_spec == ImageDatasetName.VEHICLES:
             return VEDAIDataModule(
                 root_dir="./data/vehicles",
+                batch_size=batch_size,
+                num_workers=9,
+                persistent_workers=True,
+            )
+        elif dataset_spec == ImageDatasetName.COCO_PEOPLE:
+            return COCOPeopleDataModule(
+                root_dir="./data/coco_people",
                 batch_size=batch_size,
                 num_workers=9,
                 persistent_workers=True,

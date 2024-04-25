@@ -5,6 +5,8 @@ from torchvision.models import MobileNet_V3_Large_Weights
 from transformers import BatchEncoding
 from transformers import DistilBertConfig
 from transformers import DistilBertModel
+from transformers import ViTConfig
+from transformers import ViTModel
 
 
 class Backbone(nn.Module):
@@ -165,6 +167,40 @@ class DistilBert(Backbone):
 
     def forward(self, x: BatchEncoding) -> torch.Tensor:
         h: torch.Tensor = self.backbone(**x)[0][:, 0]
+        h = self.relu(self.projection_1(h))
+        h = self.relu(self.projection_2(h))
+        return h
+
+
+class ViT(Backbone):
+    """A ViT feature extractor for images.
+
+    Attributes:
+        output_dim (int): Dimension of output feature vectors.
+    """
+
+    def __init__(self, output_dim: int = 64):
+        """Initialize a ViT image feature extractor.
+
+        Args:
+            output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
+        """
+        super(ViT, self).__init__(output_dim=output_dim)
+
+        config = ViTConfig(image_size=(512, 512))
+        self.backbone = ViTModel(config)
+        self.projection_1 = nn.Linear(config.hidden_size, config.hidden_size // 2)
+        self.projection_2 = nn.Linear(config.hidden_size // 2, self.output_dim)
+        self.relu = nn.ReLU()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        h: torch.Tensor = self.backbone(
+            pixel_values=x,
+            interpolate_pos_encoding=True,
+            output_attentions=False,
+            output_hidden_states=False,
+            return_dict=False,
+        )[1]
         h = self.relu(self.projection_1(h))
         h = self.relu(self.projection_2(h))
         return h

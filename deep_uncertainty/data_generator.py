@@ -195,12 +195,16 @@ class DataGenerator:
         return X, y
 
     @staticmethod
-    def generate_discrete_conflation_parabola(n: int = 1000) -> tuple[np.ndarray, np.ndarray]:
+    def generate_discrete_overdispersed_parabola(n: int = 1000) -> tuple[np.ndarray, np.ndarray]:
         x_vals = []
         y_vals = []
         for _ in range(n):
             x = torch.rand(1) * 10
-            rv_list = [torch.distributions.Poisson(rate=(x - 3) ** 2)] * 3
+            rv_list = [
+                torch.distributions.NegativeBinomial(total_count=x**2, probs=0.4),
+                torch.distributions.NegativeBinomial(total_count=x**2, probs=0.2),
+                torch.distributions.NegativeBinomial(total_count=x**2, probs=0.1),
+            ]
             conflation = DiscreteConflation(rv_list)
             y = conflation.rvs((1, 1))
 
@@ -209,5 +213,4 @@ class DataGenerator:
 
         X = np.array(x_vals)
         y = np.array(y_vals)
-
         return X, y

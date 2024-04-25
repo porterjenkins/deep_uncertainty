@@ -15,6 +15,7 @@ GENERATORS = {
     DataGenerator.generate_nonlinear_count_data.__name__: DataGenerator.generate_nonlinear_count_data,
     DataGenerator.generate_linear_count_data.__name__: DataGenerator.generate_linear_count_data,
     DataGenerator.generate_discrete_conflation_sine_wave.__name__: DataGenerator.generate_discrete_conflation_sine_wave,
+    DataGenerator.generate_discrete_conflation_parabola.__name__: DataGenerator.generate_discrete_conflation_parabola,
 }
 
 

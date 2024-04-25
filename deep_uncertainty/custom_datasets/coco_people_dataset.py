@@ -5,13 +5,12 @@ from shutil import unpack_archive
 from typing import Callable
 
 import pandas as pd
-import requests
 import wget
+from imgdl import download
 from PIL import Image
 from PIL.Image import Image as PILImage
 from pycocotools.coco import COCO
 from torch.utils.data import Dataset
-from tqdm import tqdm
 
 
 class COCOPeopleDataset(Dataset):
@@ -88,14 +87,12 @@ class COCOPeopleDataset(Dataset):
 
         self.image_ids = self.coco_api.getImgIds(catIds=self.PERSON_CATEGORY_ID)[: self.limit]
         images = self.coco_api.loadImgs(self.image_ids)
-
+        image_urls = []
         self.image_paths = []
-        for image in tqdm(images, desc="Downloading images..."):
-            image_data = requests.get(image["coco_url"]).content
-            image_path = self.image_dir / image["file_name"]
-            with open(image_path, "wb") as image_file:
-                image_file.write(image_data)
-            self.image_paths.append(image_path)
+        for image in images:
+            image_urls.append(image["coco_url"])
+            self.image_paths.append(str(self.image_dir / image["file_name"]))
+        self.image_paths = download(image_urls, paths=self.image_paths, n_workers=50)
 
     def _get_instances_df(self) -> pd.DataFrame:
         instances = {"image_path": [], "count": []}

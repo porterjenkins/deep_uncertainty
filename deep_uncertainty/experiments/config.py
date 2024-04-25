@@ -39,6 +39,7 @@ class ExperimentConfig:
         source_dict (dict): Dictionary from which config was constructed.
         precision (str | None, optional): String specifying desired floating point precision for training. Defaults to None.
         input_dim (int | None, optional): If dataset is tabular, the input dim of the data (used to construct the MLP). Defaults to None.
+        hidden_dim (int, optional): Feature dimension used in the model (before feeding the representation to the output head). Defaults to 64.
         random_seed (int | None, optional): If specified, the random seed to use for reproducibility. Defaults to None.
     """
 
@@ -63,6 +64,7 @@ class ExperimentConfig:
         log_dir: Path,
         source_dict: dict,
         input_dim: int | None = None,
+        hidden_dim: int = 64,
         precision: str | None = None,
         random_seed: int | None = None,
     ):
@@ -85,6 +87,7 @@ class ExperimentConfig:
         self.log_dir = log_dir
         self.source_dict = source_dict
         self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
         self.precision = precision
         self.random_seed = random_seed
 
@@ -140,6 +143,7 @@ class ExperimentConfig:
         num_trials = eval_dict["num_trials"]
         log_dir = Path(eval_dict["log_dir"])
         input_dim = config_dict["dataset"].get("input_dim")
+        hidden_dim = config_dict.get("hidden_dim", 64)
         random_seed = config_dict.get("random_seed")
 
         return ExperimentConfig(
@@ -162,6 +166,7 @@ class ExperimentConfig:
             log_dir=log_dir,
             source_dict=config_dict,
             input_dim=input_dim,
+            hidden_dim=hidden_dim,
             precision=precision,
             random_seed=random_seed,
         )

@@ -29,7 +29,7 @@ class COCOPeopleDataModule(L.LightningDataModule):
         COCOPeopleDataset(self.root_dir)
 
     def setup(self, stage):
-        resize = Resize((640, 480))
+        resize = Resize((512, 512))
         augment = AutoAugment()
         normalize = Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
         to_tensor = ToTensor()
@@ -38,16 +38,13 @@ class COCOPeopleDataModule(L.LightningDataModule):
 
         full_dataset = COCOPeopleDataset(self.root_dir)
         num_instances = len(full_dataset)
-        shuffled_indices = np.random.permutation(np.arange(num_instances))
+        generator = np.random.default_rng(seed=1998)
+        shuffled_indices = generator.permutation(np.arange(num_instances))
         num_train = int(0.7 * num_instances)
         num_val = int(0.1 * num_instances)
         train_indices = shuffled_indices[:num_train]
         val_indices = shuffled_indices[num_train : num_train + num_val]
         test_indices = shuffled_indices[num_train + num_val :]
-
-        assert (
-            not set(train_indices).intersection(set(val_indices)).intersection(set(test_indices))
-        )
 
         self.train = ImageDatasetWrapper(
             base_dataset=Subset(full_dataset, train_indices),

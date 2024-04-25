@@ -126,7 +126,7 @@ def get_datamodule(
             return COCOPeopleDataModule(
                 root_dir="./data/coco_people",
                 batch_size=batch_size,
-                num_workers=9,
+                num_workers=16,
                 persistent_workers=True,
             )
     elif dataset_type == DatasetType.TEXT:
@@ -134,7 +134,7 @@ def get_datamodule(
             return ReviewsDataModule(
                 root_dir="./data/amazon_reviews",
                 batch_size=batch_size,
-                num_workers=4,
+                num_workers=16,
                 max_instances=None,
                 persistent_workers=True,
             )

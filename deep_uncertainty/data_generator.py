@@ -193,3 +193,21 @@ class DataGenerator:
         y = np.array(y_vals)
 
         return X, y
+
+    @staticmethod
+    def generate_discrete_conflation_parabola(n: int = 1000) -> tuple[np.ndarray, np.ndarray]:
+        x_vals = []
+        y_vals = []
+        for _ in range(n):
+            x = torch.rand(1) * 10
+            rv_list = [torch.distributions.Poisson(rate=(x - 3) ** 2)] * 3
+            conflation = DiscreteConflation(rv_list)
+            y = conflation.rvs((1, 1))
+
+            x_vals.append(x)
+            y_vals.append(y)
+
+        X = np.array(x_vals)
+        y = np.array(y_vals)
+
+        return X, y

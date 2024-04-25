@@ -18,6 +18,7 @@ class COCOPeopleDataModule(L.LightningDataModule):
     def __init__(
         self, root_dir: str | Path, batch_size: int, num_workers: int, persistent_workers: bool
     ):
+        super().__init__()
         self.root_dir = Path(root_dir)
         self.batch_size = batch_size
         self.num_workers = num_workers

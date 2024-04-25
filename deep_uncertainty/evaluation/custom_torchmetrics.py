@@ -70,7 +70,10 @@ class YoungCalibration(Metric):
         }
         self.posterior_predictive = self.rv_class_type(**param_dict)
         self.all_targets = torch.cat(self.y).long().flatten().detach().cpu().numpy()
-        return compute_young_calibration(self.all_targets, self.posterior_predictive)
+        return torch.tensor(
+            compute_young_calibration(self.all_targets, self.posterior_predictive),
+            device=self.device,
+        )
 
     def plot(self) -> Figure:
         if not self._computed:
@@ -158,12 +161,15 @@ class ContinuousExpectedCalibrationError(Metric):
         }
         self.posterior_predictive = self.rv_class_type(**param_dict)
         self.all_targets = torch.cat(self.y).long().flatten().detach().cpu().numpy()
-        return compute_continuous_ece(
-            self.all_targets,
-            self.posterior_predictive,
-            self.num_bins,
-            self.weights,
-            self.alpha,
+        return torch.tensor(
+            compute_continuous_ece(
+                self.all_targets,
+                self.posterior_predictive,
+                self.num_bins,
+                self.weights,
+                self.alpha,
+            ),
+            device=self.device,
         )
 
 
@@ -201,13 +207,16 @@ class DiscreteExpectedCalibrationError(Metric):
         all_preds = torch.cat(self.all_preds).long().flatten().detach().cpu().numpy()
         all_probs = torch.cat(self.all_probs).flatten().detach().cpu().numpy()
         all_targets = torch.cat(self.all_targets).long().flatten().detach().cpu().numpy()
-        return compute_discrete_ece(
-            targets=all_targets,
-            preds=all_preds,
-            probs=all_probs,
-            bin_strategy=self.bin_strategy,
-            alpha=self.alpha,
-            num_bins=self.num_bins,
+        return torch.tensor(
+            compute_discrete_ece(
+                targets=all_targets,
+                preds=all_preds,
+                probs=all_probs,
+                bin_strategy=self.bin_strategy,
+                alpha=self.alpha,
+                num_bins=self.num_bins,
+            ),
+            device=self.device,
         )
 
 
@@ -233,10 +242,13 @@ class DoublePoissonNLL(Metric):
         mu_vals = torch.cat(self.mu_vals).long().flatten().detach().cpu().numpy()
         phi_vals = torch.cat(self.phi_vals).flatten().detach().cpu().numpy()
         all_targets = torch.cat(self.all_targets).long().flatten().detach().cpu().numpy()
-        return compute_double_poisson_nll(
-            y_true=all_targets,
-            mu=mu_vals,
-            phi=phi_vals,
+        return torch.tensor(
+            compute_double_poisson_nll(
+                y_true=all_targets,
+                mu=mu_vals,
+                phi=phi_vals,
+            ),
+            device=self.device,
         )
 
 

@@ -3,10 +3,10 @@ from torch import nn
 from torchvision.models import mobilenet_v3_large
 from torchvision.models import MobileNet_V3_Large_Weights
 from transformers import BatchEncoding
-from transformers import DistilBertConfig
 from transformers import DistilBertModel
-from transformers import ViTConfig
 from transformers import ViTModel
+from transformers.modeling_outputs import BaseModelOutput
+from transformers.modeling_outputs import BaseModelOutputWithPooling
 
 
 class Backbone(nn.Module):
@@ -156,17 +156,14 @@ class DistilBert(Backbone):
             output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
         """
         super(DistilBert, self).__init__(output_dim=output_dim)
-
-        config = DistilBertConfig(
-            output_attentions=False, output_hidden_states=False, return_dict=False
-        )
-        self.backbone = DistilBertModel(config)
-        self.projection_1 = nn.Linear(config.dim, config.dim // 2)
-        self.projection_2 = nn.Linear(config.dim // 2, self.output_dim)
+        self.backbone = DistilBertModel.from_pretrained("distilbert-base-cased")
+        self.projection_1 = nn.Linear(768, 384)
+        self.projection_2 = nn.Linear(384, self.output_dim)
         self.relu = nn.ReLU()
 
     def forward(self, x: BatchEncoding) -> torch.Tensor:
-        h: torch.Tensor = self.backbone(**x)[0][:, 0]
+        outputs: BaseModelOutput = self.backbone(**x)
+        h = outputs.last_hidden_state[:, 0]
         h = self.relu(self.projection_1(h))
         h = self.relu(self.projection_2(h))
         return h
@@ -186,21 +183,14 @@ class ViT(Backbone):
             output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
         """
         super(ViT, self).__init__(output_dim=output_dim)
-
-        config = ViTConfig(image_size=(512, 512))
-        self.backbone = ViTModel(config)
-        self.projection_1 = nn.Linear(config.hidden_size, config.hidden_size // 2)
-        self.projection_2 = nn.Linear(config.hidden_size // 2, self.output_dim)
+        self.backbone = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k")
+        self.projection_1 = nn.Linear(768, 384)
+        self.projection_2 = nn.Linear(384, self.output_dim)
         self.relu = nn.ReLU()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        h: torch.Tensor = self.backbone(
-            pixel_values=x,
-            interpolate_pos_encoding=True,
-            output_attentions=False,
-            output_hidden_states=False,
-            return_dict=False,
-        )[1]
+        outputs: BaseModelOutputWithPooling = self.backbone(pixel_values=x)
+        h = outputs.pooler_output
         h = self.relu(self.projection_1(h))
         h = self.relu(self.projection_2(h))
         return h

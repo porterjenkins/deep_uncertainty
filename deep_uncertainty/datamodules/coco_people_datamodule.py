@@ -15,6 +15,9 @@ from deep_uncertainty.custom_datasets import ImageDatasetWrapper
 
 
 class COCOPeopleDataModule(L.LightningDataModule):
+
+    IMG_SIZE = 224
+
     def __init__(
         self, root_dir: str | Path, batch_size: int, num_workers: int, persistent_workers: bool
     ):
@@ -29,7 +32,7 @@ class COCOPeopleDataModule(L.LightningDataModule):
         COCOPeopleDataset(self.root_dir)
 
     def setup(self, stage):
-        resize = Resize((512, 512))
+        resize = Resize((self.IMG_SIZE, self.IMG_SIZE))
         augment = AutoAugment()
         normalize = Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
         to_tensor = ToTensor()

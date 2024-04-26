@@ -11,7 +11,7 @@ from transformers import DistilBertTokenizer
 from deep_uncertainty.custom_datasets import ReviewsDataset
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
+tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-cased")
 
 
 class ReviewsDataModule(L.LightningDataModule):

@@ -4,3 +4,10 @@ __pycache__
 .DS_Store
 *.env
 */.ipynb_checkpoints
+
+
+
+/baselines/faithful-heteroscedasticity/data/*
+!/baselines/faithful-heteroscedasticity/data/crispr/
+/baselines/faithful-heteroscedasticity/experiments/
+*.pdf

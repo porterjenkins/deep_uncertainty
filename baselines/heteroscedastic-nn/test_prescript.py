@@ -113,7 +113,7 @@ s_var_sqr = s_var ** 2
 # f, s = ds_train.ground_truth(x)
 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-save_path = "/home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/Effective Bayesian Heteroscedastic Regressionwith Deep Neural Networks/heteroscedastic-nn/Baseline/save_output/prescription/" + current_time + "/"
+save_path = "./Baseline/save_output/prescription/" + current_time + "/"
 
 
 data_save = {}

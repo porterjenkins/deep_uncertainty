@@ -145,7 +145,7 @@ elif mode == "Heteroscedastic":
     
     current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     
-    save_path = "/home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/Effective Bayesian Heteroscedastic Regressionwith Deep Neural Networks/heteroscedastic-nn/Baseline/save_output/" + current_time + "/"
+    save_path = "./Baseline/save_output/" + current_time + "/"
 
 
 

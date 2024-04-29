@@ -184,7 +184,7 @@ elif mode == "Heteroscedastic":
             ax.set_xlabel('$x$')
         axs[0].set_ylabel('$y$')
     
-    save_path = "/home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/Effective Bayesian Heteroscedastic Regressionwith Deep Neural Networks/heteroscedastic-nn/Baseline/save_output/"
+    save_path = "./Baseline/save_output/"
 
 
 

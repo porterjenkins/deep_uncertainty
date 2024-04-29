@@ -5,9 +5,72 @@ __pycache__
 *.env
 */.ipynb_checkpoints
 
-
+# ignore the faithful-hetero
 
 /baselines/faithful-heteroscedasticity/data/*
 !/baselines/faithful-heteroscedasticity/data/crispr/
 /baselines/faithful-heteroscedasticity/experiments/
 *.pdf
+
+
+# ignore the heterca-nn
+
+# Byte-compiled / optimized / DLL files
+
+# *.py[cod]
+# *$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+/baselines/heteroscedastic-nn/build/
+/baselines/heteroscedastic-nn/Baseline/save_output
+/baselines/heteroscedastic-nn/data
+/baselines/heteroscedastic-nn/dependencies
+/baselines/heteroscedastic-nn/develop-eggs/
+/baselines/heteroscedastic-nn/dist/
+/baselines/heteroscedastic-nn/downloads/
+/baselines/heteroscedastic-nn/eggs/
+.eggs/
+/baselines/heteroscedastic-nn/lib/
+/baselines/heteroscedastic-nn/lib64/
+/baselines/heteroscedastic-nn/parts/
+/baselines/heteroscedastic-nn/sdist/
+/baselines/heteroscedastic-nn/var/
+/baselines/heteroscedastic-nn/wheels/
+/baselines/heteroscedastic-nn/pip-wheel-metadata/
+/baselines/heteroscedastic-nn/share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot

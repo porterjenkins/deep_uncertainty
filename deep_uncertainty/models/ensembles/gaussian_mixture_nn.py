@@ -9,8 +9,7 @@ from torchmetrics import MeanAbsoluteError
 from torchmetrics import MeanSquaredError
 from torchmetrics import Metric
 
-from deep_uncertainty.evaluation.custom_torchmetrics import DiscreteExpectedCalibrationError
-from deep_uncertainty.evaluation.custom_torchmetrics import DoublePoissonNLL
+from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.experiments.config import EnsembleConfig
 from deep_uncertainty.models import GaussianNN
@@ -34,8 +33,7 @@ class GaussianMixtureNN(L.LightningModule):
 
         self.rmse = MeanSquaredError(squared=False)
         self.mae = MeanAbsoluteError()
-        self.discrete_ece = DiscreteExpectedCalibrationError(alpha=2)
-        self.nll = DoublePoissonNLL()
+        self.nll = AverageNLL()
         self.mp = MedianPrecision()
 
     def _predict_impl(self, x: torch.Tensor) -> torch.Tensor:
@@ -68,7 +66,6 @@ class GaussianMixtureNN(L.LightningModule):
         return {
             "rmse": self.rmse,
             "mae": self.mae,
-            "discrete_ece": self.discrete_ece,
             "nll": self.nll,
             "mp": self.mp,
         }
@@ -82,24 +79,13 @@ class GaussianMixtureNN(L.LightningModule):
         targets = y.flatten()
 
         preds = torch.round(mu)  # Since we have to predict counts.
-        device = y_hat.device
 
         # We compute "probability" by normalizing density over the discrete counts.
         dist = torch.distributions.Normal(loc=mu, scale=std)
-        all_discrete_probs = torch.exp(
-            dist.log_prob(torch.arange(2000, device=device).reshape(-1, 1))
-        )
-        all_discrete_probs = all_discrete_probs / all_discrete_probs.sum(dim=0)
-        self.discrete_ece.update(
-            preds=preds,
-            probs=all_discrete_probs[
-                preds.long(), torch.arange(all_discrete_probs.size(1), device=device)
-            ],
-            targets=targets,
-        )
+        target_probs = dist.cdf(targets + 0.5) - dist.cdf(targets - 0.5)
         self.rmse.update(preds, targets)
         self.mae.update(preds, targets)
-        self.nll.update(mu=mu, phi=mu / var, targets=targets)
+        self.nll.update(target_probs=target_probs)
         self.mp.update(precision)
 
     def test_step(self, batch: torch.Tensor) -> torch.Tensor:

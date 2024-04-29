@@ -11,7 +11,7 @@ from deep_uncertainty.models.ensembles import DoublePoissonMixtureNN
 from deep_uncertainty.models.ensembles import GaussianMixtureNN
 from deep_uncertainty.models.ensembles import NegBinomMixtureNN
 from deep_uncertainty.models.ensembles import PoissonMixtureNN
-from deep_uncertainty.utils.experiment_utils import get_dataloaders
+from deep_uncertainty.utils.experiment_utils import get_datamodule
 
 
 def main(config_path: str):
@@ -21,11 +21,11 @@ def main(config_path: str):
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
-    test_loader = get_dataloaders(
+    datamodule = get_datamodule(
         config.dataset_type,
         config.dataset_spec,
         config.batch_size,
-    )[2]
+    )
 
     if config.member_head_type == HeadType.GAUSSIAN:
         ensemble = GaussianMixtureNN.from_config(config)
@@ -42,8 +42,10 @@ def main(config_path: str):
         accelerator=config.accelerator_type.value,
         enable_model_summary=False,
         logger=False,
+        devices=1,
+        num_nodes=1,
     )
-    metrics = evaluator.test(model=ensemble, dataloaders=test_loader)[0]
+    metrics = evaluator.test(model=ensemble, datamodule=datamodule)[0]
     with open(log_dir / "test_metrics.yaml", "w") as f:
         yaml.dump(metrics, f)
     config.to_yaml(log_dir / "ensemble_config.yaml")

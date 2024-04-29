@@ -11,3 +11,7 @@ The two baselines will need to configurate with different requirement, please cr
 The `heteroscedastic-nn` has integrated the tabular data and can be ran by executing corresponding `py` files.
 
 The `faithful-heteroscedasticity` has been tunned successfully and can replicate the original paper's training process, pending realizing the customized dataset.
+
+For details of the installation and and requirements for each baselines, please check the sub-folder `heteroscedastic-nn` and `faithful-heteroscedasticity`. 
+
+To avoid the path error, when conducting the experiment, please `cd` to the above folders as the root execution path.

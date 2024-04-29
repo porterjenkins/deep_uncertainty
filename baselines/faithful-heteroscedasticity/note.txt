@@ -1,1 +1,0 @@
-docker run -it --gpus all --name tensorflow_container tensorflow/tensorflow:2.8.0-gpu bash

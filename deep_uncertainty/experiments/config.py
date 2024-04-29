@@ -239,6 +239,8 @@ class EnsembleConfig:
             dataset_spec = Path(config_dict["dataset"]["spec"])
         elif dataset_type == DatasetType.IMAGE:
             dataset_spec = ImageDatasetName(config_dict["dataset"]["spec"])
+        elif dataset_type == DatasetType.TEXT:
+            dataset_spec = TextDatasetName(config_dict["dataset"]["spec"])
         log_dir = Path(config_dict["log_dir"])
 
         return EnsembleConfig(

@@ -9,8 +9,8 @@ from torchmetrics import MeanAbsoluteError
 from torchmetrics import MeanSquaredError
 from torchmetrics import Metric
 
+from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
 from deep_uncertainty.evaluation.custom_torchmetrics import DiscreteExpectedCalibrationError
-from deep_uncertainty.evaluation.custom_torchmetrics import DoublePoissonNLL
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.experiments.config import EnsembleConfig
 from deep_uncertainty.models import DoublePoissonNN
@@ -42,7 +42,7 @@ class BaseDiscreteMixtureNN(L.LightningModule):
         self.rmse = MeanSquaredError(squared=False)
         self.mae = MeanAbsoluteError()
         self.discrete_ece = DiscreteExpectedCalibrationError(alpha=2)
-        self.nll = DoublePoissonNLL()
+        self.nll = AverageNLL()
         self.mp = MedianPrecision()
 
     @property
@@ -60,6 +60,7 @@ class BaseDiscreteMixtureNN(L.LightningModule):
         preds = y_hat.argmax(dim=1)
         probs = y_hat[torch.arange(y_hat.size(0), device=self.device), preds]
         targets = y.flatten()
+        target_probs = y_hat[torch.arange(y_hat.size(0), device=self.device), targets.long()]
 
         support = torch.arange(self.max_value, device=self.device)
         mu = (y_hat * support).sum(dim=1)
@@ -73,7 +74,7 @@ class BaseDiscreteMixtureNN(L.LightningModule):
         )
         self.rmse.update(preds, targets)
         self.mae.update(preds, targets)
-        self.nll.update(mu=mu, phi=mu / var, targets=targets)
+        self.nll.update(target_probs)
         self.mp.update(precision)
 
     def test_step(self, batch: torch.Tensor) -> torch.Tensor:

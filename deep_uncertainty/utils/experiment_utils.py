@@ -19,6 +19,7 @@ from deep_uncertainty.enums import ImageDatasetName
 from deep_uncertainty.enums import TextDatasetName
 from deep_uncertainty.experiments.config import ExperimentConfig
 from deep_uncertainty.models import DoublePoissonNN
+from deep_uncertainty.models import FaithfulGaussianNN
 from deep_uncertainty.models import GaussianNN
 from deep_uncertainty.models import MeanNN
 from deep_uncertainty.models import NegBinomNN
@@ -49,6 +50,8 @@ def get_model(config: ExperimentConfig, return_initializer: bool = False) -> Dis
             )
         else:
             initializer = GaussianNN
+    elif config.head_type == HeadType.FAITHFUL_GAUSSIAN:
+        initializer = FaithfulGaussianNN
     elif config.head_type in (HeadType.POISSON, HeadType.POISSON_GLM):
         initializer = PoissonNN
     elif config.head_type == HeadType.DOUBLE_POISSON:

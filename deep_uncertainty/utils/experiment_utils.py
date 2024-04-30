@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 import torch
 from lightning.pytorch.callbacks import ModelCheckpoint
-from torch.utils.data import DataLoader
 
 from deep_uncertainty.datamodules import COCOPeopleDataModule
 from deep_uncertainty.datamodules import ReviewsDataModule
@@ -25,17 +24,13 @@ from deep_uncertainty.models import MeanNN
 from deep_uncertainty.models import NegBinomNN
 from deep_uncertainty.models import PoissonNN
 from deep_uncertainty.models.backbones import DistilBert
+from deep_uncertainty.models.backbones import Identity
 from deep_uncertainty.models.backbones import MLP
 from deep_uncertainty.models.backbones import MNISTCNN
 from deep_uncertainty.models.backbones import MobileNetV3
 from deep_uncertainty.models.backbones import SmallCNN
 from deep_uncertainty.models.backbones import ViT
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
-from deep_uncertainty.utils.data_utils import get_coin_counting_train_val_test
-from deep_uncertainty.utils.data_utils import get_mnist_train_val_test
-from deep_uncertainty.utils.data_utils import get_tabular_npz_train_val_test
-from deep_uncertainty.utils.data_utils import get_train_val_test_loaders
-from deep_uncertainty.utils.data_utils import get_vehicles_train_val_test
 from deep_uncertainty.utils.generic_utils import partialclass
 
 
@@ -54,7 +49,7 @@ def get_model(config: ExperimentConfig, return_initializer: bool = False) -> Dis
             )
         else:
             initializer = GaussianNN
-    elif config.head_type == HeadType.POISSON:
+    elif config.head_type in (HeadType.POISSON, HeadType.POISSON_GLM):
         initializer = PoissonNN
     elif config.head_type == HeadType.DOUBLE_POISSON:
         if config.beta_scheduler_type is not None:
@@ -65,11 +60,14 @@ def get_model(config: ExperimentConfig, return_initializer: bool = False) -> Dis
             )
         else:
             initializer = DoublePoissonNN
-    elif config.head_type == HeadType.NEGATIVE_BINOMIAL:
+    elif config.head_type in (HeadType.NEGATIVE_BINOMIAL, HeadType.NEGATIVE_BINOMIAL_GLM):
         initializer = NegBinomNN
 
     if config.dataset_type == DatasetType.TABULAR:
-        backbone_type = MLP
+        if config.head_type in (HeadType.POISSON_GLM, HeadType.NEGATIVE_BINOMIAL_GLM):
+            backbone_type = Identity
+        else:
+            backbone_type = MLP
         backbone_kwargs = {"input_dim": config.input_dim}
     elif config.dataset_type == DatasetType.TEXT:
         backbone_type = DistilBert
@@ -138,34 +136,6 @@ def get_datamodule(
                 max_instances=None,
                 persistent_workers=True,
             )
-
-
-def get_dataloaders(
-    dataset_type: DatasetType,
-    dataset_spec: Path | ImageDatasetName,
-    batch_size: int,
-) -> tuple[DataLoader, DataLoader, DataLoader]:
-
-    if dataset_type == DatasetType.TABULAR:
-        train_dataset, val_dataset, test_dataset = get_tabular_npz_train_val_test(dataset_spec)
-    elif dataset_type == DatasetType.IMAGE:
-        if dataset_spec == ImageDatasetName.MNIST:
-            train_dataset, val_dataset, test_dataset = get_mnist_train_val_test()
-        elif dataset_spec == ImageDatasetName.COINS:
-            train_dataset, val_dataset, test_dataset = get_coin_counting_train_val_test()
-        elif dataset_spec == ImageDatasetName.VEHICLES:
-            train_dataset, val_dataset, test_dataset = get_vehicles_train_val_test()
-
-    train_loader, val_loader, test_loader = get_train_val_test_loaders(
-        train_dataset,
-        val_dataset,
-        test_dataset,
-        batch_size,
-        num_workers=9,
-        persistent_workers=True,
-    )
-
-    return train_loader, val_loader, test_loader
 
 
 def save_metrics_plots(log_dir: Path):

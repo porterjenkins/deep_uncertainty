@@ -26,19 +26,20 @@ class Identity(Backbone):
 
     Since the structure of this repo expects a feature extractor backbone before a probabilistic regression head,
     this class allows for training pure affine probabilistic models (y_hat = beta.T @ x + beta_0).
-    
+
     Attributes:
         output_dim (int): Dimension of output feature vectors. Will be the same as the input feature dim.
     """
 
-    def __init__(self, input_dim: int):
+    def __init__(self, input_dim: int, output_dim: int | None = None):
         """Instantiate an Identity backbone.
 
         Args:
             input_dim (int): Dimension of input feature vectors.
+            output_dim (int | None, optional): Dimension of output feature vectors (here for compatibility only). Unused.
         """
         super(Identity, self).__init__(output_dim=input_dim)
-    
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return x
 

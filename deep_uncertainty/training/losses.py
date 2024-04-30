@@ -105,3 +105,27 @@ def neg_binom_nll(outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         - targets * (torch.log(alphamu) - torch.log(1 + alphamu))
     )
     return losses.mean()
+
+
+def faithful_gaussian_nll(outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+    """Compute the modified Gaussian negative log likelihood according to https://arxiv.org/abs/2212.09184 over the given targets.
+
+    Args:
+        output (torch.Tensor): The (n, 2) output from a FaithfulGaussianNN. Dims along last axis are assumed to be (mu, logvar).
+        targets (torch.Tensor): Regression targets for the FaithfulGaussianNN. Shape: (n, 1).
+
+    Returns:
+        torch.Tensor: Avg. loss across all targets. Zero-dimensional tensor (torch.Size([])).
+    """
+    if targets.size(1) != 1:
+        warnings.warn(
+            f"Targets tensor for `faithful_gaussian_nll` expected to be of shape (n, 1) but got shape {targets.shape}. This may result in unexpected training behavior."
+        )
+
+    mu, logvar = torch.split(outputs, [1, 1], dim=-1)
+    dist = torch.distributions.Normal(loc=mu.detach(), scale=logvar.exp().sqrt())
+
+    mse_penalty = 0.5 * (targets - mu) ** 2
+    dist_penalty: torch.Tensor = -dist.log_prob(targets)
+    losses = mse_penalty + dist_penalty
+    return losses.mean()

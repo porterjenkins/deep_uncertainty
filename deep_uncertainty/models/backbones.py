@@ -21,6 +21,28 @@ class Backbone(nn.Module):
         self.output_dim = output_dim
 
 
+class Identity(Backbone):
+    """Placeholder class for training a generalized linear model. Performs no transformations on input data.
+
+    Since the structure of this repo expects a feature extractor backbone before a probabilistic regression head,
+    this class allows for training pure affine probabilistic models (y_hat = beta.T @ x + beta_0).
+    
+    Attributes:
+        output_dim (int): Dimension of output feature vectors. Will be the same as the input feature dim.
+    """
+
+    def __init__(self, input_dim: int):
+        """Instantiate an Identity backbone.
+
+        Args:
+            input_dim (int): Dimension of input feature vectors.
+        """
+        super(Identity, self).__init__(output_dim=input_dim)
+    
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return x
+
+
 class MLP(Backbone):
     """An MLP feature extractor for (N, d) input data.
 
@@ -29,7 +51,7 @@ class MLP(Backbone):
     """
 
     def __init__(self, input_dim: int = 1, output_dim: int = 64):
-        """Instantiate a ScalarMLP.
+        """Instantiate an MLP backbone.
 
         Args:
             input_dim (int, optional): Dimension of input feature vectors. Defaults to 1.

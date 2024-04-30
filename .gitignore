@@ -9,3 +9,4 @@ __pycache__
 /chkp/
 *.png
 /ignore/
+.log

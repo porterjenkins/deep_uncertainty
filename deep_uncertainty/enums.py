@@ -14,6 +14,8 @@ class HeadType(Enum):
     POISSON = "poisson"
     DOUBLE_POISSON = "double_poisson"
     NEGATIVE_BINOMIAL = "negative_binomial"
+    POISSON_GLM = "poisson_glm"
+    NEGATIVE_BINOMIAL_GLM = "negative_binomial_glm"
 
 
 class OptimizerType(Enum):

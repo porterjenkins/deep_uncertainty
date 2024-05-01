@@ -11,9 +11,9 @@ from deep_uncertainty.data_generator import DataGenerator
 
 
 def save_train_val_test_split(output_dir: str = "."):
-    """Method to download and preprocess rental bike counts from the Bike Sharing dataset for regression tasks.
+    """Method to download and preprocess the Abalone dataset for regression tasks.
 
-    When this method has finished running, a `"bikes.npz"` file will be in `output_dir` for later use, containing
+    When this method has finished running, an `"abalone.npz"` file will be in `output_dir` for later use, containing
     pre-computed train/test/val splits.
 
     Args:

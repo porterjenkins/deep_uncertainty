@@ -32,6 +32,8 @@ cycler==0.12.1
     # via matplotlib
 distlib==0.3.8
     # via virtualenv
+et-xmlfile==1.1.0
+    # via openpyxl
 exceptiongroup==1.2.0
     # via pytest
 filelock==3.13.1
@@ -103,6 +105,8 @@ numpy==1.25.1
     #   torchmetrics
     #   torchvision
     #   transformers
+openpyxl==3.1.2
+    # via -r requirements.in
 opt-einsum==3.3.0
     # via pyro-ppl
 packaging==23.2

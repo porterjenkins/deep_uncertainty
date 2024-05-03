@@ -22,6 +22,7 @@ from deep_uncertainty.models import DoublePoissonNN
 from deep_uncertainty.models import FaithfulGaussianNN
 from deep_uncertainty.models import GaussianNN
 from deep_uncertainty.models import MeanNN
+from deep_uncertainty.models import NaturalGaussianNN
 from deep_uncertainty.models import NegBinomNN
 from deep_uncertainty.models import PoissonNN
 from deep_uncertainty.models.backbones import DistilBert
@@ -52,6 +53,8 @@ def get_model(config: ExperimentConfig, return_initializer: bool = False) -> Dis
             initializer = GaussianNN
     elif config.head_type == HeadType.FAITHFUL_GAUSSIAN:
         initializer = FaithfulGaussianNN
+    elif config.head_type == HeadType.NATURAL_GAUSSIAN:
+        initializer = NaturalGaussianNN
     elif config.head_type in (HeadType.POISSON, HeadType.POISSON_GLM):
         initializer = PoissonNN
     elif config.head_type == HeadType.DOUBLE_POISSON:

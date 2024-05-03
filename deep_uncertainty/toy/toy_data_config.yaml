@@ -1,11 +1,9 @@
 dataset:
-  task: generate_nonlinear_count_data
+  task: generate_discrete_overdispersed_parabola
   generation_params:
     n: 1000
-    x_min: 1
-    x_max: 25
   train_pct: 0.8
   val_pct: 0.1
   test_pct: 0.1
-  name: toy_data_nonlinear_count
-  output_dir: "./data/nonlinear_count_data/"
+  name: discrete_parabola
+  output_dir: "./data/discrete_parabola/"

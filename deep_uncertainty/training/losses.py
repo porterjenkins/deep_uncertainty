@@ -1,4 +1,6 @@
 import warnings
+from math import log
+from math import pi
 
 import torch
 
@@ -129,3 +131,30 @@ def faithful_gaussian_nll(outputs: torch.Tensor, targets: torch.Tensor) -> torch
     dist_penalty: torch.Tensor = -dist.log_prob(targets)
     losses = mse_penalty + dist_penalty
     return losses.mean()
+
+
+def natural_guassian_nll(outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+    """Compute the modified natural Gaussian negative log likelihood according to Immer et al '23 (link below):
+
+    https://proceedings.neurips.cc/paper_files/paper/2023/hash/a901d5540789a086ee0881a82211b63d-Abstract-Conference.html
+
+    This implementation is an essential replica of the code provided in the appendix of Immer et al '23.
+
+    Args:
+        output (torch.Tensor): The (n, 2) output from a NaturalGaussianNN. Dims along last axis are assumed to be (eta_1, eta_2).
+        targets (torch.Tensor): Regression targets for the NaturalGaussianNN. Shape: (n, 1).
+
+    Returns:
+        torch.Tensor: Avg. loss across all targets. Zero-dimensional tensor (torch.Size([])).
+    """
+    if targets.size(1) != 1:
+        warnings.warn(
+            f"Targets tensor for `natural_gaussian_nll` expected to be of shape (n, 1) but got shape {targets.shape}. This may result in unexpected training behavior."
+        )
+    C = -0.5 * log(2 * pi)
+    n = len(outputs)
+    target = torch.cat([targets, targets.square()], dim=1)
+    inner = torch.einsum("nk,nk->n", target, outputs)
+    log_A = outputs[:, 0].square() / (4 * outputs[:, 1]) + 0.5 * torch.log(-2 * outputs[:, 1])
+    log_lik = n * C + inner.sum() + log_A.sum()
+    return -log_lik / n

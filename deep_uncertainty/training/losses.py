@@ -133,7 +133,7 @@ def faithful_gaussian_nll(outputs: torch.Tensor, targets: torch.Tensor) -> torch
     return losses.mean()
 
 
-def natural_guassian_nll(outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+def natural_gaussian_nll(outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
     """Compute the modified natural Gaussian negative log likelihood according to Immer et al '23 (link below):
 
     https://proceedings.neurips.cc/paper_files/paper/2023/hash/a901d5540789a086ee0881a82211b63d-Abstract-Conference.html

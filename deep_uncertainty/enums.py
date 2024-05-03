@@ -17,6 +17,7 @@ class HeadType(Enum):
     POISSON_GLM = "poisson_glm"
     NEGATIVE_BINOMIAL_GLM = "negative_binomial_glm"
     FAITHFUL_GAUSSIAN = "faithful_gaussian"
+    NATURAL_GAUSSIAN = "natural_gaussian"
 
 
 class OptimizerType(Enum):

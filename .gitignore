@@ -10,3 +10,6 @@ __pycache__
 *.png
 /ignore/
 .log
+
+deep_uncertainty/etl/get_prescriptions_data.py
+deep_uncertainty/etl/get_bikes_data.py

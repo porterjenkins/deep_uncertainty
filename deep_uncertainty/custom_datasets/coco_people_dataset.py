@@ -36,6 +36,7 @@ class COCOPeopleDataset(Dataset):
         limit: int | None = None,
         transform: Callable[[PILImage], PILImage] | None = None,
         target_transform: Callable[[int], int] | None = None,
+        surface_image_path: bool = False,
     ):
         """Create an instance of the VEDAI dataset.
 
@@ -44,12 +45,14 @@ class COCOPeopleDataset(Dataset):
             limit (int | None, optional): Max number of images to download/use for this dataset. Defaults to None.
             transform (Callable, optional): A function/transform that takes in a PIL image and returns a transformed version. e.g, `transforms.RandomCrop`. Defaults to None.
             target_transform (Callable, optional): A function/transform that takes in the target and transforms it. Defaults to None.
+            surface_image_path (bool, optional): Whether/not to return the image path along with the image and count in __getitem__.
         """
         self.root_dir = Path(root_dir)
         self.limit = limit
         self.image_dir = self.root_dir / "images"
         self.annotations_dir = self.root_dir / "annotations"
         self.annotations_json_path = self.annotations_dir / "instances_train2017.json"
+        self.surface_image_path = surface_image_path
 
         for dir in self.root_dir, self.image_dir, self.annotations_dir:
             if not dir.exists():
@@ -106,15 +109,19 @@ class COCOPeopleDataset(Dataset):
             instances["count"].append(num_people)
         return pd.DataFrame(instances)
 
-    def __getitem__(self, idx: int) -> tuple[PILImage, int]:
+    def __getitem__(self, idx: int) -> tuple[PILImage, int] | tuple[PILImage, tuple[str, int]]:
         row = self.instances.iloc[idx]
-        image = Image.open(row["image_path"])
+        image_path = row["image_path"]
+        image = Image.open(image_path)
         count = row["count"]
         if self.transform is not None:
             image = self.transform(image)
         if self.target_transform is not None:
             count = self.target_transform(count)
-        return image, count
+        if self.surface_image_path:
+            return image, (image_path, count)
+        else:
+            return image, count
 
     def __len__(self):
         return len(self.instances)

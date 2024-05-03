@@ -19,13 +19,19 @@ class COCOPeopleDataModule(L.LightningDataModule):
     IMG_SIZE = 224
 
     def __init__(
-        self, root_dir: str | Path, batch_size: int, num_workers: int, persistent_workers: bool
+        self,
+        root_dir: str | Path,
+        batch_size: int,
+        num_workers: int,
+        persistent_workers: bool,
+        surface_image_path: bool = False,
     ):
         super().__init__()
         self.root_dir = Path(root_dir)
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.persistent_workers = persistent_workers
+        self.surface_image_path = surface_image_path
 
     def prepare_data(self) -> None:
         # Force images to be downloaded.
@@ -39,7 +45,10 @@ class COCOPeopleDataModule(L.LightningDataModule):
         train_transforms = Compose([resize, augment, to_tensor, normalize])
         inference_transforms = Compose([resize, to_tensor, normalize])
 
-        full_dataset = COCOPeopleDataset(self.root_dir)
+        full_dataset = COCOPeopleDataset(
+            self.root_dir,
+            surface_image_path=self.surface_image_path,
+        )
         num_instances = len(full_dataset)
         generator = np.random.default_rng(seed=1998)
         shuffled_indices = generator.permutation(np.arange(num_instances))

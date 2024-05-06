@@ -1,5 +1,6 @@
 from typing import TypeAlias
 
+import torch
 from scipy.stats import rv_continuous
 from scipy.stats import rv_discrete
 
@@ -24,3 +25,18 @@ def get_bayes_credible_interval(rv: RandomVariable, p: float) -> tuple[float, fl
     credible_interval_min, credible_interval_max = rv.ppf(p_low), rv.ppf(p_high)
 
     return credible_interval_min, credible_interval_max
+
+
+def calculate_entropy(probs: torch.Tensor) -> torch.Tensor:
+    """Compute the entropy of the given discrete distribution(s) in native Pytorch.
+
+    If `probs` do not sum to 1 along dimension 0, they will first be normalized.
+
+    Args:
+        probs (torch.Tensor): Probabilities that define the discrete distribution(s). Shape: (num_probabilities, num_distributions).
+
+    Returns:
+        torch.Tensor: The entropy of the given distribution(s). Shape: (num_distributions,).
+    """
+    normalized_probs = probs / probs.sum(dim=0)
+    return -torch.xlogy(normalized_probs, normalized_probs).sum(dim=0)

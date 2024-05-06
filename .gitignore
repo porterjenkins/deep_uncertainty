@@ -11,5 +11,12 @@ __pycache__
 /ignore/
 .log
 
+
 deep_uncertainty/etl/get_prescriptions_data.py
 deep_uncertainty/etl/get_bikes_data.py
+
+deep_uncertainty/chkp/
+deep_uncertainty/data/
+deep_uncertainty/logs
+
+bike+sharing+dataset.zip

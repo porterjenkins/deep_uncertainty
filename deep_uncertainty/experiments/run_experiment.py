@@ -6,6 +6,9 @@ from pathlib import Path
 import lightning as L
 from lightning.pytorch.loggers import CSVLogger
 
+import sys
+sys.path.append("/home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/deep_uncertainty/")
+
 from deep_uncertainty.experiments.config import ExperimentConfig
 from deep_uncertainty.utils.experiment_utils import fix_random_seed
 from deep_uncertainty.utils.experiment_utils import get_chkp_callbacks
@@ -49,7 +52,7 @@ def main(config: ExperimentConfig):
 
 def parse_args() -> Namespace:
     parser = ArgumentParser()
-    parser.add_argument("--config", type=str)
+    parser.add_argument("--config", type=str, default="/home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/deep_uncertainty/deep_uncertainty/experiments/experiment_faithful.yaml")
     return parser.parse_args()
 
 

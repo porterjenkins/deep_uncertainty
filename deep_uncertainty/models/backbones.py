@@ -62,7 +62,11 @@ class MLP(Backbone):
         super(MLP, self).__init__(output_dim=output_dim)
 
         self.layers = nn.Sequential(
-            nn.Linear(input_dim, 128),
+            # nn.Linear(1, 128), # toy: /home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/deep_uncertainty/deep_uncertainty/data/nonlinear_count_data
+            # nn.Linear(42, 128), # sales: /home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/deep_uncertainty/deep_uncertainty/data/sales.npz
+            # nn.Linear(5, 128), # prescriptions: /home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/deep_uncertainty/deep_uncertainty/data/prescriptions.npz
+            # nn.Linear(10, 128), # abalone: /home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/deep_uncertainty/deep_uncertainty/data/abalone.csv
+            nn.Linear(15, 128), # bikes: /home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/deep_uncertainty/deep_uncertainty/data/bikes.npz
             nn.ReLU(),
             nn.Linear(128, 128),
             nn.ReLU(),

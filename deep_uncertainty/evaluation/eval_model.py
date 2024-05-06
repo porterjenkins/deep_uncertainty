@@ -7,6 +7,10 @@ from typing import Type
 import lightning as L
 import yaml
 
+
+import sys
+sys.path.append('/home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/deep_uncertainty')
+
 from deep_uncertainty.experiments.config import ExperimentConfig
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
 from deep_uncertainty.utils.experiment_utils import get_datamodule

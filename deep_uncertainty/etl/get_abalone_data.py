@@ -6,6 +6,9 @@ from shutil import unpack_archive
 import numpy as np
 import pandas as pd
 import wget
+import sys
+
+sys.path.append("/home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/deep_uncertainty/")
 
 from deep_uncertainty.data_generator import DataGenerator
 

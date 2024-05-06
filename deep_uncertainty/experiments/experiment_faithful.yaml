@@ -1,0 +1,42 @@
+experiment_name: faithful_gaussian_bikes
+# experiment_name: faithful_gaussian_abalone
+# experiment_name: faithful_gaussian_prescriptions
+# experiment_name: faithful_gaussian_sales
+random_seed: 1998 # 0
+# random_seed: 1999 # 1
+# random_seed: 2000 # 2
+# random_seed: 2001 # 3
+# random_seed: 2002 # 4
+head_type: faithful_gaussian
+dataset:
+  type: tabular
+  spec: /home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/deep_uncertainty/deep_uncertainty/data/bikes.npz
+  # spec: /home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/deep_uncertainty/deep_uncertainty/data/abalone.npz
+  # spec: /home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/deep_uncertainty/deep_uncertainty/data/prescriptions.npz
+  # spec: /home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/deep_uncertainty/deep_uncertainty/data/sales.npz
+training:
+  accelerator: gpu
+  batch_size: 32
+  beta_scheduler:
+    type: cosine_annealing
+    kwargs:
+      beta_0: 1.0
+      beta_1: 1.0
+      last_epoch: -1
+  chkp_dir: /home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/deep_uncertainty/deep_uncertainty/chkp
+  chkp_freq: 20
+  num_epochs: 100
+  optimizer:
+    type: adam_w
+    kwargs:
+      lr: 0.001
+      weight_decay: 0.00001
+  lr_scheduler:
+    type: cosine_annealing
+    kwargs:
+      T_max: 100
+      eta_min: 0
+      last_epoch: -1
+evaluation:
+  num_trials: 1
+  log_dir: /home/local/ASURITE/longchao/Desktop/project/HeteroscedasticUnc/deep_uncertainty/deep_uncertainty/logs

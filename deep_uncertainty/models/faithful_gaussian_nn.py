@@ -73,9 +73,24 @@ class FaithfulGaussianNN(DiscreteRegressionNN):
         If viewing outputs as (mu, logvar), use `torch.split(y_hat, [1, 1], dim=-1)` to separate.
         """
         h: torch.Tensor = self.backbone(x)
-        mu = self.mu_head(h)
-        logvar = self.logvar_head(h.detach())
+
+        data = (h - h.mean()) / h.std()
+        
+        mu = self.mu_head(data)
+
+        data_detached = data.detach()
+        # data = (data - data.mean()) / data.std()
+
+        if torch.isnan(data_detached).any() or torch.isinf(data_detached).any():
+            print("Input data contains NaN or Inf values.")
+
+        logvar = self.logvar_head(data_detached)
+        
         y_hat = torch.cat((mu, logvar), dim=-1)
+        if torch.isnan(logvar).any():
+            print(logvar)
+            print("logvar!")
+        
         return y_hat
 
     def _predict_impl(self, x: torch.Tensor) -> torch.Tensor:

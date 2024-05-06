@@ -16,12 +16,51 @@ class TabularDataModule(L.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.persistent_workers = persistent_workers
+    
+    # DLC:
+    def normalize_with_stats(self, X, mean, std):
+        """Normalize a dataset using provided mean and standard deviation."""
+        return (X - mean) / std
 
-    def setup(self, stage):
-        data: dict[str, np.ndarray] = np.load(self.dataset_path)
-        X_train, y_train = data["X_train"], data["y_train"]
-        X_val, y_val = data["X_val"], data["y_val"]
-        X_test, y_test = data["X_test"], data["y_test"]
+    def setup(self, stage, normalize=True):
+        if normalize:
+            data: dict[str, np.ndarray] = np.load(self.dataset_path)
+            X_train, y_train = data["X_train"], data["y_train"]
+            X_val, y_val = data["X_val"], data["y_val"]
+            X_test, y_test = data["X_test"], data["y_test"]
+            
+            # mean_X_train = X_train.mean(axis=0)  # Column-wise mean
+            # std_X_train = X_train.std(axis=0)    # Column-wise standard deviation
+
+            # mean_Y_train = y_train.mean(axis=0)  # Column-wise mean
+            # std_Y_train = y_train.std(axis=0)    # Column-wise standard deviation
+            
+            # # Normalize training data 
+            # X_train_norm = (X_train - mean_X_train) / std_X_train
+
+            # # Normalize validation and test data using the same training mean and std
+            # X_val_norm = self.normalize_with_stats(X_val, mean_X_train, std_X_train)
+            # X_test_norm = self.normalize_with_stats(X_test, mean_X_train, std_X_train)
+
+
+            # Y_train_norm = self.normalize_with_stats(y_train, mean_Y_train, std_Y_train)
+            # Y_test_norm = self.normalize_with_stats(y_val, mean_Y_train, std_Y_train)
+            # Y_test_norm = self.normalize_with_stats(y_test, mean_Y_train, std_Y_train)
+
+            # X_train = X_train_norm
+            # X_val = X_val_norm
+            # X_test = X_test_norm
+            
+            # y_train = Y_train_norm
+            # y_test = Y_test_norm
+
+        
+        else:
+            data: dict[str, np.ndarray] = np.load(self.dataset_path)
+            X_train, y_train = data["X_train"], data["y_train"]
+            X_val, y_val = data["X_val"], data["y_val"]
+            X_test, y_test = data["X_test"], data["y_test"]
+
 
         if X_train.ndim == 1:
             X_train = X_train.reshape(-1, 1)

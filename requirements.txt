@@ -80,6 +80,7 @@ matplotlib==3.7.2
     # via
     #   -r requirements.in
     #   pycocotools
+    #   seaborn
 multidict==6.0.5
     # via
     #   aiohttp
@@ -102,9 +103,20 @@ numpy==1.25.1
     #   pytorch-lightning
     #   scikit-learn
     #   scipy
+    #   seaborn
     #   torchmetrics
     #   torchvision
     #   transformers
+nvidia-cublas-cu11==11.10.3.66
+    # via
+    #   nvidia-cudnn-cu11
+    #   torch
+nvidia-cuda-nvrtc-cu11==11.7.99
+    # via torch
+nvidia-cuda-runtime-cu11==11.7.99
+    # via torch
+nvidia-cudnn-cu11==8.5.0.96
+    # via torch
 openpyxl==3.1.2
     # via -r requirements.in
 opt-einsum==3.3.0
@@ -121,7 +133,9 @@ packaging==23.2
     #   torchmetrics
     #   transformers
 pandas==2.1.4
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   seaborn
 pathspec==0.12.1
     # via black
 pillow==10.2.0
@@ -189,6 +203,8 @@ scipy==1.11.1
     # via
     #   -r requirements.in
     #   scikit-learn
+seaborn==0.13.2
+    # via -r requirements.in
 six==1.16.0
     # via python-dateutil
 threadpoolctl==3.2.0
@@ -243,7 +259,10 @@ virtualenv==20.25.0
 wget==3.2
     # via -r requirements.in
 wheel==0.42.0
-    # via pip-tools
+    # via
+    #   nvidia-cublas-cu11
+    #   nvidia-cuda-runtime-cu11
+    #   pip-tools
 yarl==1.9.4
     # via aiohttp
 

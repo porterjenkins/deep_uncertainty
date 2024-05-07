@@ -1,3 +1,4 @@
+from .bible_dataset import BibleDataset
 from .coco_cows_dataset import COCOCowsDataset
 from .coco_people_dataset import COCOPeopleDataset
 from .coin_counting_dataset import CoinCountingDataset

@@ -82,8 +82,17 @@ def main(log_dir: Path, config_path: Path, chkp_path: Path | None, dataset: str)
             batch_encoding = batch_encoding.to(device)
             y_hat = model._predict_impl(batch_encoding)
 
-            if head_type == HeadType.GAUSSIAN:
+            if head_type in (HeadType.GAUSSIAN, HeadType.FAITHFUL_GAUSSIAN):
                 mu, var = torch.split(y_hat, [1, 1], dim=-1)
+                mu = mu.flatten()
+                var = var.flatten()
+                dist = torch.distributions.Normal(mu, var.sqrt())
+                probs = dist.cdf(trunc_support + 0.5) - dist.cdf(trunc_support - 0.5)
+
+            elif head_type == HeadType.NATURAL_GAUSSIAN:
+                eta_1, eta_2 = torch.split(y_hat, [1, 1], dim=-1)
+                mu = -0.5 * (eta_1 / eta_2)
+                var = -0.5 * torch.reciprocal(eta_2)
                 mu = mu.flatten()
                 var = var.flatten()
                 dist = torch.distributions.Normal(mu, var.sqrt())

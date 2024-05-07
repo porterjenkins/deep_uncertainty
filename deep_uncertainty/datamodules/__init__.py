@@ -1,3 +1,4 @@
+from .coco_cows_datamodule import COCOCowsDataModule
 from .coco_people_datamodule import COCOPeopleDataModule
 from .reviews_datamodule import ReviewsDataModule
 from .tabular_datamodule import TabularDataModule

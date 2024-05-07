@@ -13,11 +13,11 @@ from pycocotools.coco import COCO
 from torch.utils.data import Dataset
 
 
-class COCOPeopleDataset(Dataset):
-    """Subset of COCO with images containing people (labeled with the count of people in each image)."""
+class COCOCowsDataset(Dataset):
+    """Subset of COCO with images containing cows (labeled with the count of cows in each image)."""
 
     ANNOTATIONS_URL = "http://images.cocodataset.org/annotations/annotations_trainval2017.zip"
-    PERSON_CATEGORY_ID = 1
+    COW_CATEGORY_ID = 21
 
     def __init__(
         self,
@@ -27,7 +27,7 @@ class COCOPeopleDataset(Dataset):
         target_transform: Callable[[int], int] | None = None,
         surface_image_path: bool = False,
     ):
-        """Create an instance of the COCOPeople dataset.
+        """Create an instance of the COCOCows dataset.
 
         Args:
             root_dir (str | Path): Root directory where dataset files should be stored.
@@ -77,7 +77,7 @@ class COCOPeopleDataset(Dataset):
             unpack_archive(annotations_zip_fname, self.root_dir)
         self.coco_api = COCO(self.annotations_json_path)
 
-        self.image_ids = self.coco_api.getImgIds(catIds=self.PERSON_CATEGORY_ID)[: self.limit]
+        self.image_ids = self.coco_api.getImgIds(catIds=self.COW_CATEGORY_ID)[: self.limit]
         images = self.coco_api.loadImgs(self.image_ids)
         image_urls = []
         self.image_paths = []
@@ -91,11 +91,9 @@ class COCOPeopleDataset(Dataset):
         for image_id, image_path in zip(self.image_ids, self.image_paths):
             annotation_ids = self.coco_api.getAnnIds(image_id)
             annotations = self.coco_api.loadAnns(annotation_ids)
-            num_people = len(
-                [x for x in annotations if x["category_id"] == self.PERSON_CATEGORY_ID]
-            )
+            num_cows = len([x for x in annotations if x["category_id"] == self.COW_CATEGORY_ID])
             instances["image_path"].append(str(image_path))
-            instances["count"].append(num_people)
+            instances["count"].append(num_cows)
         return pd.DataFrame(instances)
 
     def __getitem__(self, idx: int) -> tuple[PILImage, int] | tuple[PILImage, tuple[str, int]]:

@@ -7,21 +7,14 @@ import yaml
 from scipy.stats import permutation_test
 from tqdm import tqdm
 
+from deep_uncertainty.constants import HEADS_TO_NAMES
+
 
 def difference_of_means(x: np.ndarray, y: np.ndarray, axis: int):
     return np.mean(x, axis=axis) - np.mean(y, axis=axis)
 
 
-heads = [
-    "ddpn",
-    "beta_ddpn",
-    "gaussian",
-    "beta_gaussian",
-    "faithful_gaussian",
-    "natural_gaussian",
-    "poisson",
-    "nbinom",
-]
+heads = HEADS_TO_NAMES.keys()
 versions = range(5)
 
 for head, version in tqdm(

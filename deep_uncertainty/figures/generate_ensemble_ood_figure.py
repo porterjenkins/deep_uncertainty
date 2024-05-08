@@ -11,6 +11,8 @@ from matplotlib.pyplot import Axes
 from scipy.stats import gaussian_kde
 from seaborn import color_palette
 
+from deep_uncertainty.constants import ENSEMBLE_HEADS_TO_NAMES
+
 
 def produce_figure(root_dir: Path | str, save_path: Path | str):
     """Create and save a figure showing the entropy distributions of each Amazon Reviews ensemble, both in and out of distribution.
@@ -22,14 +24,12 @@ def produce_figure(root_dir: Path | str, save_path: Path | str):
     root_dir = Path(root_dir)
     save_path = Path(save_path)
     palette = color_palette()
-
-    heads = ["ddpn", "beta_ddpn", "gaussian", "poisson", "nbinom"]
-    names = ["DDPN (Ours)", r"$\beta$-DDPN (Ours)", "Laksh. et al ('17)", "Poisson DNN", "NB DNN"]
     domain = np.linspace(0, 3, num=200)
-
-    fig, axs = plt.subplots(1, len(heads), figsize=(8, 2), sharey="row", sharex="row")
+    fig, axs = plt.subplots(
+        1, len(ENSEMBLE_HEADS_TO_NAMES), figsize=(8, 2), sharey="row", sharex="row"
+    )
     axs: Sequence[Axes]
-    for col_num, (head, name) in enumerate(zip(heads, names)):
+    for col_num, (head, name) in enumerate(ENSEMBLE_HEADS_TO_NAMES.items()):
         log_dir = root_dir / head / "ensemble"
         reg_entropies = torch.load(log_dir / "reviews_entropies.pt").detach().cpu().numpy()
         ood_entropies = torch.load(log_dir / "bible_entropies.pt").detach().cpu().numpy()

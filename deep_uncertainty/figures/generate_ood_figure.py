@@ -11,6 +11,8 @@ from matplotlib.pyplot import Axes
 from scipy.stats import gaussian_kde
 from seaborn import color_palette
 
+from deep_uncertainty.constants import HEADS_TO_NAMES
+
 
 def produce_figure(root_dir: Path | str, save_path: Path | str):
     """Create and save a figure showing the entropy distributions of each Amazon Reviews model, both in and out of distribution.
@@ -23,32 +25,12 @@ def produce_figure(root_dir: Path | str, save_path: Path | str):
     save_path = Path(save_path)
     palette = color_palette()
 
-    heads = [
-        "nbinom",
-        "poisson",
-        "faithful_gaussian",
-        "beta_gaussian",
-        "gaussian",
-        "natural_gaussian",
-        "beta_ddpn",
-        "ddpn",
-    ]
-    names = [
-        "NB DNN",
-        "Poisson DNN",
-        "Stirn et al. ('23)",
-        "Seitzer et al. ('23)",
-        "Gaussian DNN",
-        "Immer et al. ('23)",
-        r"$\beta$-DDPN (Ours)",
-        "DDPN (Ours)",
-    ]
     versions = range(5)
     domain = np.linspace(0, 3, num=200)
 
-    fig, axs = plt.subplots(1, len(heads), figsize=(12, 2), sharey="row", sharex="row")
+    fig, axs = plt.subplots(1, len(HEADS_TO_NAMES), figsize=(12, 2), sharey="row", sharex="row")
     axs: Sequence[Axes]
-    for col_num, (head, name) in enumerate(zip(heads, names)):
+    for col_num, (head, name) in enumerate(HEADS_TO_NAMES.items()):
         deltas = []
         p_vals = []
         for version in versions:

@@ -6,6 +6,7 @@ members:
   - /path/to/member.ckpt
   - /path/to/other/member.ckpt
 dataset:
-  type: scalar
+  type: tabular
   spec: /Users/spenceryoung/Desktop/DAI/code/deep_uncertainty/data/nonlinear_count_data/toy_data_nonlinear_count.npz
+  input_dim: 1
 log_dir: /Users/spenceryoung/Desktop/DAI/code/deep_uncertainty/logs

@@ -6,11 +6,11 @@ import lightning as L
 import yaml
 
 from deep_uncertainty.enums import HeadType
-from deep_uncertainty.experiments.config import EnsembleConfig
 from deep_uncertainty.models.ensembles import DoublePoissonMixtureNN
 from deep_uncertainty.models.ensembles import GaussianMixtureNN
 from deep_uncertainty.models.ensembles import NegBinomMixtureNN
 from deep_uncertainty.models.ensembles import PoissonMixtureNN
+from deep_uncertainty.utils.configs import EnsembleConfig
 from deep_uncertainty.utils.experiment_utils import get_datamodule
 
 

@@ -17,7 +17,6 @@ from deep_uncertainty.enums import DatasetType
 from deep_uncertainty.enums import HeadType
 from deep_uncertainty.enums import ImageDatasetName
 from deep_uncertainty.enums import TextDatasetName
-from deep_uncertainty.experiments.config import ExperimentConfig
 from deep_uncertainty.models import DoublePoissonNN
 from deep_uncertainty.models import FaithfulGaussianNN
 from deep_uncertainty.models import GaussianNN
@@ -33,10 +32,11 @@ from deep_uncertainty.models.backbones import MobileNetV3
 from deep_uncertainty.models.backbones import SmallCNN
 from deep_uncertainty.models.backbones import ViT
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
+from deep_uncertainty.utils.configs import TrainingConfig
 from deep_uncertainty.utils.generic_utils import partialclass
 
 
-def get_model(config: ExperimentConfig, return_initializer: bool = False) -> DiscreteRegressionNN:
+def get_model(config: TrainingConfig, return_initializer: bool = False) -> DiscreteRegressionNN:
 
     initializer: Type[DiscreteRegressionNN]
 

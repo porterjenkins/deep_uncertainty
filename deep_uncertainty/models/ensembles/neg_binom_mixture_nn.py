@@ -5,10 +5,10 @@ from typing import Iterable
 import torch
 from torch.distributions import NegativeBinomial
 
-from deep_uncertainty.experiments.config import EnsembleConfig
 from deep_uncertainty.models import NegBinomNN
 from deep_uncertainty.models.ensembles.base_discrete_mixture_nn import BaseDiscreteMixtureNN
 from deep_uncertainty.random_variables import DiscreteMixture
+from deep_uncertainty.utils.configs import EnsembleConfig
 
 
 class NegBinomMixtureNN(BaseDiscreteMixtureNN):

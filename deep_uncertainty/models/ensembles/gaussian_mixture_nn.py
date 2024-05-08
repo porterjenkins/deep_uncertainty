@@ -4,15 +4,14 @@ from typing import Iterable
 
 import lightning as L
 import torch
-from matplotlib.figure import Figure
 from torchmetrics import MeanAbsoluteError
 from torchmetrics import MeanSquaredError
 from torchmetrics import Metric
 
 from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
-from deep_uncertainty.experiments.config import EnsembleConfig
 from deep_uncertainty.models import GaussianNN
+from deep_uncertainty.utils.configs import EnsembleConfig
 
 
 class GaussianMixtureNN(L.LightningModule):
@@ -102,13 +101,6 @@ class GaussianMixtureNN(L.LightningModule):
     def on_test_epoch_end(self):
         for name, metric_tracker in self._test_metrics_dict.items():
             self.log(name, metric_tracker.compute())
-            if name in {"mean_calibration", "mp"}:
-                fig: Figure = metric_tracker.plot()
-                if self.logger is not None:
-                    root = self.logger.log_dir or "."
-                else:
-                    root = "."
-                fig.savefig(root + f"/{name}_plot.png")
 
     @staticmethod
     def from_config(config: EnsembleConfig) -> GaussianMixtureNN:

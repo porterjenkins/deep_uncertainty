@@ -7,8 +7,8 @@ from typing import Type
 import lightning as L
 import yaml
 
-from deep_uncertainty.experiments.config import ExperimentConfig
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
+from deep_uncertainty.utils.configs import TrainingConfig
 from deep_uncertainty.utils.experiment_utils import get_datamodule
 from deep_uncertainty.utils.experiment_utils import get_model
 
@@ -17,7 +17,7 @@ def main(log_dir: Path, config_path: Path, chkp_path: Path):
 
     if not log_dir.exists():
         os.makedirs(log_dir)
-    config = ExperimentConfig.from_yaml(config_path)
+    config = TrainingConfig.from_yaml(config_path)
 
     datamodule = get_datamodule(
         config.dataset_type,

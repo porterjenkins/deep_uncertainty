@@ -11,14 +11,14 @@ from deep_uncertainty.datamodules import BibleDataModule
 from deep_uncertainty.datamodules import ReviewsDataModule
 from deep_uncertainty.enums import HeadType
 from deep_uncertainty.evaluation.utils import calculate_entropy
-from deep_uncertainty.experiments.config import EnsembleConfig
-from deep_uncertainty.experiments.config import ExperimentConfig
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
 from deep_uncertainty.models.ensembles import DoublePoissonMixtureNN
 from deep_uncertainty.models.ensembles import GaussianMixtureNN
 from deep_uncertainty.models.ensembles import NegBinomMixtureNN
 from deep_uncertainty.models.ensembles import PoissonMixtureNN
 from deep_uncertainty.random_variables import DoublePoisson
+from deep_uncertainty.utils.configs import EnsembleConfig
+from deep_uncertainty.utils.configs import TrainingConfig
 from deep_uncertainty.utils.experiment_utils import get_model
 
 
@@ -29,7 +29,7 @@ def main(log_dir: Path, config_path: Path, chkp_path: Path | None, dataset: str)
     if not log_dir.exists():
         os.makedirs(log_dir)
     config = (
-        ExperimentConfig.from_yaml(config_path)
+        TrainingConfig.from_yaml(config_path)
         if not is_ensemble
         else EnsembleConfig.from_yaml(config_path)
     )

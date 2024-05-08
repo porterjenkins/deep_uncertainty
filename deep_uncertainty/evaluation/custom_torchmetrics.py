@@ -7,8 +7,6 @@ from matplotlib.figure import Figure
 from torchmetrics import Metric
 
 from deep_uncertainty.evaluation.calibration import compute_continuous_ece
-from deep_uncertainty.evaluation.calibration import compute_discrete_ece
-from deep_uncertainty.evaluation.calibration import compute_double_poisson_nll
 from deep_uncertainty.evaluation.calibration import compute_young_calibration
 from deep_uncertainty.evaluation.plotting import plot_posterior_predictive
 from deep_uncertainty.evaluation.plotting import plot_regression_calibration_curve
@@ -168,85 +166,6 @@ class ContinuousExpectedCalibrationError(Metric):
                 self.num_bins,
                 self.weights,
                 self.alpha,
-            ),
-            device=self.device,
-        )
-
-
-class DiscreteExpectedCalibrationError(Metric):
-    """A custom `torchmetric` for computing the expected calibration error (for count regression) over multiple test batches in `lightning`.
-
-    Attributes:
-        bin_strategy (str, optional): Strategy for choosing bin boundaries. Must be either "uniform" or "adaptive". Defaults to "adaptive" (same # of targets in each bin).
-        alpha (int, optional): Controls how severely we penalize the model for the magnitude of a probability residual. Defaults to 1 (error term is |acc(B) - conf(B)|).
-        num_bins (int): The number of bins to use. Defaults to 30.
-    """
-
-    def __init__(
-        self,
-        bin_strategy: str = "adaptive",
-        alpha: float = 2.0,
-        num_bins: int = 30,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        self.bin_strategy = bin_strategy
-        self.alpha = alpha
-        self.num_bins = num_bins
-
-        self.add_state("all_preds", default=[], dist_reduce_fx="cat")
-        self.add_state("all_probs", default=[], dist_reduce_fx="cat")
-        self.add_state("all_targets", default=[], dist_reduce_fx="cat")
-
-    def update(self, preds: torch.Tensor, probs: torch.Tensor, targets: torch.Tensor):
-        self.all_preds.append(preds)
-        self.all_probs.append(probs)
-        self.all_targets.append(targets)
-
-    def compute(self) -> torch.Tensor:
-        all_preds = torch.cat(self.all_preds).long().flatten().detach().cpu().numpy()
-        all_probs = torch.cat(self.all_probs).flatten().detach().cpu().numpy()
-        all_targets = torch.cat(self.all_targets).long().flatten().detach().cpu().numpy()
-        return torch.tensor(
-            compute_discrete_ece(
-                targets=all_targets,
-                preds=all_preds,
-                probs=all_probs,
-                bin_strategy=self.bin_strategy,
-                alpha=self.alpha,
-                num_bins=self.num_bins,
-            ),
-            device=self.device,
-        )
-
-
-class DoublePoissonNLL(Metric):
-    """A custom `torchmetric` for computing the Double Poisson NLL over multiple test batches."""
-
-    def __init__(
-        self,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-
-        self.add_state("mu_vals", default=[], dist_reduce_fx="cat")
-        self.add_state("phi_vals", default=[], dist_reduce_fx="cat")
-        self.add_state("all_targets", default=[], dist_reduce_fx="cat")
-
-    def update(self, mu: torch.Tensor, phi: torch.Tensor, targets: torch.Tensor):
-        self.mu_vals.append(mu)
-        self.phi_vals.append(phi)
-        self.all_targets.append(targets)
-
-    def compute(self) -> torch.Tensor:
-        mu_vals = torch.cat(self.mu_vals).long().flatten().detach().cpu().numpy()
-        phi_vals = torch.cat(self.phi_vals).flatten().detach().cpu().numpy()
-        all_targets = torch.cat(self.all_targets).long().flatten().detach().cpu().numpy()
-        return torch.tensor(
-            compute_double_poisson_nll(
-                y_true=all_targets,
-                mu=mu_vals,
-                phi=phi_vals,
             ),
             device=self.device,
         )

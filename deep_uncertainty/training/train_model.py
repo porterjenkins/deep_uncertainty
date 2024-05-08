@@ -6,7 +6,7 @@ from pathlib import Path
 import lightning as L
 from lightning.pytorch.loggers import CSVLogger
 
-from deep_uncertainty.experiments.config import ExperimentConfig
+from deep_uncertainty.utils.configs import TrainingConfig
 from deep_uncertainty.utils.experiment_utils import fix_random_seed
 from deep_uncertainty.utils.experiment_utils import get_chkp_callbacks
 from deep_uncertainty.utils.experiment_utils import get_datamodule
@@ -14,7 +14,7 @@ from deep_uncertainty.utils.experiment_utils import get_model
 from deep_uncertainty.utils.experiment_utils import save_metrics_plots
 
 
-def main(config: ExperimentConfig):
+def main(config: TrainingConfig):
 
     fix_random_seed(config.random_seed)
 
@@ -55,4 +55,4 @@ def parse_args() -> Namespace:
 
 if __name__ == "__main__":
     args = parse_args()
-    main(ExperimentConfig.from_yaml(args.config))
+    main(TrainingConfig.from_yaml(args.config))

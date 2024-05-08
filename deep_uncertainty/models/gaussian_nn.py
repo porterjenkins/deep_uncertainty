@@ -11,7 +11,6 @@ from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
 from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
 from deep_uncertainty.evaluation.custom_torchmetrics import ContinuousExpectedCalibrationError
-from deep_uncertainty.evaluation.custom_torchmetrics import DiscreteExpectedCalibrationError
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.evaluation.custom_torchmetrics import YoungCalibration
 from deep_uncertainty.models.backbones import Backbone
@@ -92,7 +91,6 @@ class GaussianNN(DiscreteRegressionNN):
             param_list=["loc", "scale"],
             rv_class_type=norm,
         )
-        self.discrete_ece = DiscreteExpectedCalibrationError(alpha=2)
         self.nll = AverageNLL()
         self.mp = MedianPrecision()
         self.save_hyperparameters()
@@ -142,7 +140,6 @@ class GaussianNN(DiscreteRegressionNN):
         return {
             "mean_calibration": self.mean_calibration,
             "continuous_ece": self.continuous_ece,
-            "discrete_ece": self.discrete_ece,
             "nll": self.nll,
             "mp": self.mp,
         }
@@ -157,24 +154,14 @@ class GaussianNN(DiscreteRegressionNN):
         std = torch.sqrt(var)
         targets = y.flatten()
 
-        # --- CONTINUOUS METRICS ---
         self.mean_calibration.update({"loc": mu, "scale": std}, x, targets)
         self.continuous_ece.update({"loc": mu, "scale": std}, targets)
-
-        # --- DISCRETE METRICS ---
-        preds = torch.round(mu)  # Since we have to predict counts.
+        self.mp.update(precision)
 
         # We compute "probability" with the continuity correction (probability of +- 0.5 of the value).
         dist = torch.distributions.Normal(loc=mu, scale=std)
-        probs = dist.cdf(preds + 0.5) - dist.cdf(preds - 0.5)
         target_probs = dist.cdf(targets + 0.5) - dist.cdf(targets - 0.5)
-        self.discrete_ece.update(
-            preds=preds,
-            probs=probs,
-            targets=targets,
-        )
         self.nll.update(target_probs)
-        self.mp.update(precision)
 
     def on_train_epoch_end(self):
         if self.beta_scheduler is not None:

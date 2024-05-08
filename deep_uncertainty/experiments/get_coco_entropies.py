@@ -11,9 +11,9 @@ from deep_uncertainty.datamodules import COCOCowsDataModule
 from deep_uncertainty.datamodules import COCOPeopleDataModule
 from deep_uncertainty.enums import HeadType
 from deep_uncertainty.evaluation.utils import calculate_entropy
-from deep_uncertainty.experiments.config import ExperimentConfig
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
 from deep_uncertainty.random_variables import DoublePoisson
+from deep_uncertainty.utils.configs import TrainingConfig
 from deep_uncertainty.utils.experiment_utils import get_model
 
 
@@ -21,7 +21,7 @@ def main(log_dir: Path, config_path: Path, chkp_path: Path, split: str):
 
     if not log_dir.exists():
         os.makedirs(log_dir)
-    config = ExperimentConfig.from_yaml(config_path)
+    config = TrainingConfig.from_yaml(config_path)
     batch_size = config.batch_size
     num_workers = 16
 

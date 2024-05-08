@@ -9,7 +9,6 @@ from torchmetrics import Metric
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
 from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
-from deep_uncertainty.evaluation.custom_torchmetrics import DiscreteExpectedCalibrationError
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.backbones import Backbone
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
@@ -59,7 +58,6 @@ class PoissonNN(DiscreteRegressionNN):
         )
         self.head = nn.Linear(self.backbone.output_dim, 1)
 
-        self.discrete_ece = DiscreteExpectedCalibrationError(alpha=2)
         self.nll = AverageNLL()
         self.mp = MedianPrecision()
 
@@ -99,7 +97,6 @@ class PoissonNN(DiscreteRegressionNN):
 
     def _addl_test_metrics_dict(self) -> dict[str, Metric]:
         return {
-            "discrete_ece": self.discrete_ece,
             "nll": self.nll,
             "mp": self.mp,
         }
@@ -109,12 +106,9 @@ class PoissonNN(DiscreteRegressionNN):
     ):
         lmbda = y_hat.flatten()
         dist = torch.distributions.Poisson(lmbda)
-        preds = dist.mode
-        probs = torch.exp(dist.log_prob(preds))
         targets = y.flatten()
         target_probs = torch.exp(dist.log_prob(targets))
         precision = 1 / lmbda
 
-        self.discrete_ece.update(preds=preds, probs=probs, targets=targets)
         self.nll.update(target_probs)
         self.mp.update(precision)

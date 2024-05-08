@@ -16,11 +16,11 @@ from deep_uncertainty.utils.generic_utils import get_yaml
 from deep_uncertainty.utils.generic_utils import to_snake_case
 
 
-class ExperimentConfig:
-    """Class with configuration options for an experiment.
+class TrainingConfig:
+    """Class with configuration options for training a model.
 
     Attributes:
-        experiment_name (str): The name of the experiment (used for identifying chkp weights / eval logs), automatically cast to snake case.
+        experiment_name (str): The name of the training run (used for identifying chkp weights / eval logs), automatically cast to snake case.
         head_type (HeadType): The output head to use in the neural network, e.g. "gaussian", "mean", "poisson", etc.
         chkp_dir (Path): Directory to checkpoint model weights in.
         chkp_freq (int): Number of epochs to wait in between checkpointing model weights.
@@ -92,14 +92,14 @@ class ExperimentConfig:
         self.random_seed = random_seed
 
     @staticmethod
-    def from_yaml(config_path: str | Path) -> ExperimentConfig:
-        """Factory method to construct an ExperimentConfig from a .yaml file.
+    def from_yaml(config_path: str | Path) -> TrainingConfig:
+        """Factory method to construct an TrainingConfig from a .yaml file.
 
         Args:
             config_path (str | Path): Path to the .yaml file with config options.
 
         Returns:
-            ExperimentConfig: The specified config.
+            TrainingConfig: The specified config.
         """
         config_dict = get_yaml(config_path)
         training_dict: dict = config_dict["training"]
@@ -146,7 +146,7 @@ class ExperimentConfig:
         hidden_dim = config_dict.get("hidden_dim", 64)
         random_seed = config_dict.get("random_seed")
 
-        return ExperimentConfig(
+        return TrainingConfig(
             experiment_name=experiment_name,
             accelerator_type=accelerator_type,
             head_type=head_type,
@@ -182,7 +182,7 @@ class ExperimentConfig:
 
 
 class EnsembleConfig:
-    """Class with configuration options for evaluating an ensemble.
+    """Class with configuration options for specifying / evaluating an ensemble.
 
     Attributes:
         experiment_name (str): The name of the experiment (used for identifying chkp weights / eval logs), automatically cast to snake case.

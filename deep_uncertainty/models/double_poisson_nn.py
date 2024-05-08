@@ -9,7 +9,6 @@ from deep_uncertainty.enums import BetaSchedulerType
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
 from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
-from deep_uncertainty.evaluation.custom_torchmetrics import DiscreteExpectedCalibrationError
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.backbones import Backbone
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
@@ -79,7 +78,6 @@ class DoublePoissonNN(DiscreteRegressionNN):
         )
         self.head = nn.Linear(self.backbone.output_dim, 2)
 
-        self.discrete_ece = DiscreteExpectedCalibrationError(alpha=2)
         self.nll = AverageNLL()
         self.mp = MedianPrecision()
 
@@ -124,7 +122,6 @@ class DoublePoissonNN(DiscreteRegressionNN):
 
     def _addl_test_metrics_dict(self) -> dict[str, Metric]:
         return {
-            "discrete_ece": self.discrete_ece,
             "nll": self.nll,
             "mp": self.mp,
         }
@@ -135,12 +132,9 @@ class DoublePoissonNN(DiscreteRegressionNN):
         dist = self._convert_output_to_dist(y_hat, log_output=False)
         mu, phi = dist.mu, dist.phi
         precision = phi / mu
-        preds = torch.argmax(dist.pmf_vals, axis=0)
-        probs = dist.pmf(preds)
         targets = y.flatten()
         target_probs = dist.pmf(targets.long())
 
-        self.discrete_ece.update(preds, probs, targets)
         self.nll.update(target_probs)
         self.mp.update(precision)
 

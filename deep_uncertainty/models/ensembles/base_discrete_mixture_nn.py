@@ -4,18 +4,16 @@ from typing import Iterable
 
 import lightning as L
 import torch
-from matplotlib.figure import Figure
 from torchmetrics import MeanAbsoluteError
 from torchmetrics import MeanSquaredError
 from torchmetrics import Metric
 
 from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
-from deep_uncertainty.evaluation.custom_torchmetrics import DiscreteExpectedCalibrationError
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
-from deep_uncertainty.experiments.config import EnsembleConfig
 from deep_uncertainty.models import DoublePoissonNN
 from deep_uncertainty.models import NegBinomNN
 from deep_uncertainty.models import PoissonNN
+from deep_uncertainty.utils.configs import EnsembleConfig
 
 
 class BaseDiscreteMixtureNN(L.LightningModule):
@@ -41,7 +39,6 @@ class BaseDiscreteMixtureNN(L.LightningModule):
 
         self.rmse = MeanSquaredError(squared=False)
         self.mae = MeanAbsoluteError()
-        self.discrete_ece = DiscreteExpectedCalibrationError(alpha=2)
         self.nll = AverageNLL()
         self.mp = MedianPrecision()
 
@@ -50,7 +47,6 @@ class BaseDiscreteMixtureNN(L.LightningModule):
         return {
             "rmse": self.rmse,
             "mae": self.mae,
-            "discrete_ece": self.discrete_ece,
             "nll": self.nll,
             "mp": self.mp,
         }
@@ -58,7 +54,6 @@ class BaseDiscreteMixtureNN(L.LightningModule):
     def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
 
         preds = y_hat.argmax(dim=1)
-        probs = y_hat[torch.arange(y_hat.size(0), device=self.device), preds]
         targets = y.flatten()
         target_probs = y_hat[torch.arange(y_hat.size(0), device=self.device), targets.long()]
 
@@ -67,11 +62,6 @@ class BaseDiscreteMixtureNN(L.LightningModule):
         var = (y_hat * (support.unsqueeze(1) - mu).transpose(0, 1) ** 2).sum(dim=1)
         precision = 1 / var
 
-        self.discrete_ece.update(
-            preds=preds,
-            probs=probs,
-            targets=targets,
-        )
         self.rmse.update(preds, targets)
         self.mae.update(preds, targets)
         self.nll.update(target_probs)
@@ -91,13 +81,6 @@ class BaseDiscreteMixtureNN(L.LightningModule):
     def on_test_epoch_end(self):
         for name, metric_tracker in self._test_metrics_dict.items():
             self.log(name, metric_tracker.compute())
-            if name in {"mean_calibration", "mp"}:
-                fig: Figure = metric_tracker.plot()
-                if self.logger is not None:
-                    root = self.logger.log_dir or "."
-                else:
-                    root = "."
-                fig.savefig(root + f"/{name}_plot.png")
 
     @staticmethod
     def from_config(config: EnsembleConfig) -> BaseDiscreteMixtureNN:

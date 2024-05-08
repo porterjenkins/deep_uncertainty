@@ -1,7 +1,4 @@
 import numpy as np
-import pandas as pd
-from scipy.special import loggamma
-from scipy.special import xlogy
 from scipy.stats import norm
 from scipy.stats import rv_continuous
 
@@ -52,64 +49,6 @@ def compute_continuous_ece(
     return ece
 
 
-def compute_discrete_ece(
-    targets: np.ndarray,
-    preds: np.ndarray,
-    probs: np.ndarray,
-    bin_strategy: str = "adaptive",
-    alpha: float = 1.0,
-    num_bins: int = 30,
-):
-    """Given targets and predictions from a discrete probabilistic regression model, compute the expected calibration error.
-
-    Suppose we discretize [0, 1] into a set of m bins and assign each target {y_i | 1 <= i <= n} to a bin based on P(\\hat{y_i}),
-    the probability of the model's prediction for that target. Define acc(B) to be the probability, within bin B, that y_i = \\hat{y_i}.
-    Define conf(B) to be the average of P(\\hat{y_i}) within bin B. Then we have
-
-        ECE = mean([ |acc(B) - conf(B))|^alpha for B in bins ])
-
-    where alpha controls the severity of the penalty for the magnitude of a given probability residual.
-
-    Bin boundaries can either be selected uniformly across [0, 1] or chosen such that each bin has the same number of targets.
-
-    Args:
-        targets (np.ndarray): The regression targets.
-        preds (np.ndarray): The model's predictions for the targets (mode of the posterior predictive distribution).
-        probs (np.ndarray): The model's probabilities for each of its predictions (probability of the mode of the posterior predictive distribution).
-        bin_strategy (str, optional): Strategy for choosing bin boundaries. Must be either "uniform" or "adaptive". Defaults to "adaptive" (same # of targets in each bin).
-        alpha (int, optional): Controls how severely we penalize the model for the magnitude of a probability residual. Defaults to 1 (error term is |acc(B) - conf(B)|).
-        num_bins (int): The number of bins to use. Defaults to 30.
-
-    Returns:
-        float: The expected calibration error.
-    """
-    if bin_strategy == "uniform":
-        bin_boundaries = np.linspace(0, 1, num=num_bins)
-        weights = None
-    elif bin_strategy == "adaptive":
-        bin_boundaries = pd.qcut(probs, num_bins, retbins=True, duplicates="drop")[1]
-        actual_num_bins = len(bin_boundaries) - 1
-        weights = np.ones(actual_num_bins) / actual_num_bins
-    else:
-        raise ValueError('Invalid bin strategy specified. Must be "uniform" or "adaptive".')
-
-    # Handle if all probabilities are in the same bin.
-    if len(bin_boundaries) == 1:
-        return np.abs((targets == preds).mean() - probs.mean()) ** alpha
-
-    bin_boundaries[-1] += 1e-5  # Make rightmost bin boundary inclusive.
-    mask_matrix = (bin_boundaries[:-1, None] <= probs) & (probs < bin_boundaries[1:, None])
-    bin_counts = mask_matrix.sum(axis=1) + 1e-16
-    bin_confidences = np.where(mask_matrix, probs, 0).sum(axis=1) / bin_counts
-
-    if weights is None:
-        weights = 1 / bin_counts
-
-    bin_accuracies = np.where(mask_matrix, (preds == targets), 0).sum(axis=1) / bin_counts
-    ece = np.dot(weights, np.abs(bin_accuracies - bin_confidences) ** alpha)
-    return ece
-
-
 def compute_young_calibration(y_true: np.ndarray, posterior_predictive: rv_continuous) -> float:
     """Given targets and a probabilistic regression model (represented as a continuous random variable over the targets), compute the Young calibration of the model.
 
@@ -133,35 +72,6 @@ def compute_young_calibration(y_true: np.ndarray, posterior_predictive: rv_conti
 
     calibration_score = 1 - ((4 / 3) * area_between_model_and_perfect_calibration_curve)
     return calibration_score
-
-
-def compute_double_poisson_nll(y_true: np.ndarray, mu: np.ndarray, phi: np.ndarray) -> float:
-    """Compute the average negative log likelihood of the data given the parameters of a Double Poisson distribution.
-
-    This NLL is computed without the normalizing constant for numerical convenience, but can
-    still provide a score describing how well the distribution fits the data.
-
-    Args:
-        y_true (np.ndarray): The regression targets.
-        mu (np.ndarray): The predicted `mu` values for the regression targets.
-        phi (np.ndarray): The predicted `phi` values for the regression targets.
-
-    Returns:
-        float: The average NLL over the given regression targets.
-    """
-    # For numerical stability, we only allow mu to be as small as 1e-6 (and mu/phi to be as small as 1e-4).
-    stable_mu = np.clip(np.array(mu), a_min=1e-6, a_max=None)
-    var = np.clip(stable_mu / phi, a_min=1e-4, a_max=None)
-    stable_phi = stable_mu / var
-
-    return np.mean(
-        -0.5 * np.log(stable_phi)
-        + stable_phi * stable_mu
-        + y_true
-        - xlogy(y_true, y_true)
-        + loggamma(y_true + 1)
-        - stable_phi * (y_true + xlogy(y_true, stable_mu) - xlogy(y_true, y_true))
-    )
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ import torch
 from lightning.pytorch.callbacks import ModelCheckpoint
 
 from deep_uncertainty.datamodules import COCOPeopleDataModule
+from deep_uncertainty.datamodules import MNISTDataModule
 from deep_uncertainty.datamodules import ReviewsDataModule
 from deep_uncertainty.datamodules import TabularDataModule
 from deep_uncertainty.datamodules import VEDAIDataModule
@@ -116,7 +117,12 @@ def get_datamodule(
         )
     elif dataset_type == DatasetType.IMAGE:
         if dataset_spec == ImageDatasetName.MNIST:
-            raise NotImplementedError("MNIST not currently implemented.")
+            return MNISTDataModule(
+                root_dir="./data/mnist",
+                batch_size=batch_size,
+                num_workers=8,
+                persistent_workers=True,
+            )
         elif dataset_spec == ImageDatasetName.COINS:
             raise NotImplementedError("Coins dataset not currently implemented.")
         elif dataset_spec == ImageDatasetName.VEHICLES:

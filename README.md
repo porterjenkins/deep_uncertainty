@@ -48,6 +48,7 @@ If fitting a model on tabular data, the training script assumes the dataset will
 
 The currently-supported image datasets for training models are:
 
+- `MNIST` (We regress the digit labels instead of classifying)
 - `Vehicles` (VEDAI, labeled with the count of vehicle annotations)
 - `COCO-People` (All images in COCO containing people, labeled with the count of "person" annotations)
 

@@ -74,7 +74,7 @@ def get_model(config: TrainingConfig, return_initializer: bool = False) -> Discr
     if config.dataset_type == DatasetType.TABULAR:
         if "collision" in config.dataset_spec:
             backbone_type = LargerMLP
-        if config.head_type in (HeadType.POISSON_GLM, HeadType.NEGATIVE_BINOMIAL_GLM):
+        elif config.head_type in (HeadType.POISSON_GLM, HeadType.NEGATIVE_BINOMIAL_GLM):
             backbone_type = Identity
         else:
             backbone_type = MLP

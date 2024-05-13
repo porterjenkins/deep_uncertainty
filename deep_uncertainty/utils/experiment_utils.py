@@ -27,6 +27,7 @@ from deep_uncertainty.models import NegBinomNN
 from deep_uncertainty.models import PoissonNN
 from deep_uncertainty.models.backbones import DistilBert
 from deep_uncertainty.models.backbones import Identity
+from deep_uncertainty.models.backbones import LargerMLP
 from deep_uncertainty.models.backbones import MLP
 from deep_uncertainty.models.backbones import MNISTCNN
 from deep_uncertainty.models.backbones import MobileNetV3
@@ -71,6 +72,8 @@ def get_model(config: TrainingConfig, return_initializer: bool = False) -> Discr
         initializer = NegBinomNN
 
     if config.dataset_type == DatasetType.TABULAR:
+        if "collision" in config.dataset_spec:
+            backbone_type = LargerMLP
         if config.head_type in (HeadType.POISSON_GLM, HeadType.NEGATIVE_BINOMIAL_GLM):
             backbone_type = Identity
         else:

@@ -47,10 +47,11 @@ class BibleDataset(Dataset):
         with open(self.root_dir / "eng-eng-kjv.txt", "r") as f:
             num_instances = 0
             for verse in f:
-                verses.append(verse.strip())
-                num_instances += 1
-                if num_instances > (self.max_verses or float("inf")):
-                    break
+                if verse.strip():
+                    verses.append(verse.strip())
+                    num_instances += 1
+                    if num_instances > (self.max_verses or float("inf")):
+                        break
         return verses
 
     def __getitem__(self, idx: int) -> tuple[str, int]:

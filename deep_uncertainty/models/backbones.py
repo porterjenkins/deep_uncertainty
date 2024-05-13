@@ -217,3 +217,41 @@ class ViT(Backbone):
         h = self.relu(self.projection_1(h))
         h = self.relu(self.projection_2(h))
         return h
+
+
+class LargerMLP(Backbone):
+    """A larger MLP feature extractor for (N, d) input data.
+
+    Attributes:
+        layers (nn.Sequential): The layers of this MLP.
+    """
+
+    def __init__(self, input_dim: int = 1, output_dim: int = 64):
+        """Instantiate an MLP backbone.
+
+        Args:
+            input_dim (int, optional): Dimension of input feature vectors. Defaults to 1.
+            output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
+        """
+        self.input_dim = input_dim
+        super(LargerMLP, self).__init__(output_dim=output_dim)
+
+        self.layers = nn.Sequential(
+            nn.Linear(input_dim, 512),
+            nn.ReLU(),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, output_dim),
+            nn.ReLU(),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.layers(x)

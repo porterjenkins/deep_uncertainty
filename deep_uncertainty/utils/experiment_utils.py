@@ -72,7 +72,7 @@ def get_model(config: TrainingConfig, return_initializer: bool = False) -> Discr
         initializer = NegBinomNN
 
     if config.dataset_type == DatasetType.TABULAR:
-        if "collision" in config.dataset_spec:
+        if "collision" in str(config.dataset_spec):
             backbone_type = LargerMLP
         elif config.head_type in (HeadType.POISSON_GLM, HeadType.NEGATIVE_BINOMIAL_GLM):
             backbone_type = Identity

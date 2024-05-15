@@ -28,7 +28,7 @@ def wrap_text(text, width=25):
     return wrapped_text
 
 
-def generate_plot(config_path: Path, chkp_path: Path | None, save_path: Path):
+def generate_plot(config_path: Path, chkp_path: Path | None, save_path: Path, title: str):
     is_ensemble = chkp_path is None
     palette = color_palette()
     id_color, ood_color = palette[0], palette[1]
@@ -272,6 +272,7 @@ def generate_plot(config_path: Path, chkp_path: Path | None, save_path: Path):
     upper = max(rating_pmf_ax.get_ylim()[1], 1.1)
     rating_pmf_ax.set_ylim(lower, upper)
 
+    fig.suptitle(title, fontsize=12)
     fig.tight_layout()
     fig.savefig(save_path, dpi=150, format="pdf")
 
@@ -290,6 +291,11 @@ def parse_args() -> Namespace:
         type=str,
         default="deep_uncertainty/figures/artifacts/reviews_case_study.pdf",
     )
+    parser.add_argument(
+        "--title",
+        type=str,
+        default="Reviews Case Study",
+    )
     return parser.parse_args()
 
 
@@ -299,4 +305,5 @@ if __name__ == "__main__":
         config_path=Path(args.config_path),
         chkp_path=Path(args.chkp_path) if args.chkp_path != "" else None,
         save_path=Path(args.save_path),
+        title=args.title,
     )

@@ -1,5 +1,15 @@
+from typing import TypeAlias
+
 import numpy as np
 import torch
+from scipy.optimize import fmin
+from scipy.stats import rv_continuous
+from scipy.stats import rv_discrete
+
+from deep_uncertainty.random_variables.discrete_random_variable import DiscreteRandomVariable
+
+
+RandomVariable: TypeAlias = rv_discrete | rv_continuous | DiscreteRandomVariable
 
 
 def get_binom_p(mu: np.ndarray, n: np.ndarray):
@@ -147,3 +157,19 @@ def get_nll_gaus_loss(val_loader, model, device):
             loss = 0.5 * (torch.exp(-logvar) * (targets - mean) ** 2 + logvar).mean()
             running_loss += loss.item() * inputs.size(0)
     return running_loss / len(val_loader.dataset)
+
+
+def get_hdi(rv: RandomVariable, p: float = 0.95):
+    """Get the p% highest density interval for the given random variable.
+
+    Args:
+        rv (RandomVariable): The random variable to get the HDI for.
+        p (float): The amount of probability mass desired in the HDI.
+    """
+    p_inv = 1.0 - p
+
+    def interval_width(low_tail_prob: float):
+        return rv.ppf(p + low_tail_prob) - rv.ppf(low_tail_prob)
+
+    hdi_low_tail_prob = fmin(interval_width, p_inv, ftol=1e-8, disp=False)[0]
+    return rv.ppf(hdi_low_tail_prob), rv.ppf(p + hdi_low_tail_prob)

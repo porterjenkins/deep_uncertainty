@@ -50,6 +50,7 @@ class MNISTDataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             persistent_workers=self.persistent_workers,
+            shuffle=False,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -58,6 +59,7 @@ class MNISTDataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             persistent_workers=self.persistent_workers,
+            shuffle=False,
         )
 
     def predict_dataloader(self) -> DataLoader:
@@ -66,4 +68,5 @@ class MNISTDataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             persistent_workers=self.persistent_workers,
+            shuffle=False,
         )

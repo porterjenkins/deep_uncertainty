@@ -1,3 +1,4 @@
+from functools import partial
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -6,8 +7,10 @@ from scipy.stats import nbinom
 from scipy.stats import norm
 from scipy.stats import poisson
 from scipy.stats import rv_continuous
+from sklearn.metrics.pairwise import rbf_kernel
 
 from deep_uncertainty.evaluation.calibration import compute_continuous_ece
+from deep_uncertainty.evaluation.calibration import compute_mcmd
 from deep_uncertainty.random_variables import DoublePoisson
 
 
@@ -77,7 +80,7 @@ def plot_regression_calibration_curve_cdf(
     actual_pct_where_cdf_less_than_p = (posterior_predictive.cdf(y_true) <= p_vals).mean(axis=1)
 
     ece = compute_continuous_ece(
-        y_true, posterior_predictive, num_bins=50, weights="frequency", alpha=2
+        y_true, posterior_predictive, num_bins=50, weights="frequency", alpha=1
     )
 
     ax = plt.subplots(1, 1)[1] if ax is None else ax
@@ -102,10 +105,41 @@ def plot_regression_calibration_curve_cdf(
     ax.annotate(f"ECE: {ece:2f}", xy=(-0.05, 0.9), fontsize=6)
     ax.set_xticks([])
     ax.set_yticks([])
-    plt.tight_layout()
 
     if show:
         plt.show()
+
+
+def plot_mcmd_curve(
+    x: np.ndarray,
+    y_true: np.ndarray,
+    posterior_predictive: rv_continuous,
+    ax: plt.Axes | None = None,
+    num_samples_from_posterior: int = 1,
+):
+    grid = np.linspace(x.min(), x.max(), num=100)
+    y_prime = np.ravel(posterior_predictive.rvs(size=(num_samples_from_posterior, len(y_true))))
+    x_prime = np.tile(x, num_samples_from_posterior)
+    mcmd_vals = compute_mcmd(
+        grid=grid,
+        x=x,
+        y=y_true,
+        x_prime=x_prime,
+        y_prime=y_prime,
+        x_kernel=partial(rbf_kernel, gamma=0.05),
+        y_kernel=partial(rbf_kernel, gamma=0.05),
+    )
+    ax = plt.subplots(1, 1)[1] if ax is None else ax
+    ax.plot(
+        grid,
+        mcmd_vals,
+    )
+    ax.set_ylim(-0.01, max(ax.get_ylim()[1], 0.1))
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.annotate(
+        f"MCMD: {np.mean(mcmd_vals).item():2f}", xy=(1, ax.get_ylim()[1] * 0.8), fontsize=6
+    )
 
 
 def produce_figure(save_path: str | Path):
@@ -140,7 +174,7 @@ def produce_figure(save_path: str | Path):
         n=(mean**2 / (variance + eps - mean)).round(), p=(mean / (variance + eps))
     )
 
-    fig, axs = plt.subplots(3, 4, figsize=(7, 4))
+    fig, axs = plt.subplots(4, 4, figsize=(7, 5))
     hist_alpha = 0.6
     hist_rwidth = 0.9
 
@@ -158,6 +192,9 @@ def produce_figure(save_path: str | Path):
     axs[1, 0].set_xticks([])
     axs[1, 0].set_yticks([])
     plot_regression_calibration_curve_cdf(gaussian_y, gaussian_post_pred, ax=axs[2, 0], show=False)
+    plot_mcmd_curve(
+        cont_x, gaussian_y, gaussian_post_pred, ax=axs[3, 0], num_samples_from_posterior=3
+    )
 
     plot_posterior_predictive(
         cont_x,
@@ -173,6 +210,9 @@ def produce_figure(save_path: str | Path):
     axs[1, 1].set_xticks([])
     axs[1, 1].set_yticks([])
     plot_regression_calibration_curve_cdf(poisson_y, poisson_post_pred, ax=axs[2, 1], show=False)
+    plot_mcmd_curve(
+        cont_x, poisson_y, poisson_post_pred, ax=axs[3, 1], num_samples_from_posterior=3
+    )
 
     plot_posterior_predictive(
         cont_x,
@@ -194,6 +234,9 @@ def produce_figure(save_path: str | Path):
     plot_regression_calibration_curve_cdf(
         double_poisson_y.flatten(), dpo_post_pred, ax=axs[2, 2], show=False
     )
+    plot_mcmd_curve(
+        cont_x, double_poisson_y, dpo_post_pred, ax=axs[3, 2], num_samples_from_posterior=3
+    )
 
     plot_posterior_predictive(
         cont_x,
@@ -210,8 +253,9 @@ def produce_figure(save_path: str | Path):
     axs[1, 3].set_xticks([])
     axs[1, 3].set_yticks([])
     plot_regression_calibration_curve_cdf(nbinom_y, nbinom_post_pred, ax=axs[2, 3], show=False)
+    plot_mcmd_curve(cont_x, nbinom_y, nbinom_post_pred, ax=axs[3, 3], num_samples_from_posterior=3)
 
-    row_labels = ["Posterior Predictive", "PIT", "Reliability Diagram"]
+    row_labels = ["Posterior Predictive", "PIT", "Reliability Diagram", "MCMD"]
     for ax, row in zip(axs[:, 0], row_labels):
         ax.annotate(
             row,

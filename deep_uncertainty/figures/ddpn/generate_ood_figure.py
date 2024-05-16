@@ -123,7 +123,7 @@ def parse_args() -> Namespace:
     parser = ArgumentParser()
     parser.add_argument("--root-dir", default="logs/reviews")
     parser.add_argument(
-        "--save-path", default="deep_uncertainty/figures/artifacts/ood_behavior.pdf"
+        "--save-path", default="deep_uncertainty/figures/ddpn/artifacts/ood_behavior.pdf"
     )
     return parser.parse_args()
 

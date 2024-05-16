@@ -260,7 +260,7 @@ def parse_args() -> Namespace:
     parser.add_argument("--ddpn-path", default="chkp/mnist_beta_ddpn/version_0/best_mae.ckpt")
     parser.add_argument(
         "--save-path",
-        default="deep_uncertainty/figures/artifacts/mnist_regression_with_rotation.pdf",
+        default="deep_uncertainty/figures/ddpn/artifacts/mnist_regression_with_rotation.pdf",
     )
     return parser.parse_args()
 

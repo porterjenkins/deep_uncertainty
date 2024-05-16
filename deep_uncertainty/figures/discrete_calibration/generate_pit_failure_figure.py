@@ -126,19 +126,19 @@ def plot_mcmd_curve(
         y=y_true,
         x_prime=x_prime,
         y_prime=y_prime,
-        x_kernel=partial(rbf_kernel, gamma=0.05),
-        y_kernel=partial(rbf_kernel, gamma=0.05),
+        x_kernel=partial(rbf_kernel, gamma=0.5),
+        y_kernel=partial(rbf_kernel, gamma=0.5),
     )
     ax = plt.subplots(1, 1)[1] if ax is None else ax
     ax.plot(
         grid,
         mcmd_vals,
     )
-    ax.set_ylim(-0.01, max(ax.get_ylim()[1], 0.1))
+    ax.set_ylim(-0.01, max(ax.get_ylim()[1], 0.25))
     ax.set_xticks([])
     ax.set_yticks([])
     ax.annotate(
-        f"MCMD: {np.mean(mcmd_vals).item():2f}", xy=(1, ax.get_ylim()[1] * 0.8), fontsize=6
+        f"Mean MCMD: {np.mean(mcmd_vals).item():2f}", xy=(1, ax.get_ylim()[1] * 0.8), fontsize=6
     )
 
 
@@ -291,5 +291,5 @@ def produce_figure(save_path: str | Path):
 
 
 if __name__ == "__main__":
-    save_path = "deep_uncertainty/figures/artifacts/failure_of_pit.pdf"
+    save_path = "deep_uncertainty/figures/discrete_calibration/artifacts/failure_of_pit.pdf"
     produce_figure(save_path)

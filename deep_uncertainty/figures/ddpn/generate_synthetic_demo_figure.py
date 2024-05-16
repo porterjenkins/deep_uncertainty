@@ -136,7 +136,7 @@ def produce_figure(
 
 
 if __name__ == "__main__":
-    save_path = "deep_uncertainty/figures/artifacts/synthetic_demo.pdf"
+    save_path = "deep_uncertainty/figures/ddpn/artifacts/synthetic_demo.pdf"
     dataset_path = "data/discrete_sine_wave/discrete_sine_wave.npz"
     models = [
         GaussianNN.load_from_checkpoint(

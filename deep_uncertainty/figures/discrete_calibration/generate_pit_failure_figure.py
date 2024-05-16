@@ -134,7 +134,7 @@ def plot_mcmd_curve(
         grid,
         mcmd_vals,
     )
-    ax.set_ylim(-0.01, max(ax.get_ylim()[1], 0.25))
+    ax.set_ylim(-0.01, max(ax.get_ylim()[1], 0.35))
     ax.set_xticks([])
     ax.set_yticks([])
     ax.annotate(
@@ -151,7 +151,7 @@ def produce_figure(save_path: str | Path):
     plt.rc("text", usetex=True)
     plt.rc("font", family="serif")
 
-    num_samples = 2500
+    num_samples = 1000
     cont_x = np.random.uniform(1, 10, size=num_samples)
     mean = cont_x
     variance = cont_x
@@ -188,6 +188,7 @@ def produce_figure(save_path: str | Path):
         *gaussian_post_pred.ppf([[0.025], [0.975]]),
         ax=axs[0, 0],
         show=False,
+        error_color="gray",
     )
     axs[1, 0].hist(
         gaussian_post_pred.cdf(gaussian_y), density=True, alpha=hist_alpha, rwidth=hist_rwidth
@@ -196,7 +197,7 @@ def produce_figure(save_path: str | Path):
     axs[1, 0].set_yticks([])
     plot_regression_calibration_curve_cdf(gaussian_y, gaussian_post_pred, ax=axs[2, 0], show=False)
     plot_mcmd_curve(
-        cont_x, gaussian_y, gaussian_post_pred, ax=axs[3, 0], num_samples_from_posterior=3
+        cont_x, gaussian_y, gaussian_post_pred, ax=axs[3, 0], num_samples_from_posterior=10
     )
 
     plot_posterior_predictive(
@@ -206,6 +207,7 @@ def produce_figure(save_path: str | Path):
         *poisson_post_pred.ppf([[0.025], [0.975]]),
         ax=axs[0, 1],
         show=False,
+        error_color="gray",
     )
     axs[1, 1].hist(
         poisson_post_pred.cdf(poisson_y), density=True, alpha=hist_alpha, rwidth=hist_rwidth
@@ -214,7 +216,7 @@ def produce_figure(save_path: str | Path):
     axs[1, 1].set_yticks([])
     plot_regression_calibration_curve_cdf(poisson_y, poisson_post_pred, ax=axs[2, 1], show=False)
     plot_mcmd_curve(
-        cont_x, poisson_y, poisson_post_pred, ax=axs[3, 1], num_samples_from_posterior=3
+        cont_x, poisson_y, poisson_post_pred, ax=axs[3, 1], num_samples_from_posterior=10
     )
 
     plot_posterior_predictive(
@@ -225,6 +227,7 @@ def produce_figure(save_path: str | Path):
         dpo_post_pred.ppf(0.975),
         ax=axs[0, 2],
         show=False,
+        error_color="gray",
     )
     axs[1, 2].hist(
         dpo_post_pred.cdf(double_poisson_y.reshape(-1, 1).flatten()),
@@ -238,7 +241,7 @@ def produce_figure(save_path: str | Path):
         double_poisson_y.flatten(), dpo_post_pred, ax=axs[2, 2], show=False
     )
     plot_mcmd_curve(
-        cont_x, double_poisson_y, dpo_post_pred, ax=axs[3, 2], num_samples_from_posterior=3
+        cont_x, double_poisson_y, dpo_post_pred, ax=axs[3, 2], num_samples_from_posterior=10
     )
 
     plot_posterior_predictive(
@@ -249,6 +252,7 @@ def produce_figure(save_path: str | Path):
         nbinom_post_pred.ppf(0.975),
         ax=axs[0, 3],
         show=False,
+        error_color="gray",
     )
     axs[1, 3].hist(
         nbinom_post_pred.cdf(nbinom_y), density=True, alpha=hist_alpha, rwidth=hist_rwidth
@@ -256,7 +260,9 @@ def produce_figure(save_path: str | Path):
     axs[1, 3].set_xticks([])
     axs[1, 3].set_yticks([])
     plot_regression_calibration_curve_cdf(nbinom_y, nbinom_post_pred, ax=axs[2, 3], show=False)
-    plot_mcmd_curve(cont_x, nbinom_y, nbinom_post_pred, ax=axs[3, 3], num_samples_from_posterior=3)
+    plot_mcmd_curve(
+        cont_x, nbinom_y, nbinom_post_pred, ax=axs[3, 3], num_samples_from_posterior=20
+    )
 
     row_labels = ["Posterior Predictive", "PIT", "Reliability Diagram", "MCMD"]
     for ax, row in zip(axs[:, 0], row_labels):

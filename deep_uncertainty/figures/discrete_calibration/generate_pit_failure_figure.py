@@ -102,7 +102,7 @@ def plot_regression_calibration_curve_cdf(
     )
     ax.set_xlim(-0.1, 1.1)
     ax.set_ylim(-0.1, 1.1)
-    ax.annotate(f"ECE: {ece:2f}", xy=(-0.05, 0.9), fontsize=6)
+    ax.annotate(f"ECE: {ece:4f}", xy=(-0.05, 0.9), fontsize=6)
     ax.set_xticks([])
     ax.set_yticks([])
 
@@ -138,7 +138,7 @@ def plot_mcmd_curve(
     ax.set_xticks([])
     ax.set_yticks([])
     ax.annotate(
-        f"Mean MCMD: {np.mean(mcmd_vals).item():2f}", xy=(1, ax.get_ylim()[1] * 0.8), fontsize=6
+        f"Mean MCMD: {np.mean(mcmd_vals).item():4f}", xy=(1, ax.get_ylim()[1] * 0.8), fontsize=6
     )
 
 
@@ -148,6 +148,9 @@ def produce_figure(save_path: str | Path):
     Args:
         save_path (str | Path): The path to save the figure at.
     """
+    plt.rc("text", usetex=True)
+    plt.rc("font", family="serif")
+
     num_samples = 2500
     cont_x = np.random.uniform(1, 10, size=num_samples)
     mean = cont_x

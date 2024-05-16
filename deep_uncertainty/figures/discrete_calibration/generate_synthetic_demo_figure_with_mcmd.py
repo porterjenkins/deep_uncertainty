@@ -1,5 +1,5 @@
+from functools import partial
 from pathlib import Path
-from typing import Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,7 +9,9 @@ from matplotlib.ticker import MultipleLocator
 from scipy.stats import nbinom
 from scipy.stats import norm
 from scipy.stats import poisson
+from sklearn.metrics.pairwise import rbf_kernel
 
+from deep_uncertainty.evaluation.calibration import compute_mcmd
 from deep_uncertainty.evaluation.plotting import plot_posterior_predictive
 from deep_uncertainty.models import DoublePoissonNN
 from deep_uncertainty.models import GaussianNN
@@ -34,13 +36,29 @@ def produce_figure(
         save_path (Path | str): Path to save figure to.
         dataset_path (Path | str): Path with dataset to fit.
     """
-    fig, axs = plt.subplots(1, len(models), figsize=(2.5 * len(models), 3), sharey=True)
-    axs: Sequence[plt.Axes]
+    plt.rc("text", usetex=True)
+    plt.rc("font", family="serif")
+
+    fig, axs = plt.subplots(
+        2,
+        len(models),
+        figsize=(2.5 * len(models), 4),
+        sharey="row",
+        sharex="col",
+        gridspec_kw={"height_ratios": [2, 1]},
+    )
     data: dict[str, np.ndarray] = np.load(dataset_path)
     X = data["X_test"].flatten()
     y = data["y_test"].flatten()
+    grid = np.linspace(X.min(), X.max())
+    num_posterior_samples = 100
+    x_kernel = partial(rbf_kernel, gamma=0.5)
+    y_kernel = partial(rbf_kernel, gamma=0.5)
 
-    for model, model_name, ax in zip(models, names, axs):
+    for i, (model, model_name) in enumerate(zip(models, names)):
+        posterior_ax: plt.Axes = axs[0, i]
+        mcmd_ax: plt.Axes = axs[1, i]
+
         if isinstance(model, GaussianNN):
             y_hat = model._predict_impl(torch.tensor(X).unsqueeze(1))
             mu, var = torch.split(y_hat, [1, 1], dim=-1)
@@ -86,25 +104,40 @@ def produce_figure(
             lower=lower,
             upper=upper,
             show=False,
-            ax=ax,
+            ax=posterior_ax,
             ylims=(0, 45),
             legend=False,
             error_color="gray",
         )
-        ax.set_title(model_name)
-        ax.annotate(f"MAE: {mae:.3f}", (0.2, 41))
-        ax.annotate(f"NLL: {nll:.3f}", (0.2, 37))
-        ax.xaxis.set_major_locator(MultipleLocator(np.pi))
-        ax.xaxis.set_major_formatter(FuncFormatter(multiple_formatter()))
-        ax.set_xlabel(None)
-        ax.set_ylabel(None)
+        posterior_ax.set_title(model_name)
+        posterior_ax.annotate(f"MAE: {mae:.3f}", (0.2, 41))
+        posterior_ax.annotate(f"NLL: {nll:.3f}", (0.2, 37))
+        posterior_ax.xaxis.set_major_locator(MultipleLocator(np.pi))
+        posterior_ax.xaxis.set_major_formatter(FuncFormatter(multiple_formatter()))
+        posterior_ax.set_xlabel(None)
+        posterior_ax.set_ylabel(None)
+
+        mcmd_vals = compute_mcmd(
+            grid,
+            x=X,
+            y=y,
+            x_prime=np.tile(X, num_posterior_samples),
+            y_prime=dist.rvs((num_posterior_samples, len(X))),
+            x_kernel=x_kernel,
+            y_kernel=y_kernel,
+        )
+        mcmd_ax.plot(grid, mcmd_vals)
+        mcmd_ax.set_ylim(-0.01, 0.75)
+        mcmd_ax.annotate(
+            f"Mean MCMD: {np.mean(mcmd_vals):.4f}", (X.min() + 0.1, mcmd_ax.get_ylim()[1] * 0.8)
+        )
 
     fig.tight_layout()
     fig.savefig(save_path, format="pdf", dpi=150)
 
 
 if __name__ == "__main__":
-    save_path = "deep_uncertainty/figures/ddpn/artifacts/synthetic_demo.pdf"
+    save_path = "deep_uncertainty/figures/discrete_calibration/artifacts/synthetic_demo.pdf"
     dataset_path = "data/discrete_sine_wave/discrete_sine_wave.npz"
     models = [
         GaussianNN.load_from_checkpoint(
@@ -116,5 +149,5 @@ if __name__ == "__main__":
             "chkp/discrete_sine_wave_ddpn/version_0/best_loss.ckpt"
         ),
     ]
-    names = ["Gaussian DNN", "Poisson DNN", "NB DNN", "DDPN (Ours)"]
+    names = ["Gaussian DNN", "Poisson DNN", "NB DNN", "Double Poisson DNN"]
     produce_figure(models, names, save_path, dataset_path)

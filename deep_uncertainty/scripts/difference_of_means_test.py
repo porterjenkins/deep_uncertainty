@@ -25,10 +25,10 @@ for head, version in tqdm(
     ood_entropies = torch.load(log_dir / "bible_entropies.pt").detach().cpu().numpy()
 
     test_result = permutation_test(
-        data=[reg_entropies, ood_entropies],
+        data=[ood_entropies, reg_entropies],
         statistic=difference_of_means,
         vectorized=True,
-        alternative="less",
+        alternative="greater",
         n_resamples=1500,
     )
     results_dict = {"delta": float(test_result.statistic), "p_val": float(test_result.pvalue)}

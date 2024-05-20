@@ -28,7 +28,7 @@ def wrap_text(text, width=25):
     return wrapped_text
 
 
-def generate_plot(config_path: Path, chkp_path: Path | None, save_path: Path, title: str):
+def produce_figure(config_path: Path, chkp_path: Path | None, save_path: Path, title: str):
     is_ensemble = chkp_path is None
     palette = color_palette()
     id_color, ood_color = palette[0], palette[1]
@@ -301,7 +301,7 @@ def parse_args() -> Namespace:
 
 if __name__ == "__main__":
     args = parse_args()
-    generate_plot(
+    produce_figure(
         config_path=Path(args.config_path),
         chkp_path=Path(args.chkp_path) if args.chkp_path != "" else None,
         save_path=Path(args.save_path),

@@ -85,7 +85,7 @@ def get_mnist_preds(
     return all_gaussian_preds, all_poisson_preds, all_nbinom_preds, all_ddpn_preds
 
 
-def generate_figure(
+def produce_figure(
     gaussian_path: str, poisson_path: str, nbinom_path: str, ddpn_path: str, save_path: str
 ):
     datamodule = MNISTDataModule(
@@ -267,7 +267,7 @@ def parse_args() -> Namespace:
 
 if __name__ == "__main__":
     args = parse_args()
-    generate_figure(
+    produce_figure(
         gaussian_path=args.gaussian_path,
         poisson_path=args.poisson_path,
         nbinom_path=args.nbinom_path,

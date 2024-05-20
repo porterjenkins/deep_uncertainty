@@ -13,12 +13,10 @@ from sklearn.metrics.pairwise import rbf_kernel
 
 from deep_uncertainty.evaluation.calibration import compute_mcmd
 from deep_uncertainty.evaluation.plotting import plot_posterior_predictive
-from deep_uncertainty.models import DoublePoissonNN
 from deep_uncertainty.models import GaussianNN
 from deep_uncertainty.models import NegBinomNN
 from deep_uncertainty.models import PoissonNN
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
-from deep_uncertainty.random_variables import DoublePoisson
 from deep_uncertainty.utils.figure_utils import multiple_formatter
 
 
@@ -50,7 +48,7 @@ def produce_figure(
     data: dict[str, np.ndarray] = np.load(dataset_path)
     X = data["X_test"].flatten()
     y = data["y_test"].flatten()
-    grid = np.linspace(X.min(), X.max())
+    grid = np.linspace(X.min(), X.max(), num=100)
     num_posterior_samples = 100
     x_kernel = partial(rbf_kernel, gamma=0.5)
     y_kernel = partial(rbf_kernel, gamma=0.5)
@@ -67,18 +65,10 @@ def produce_figure(
             dist = norm(loc=mu, scale=std)
             nll = np.mean(-np.log(dist.cdf(y + 0.5) - dist.cdf(y - 0.5)))
 
-        elif isinstance(model, DoublePoissonNN):
-            y_hat = model._predict_impl(torch.tensor(X).unsqueeze(1))
-            mu, phi = torch.split(y_hat, [1, 1], dim=-1)
-            mu = mu.detach().numpy().flatten()
-            phi = phi.detach().numpy().flatten()
-            dist = DoublePoisson(mu, phi)
-            nll = -np.log(dist.pmf(y)).mean()
-
         elif isinstance(model, PoissonNN):
             y_hat = model._predict_impl(torch.tensor(X).unsqueeze(1))
-            lmbda = y_hat.detach().numpy().flatten()
-            dist = poisson(lmbda)
+            mu = y_hat.detach().numpy().flatten()
+            dist = poisson(mu)
             nll = np.mean(-dist.logpmf(y))
 
         elif isinstance(model, NegBinomNN):
@@ -137,17 +127,14 @@ def produce_figure(
 
 
 if __name__ == "__main__":
-    save_path = "deep_uncertainty/figures/discrete_calibration/artifacts/synthetic_demo.pdf"
+    save_path = "deep_uncertainty/figures/discrete_calibration/artifacts/mcmd_in_practice.pdf"
     dataset_path = "data/discrete_sine_wave/discrete_sine_wave.npz"
     models = [
+        PoissonNN.load_from_checkpoint("chkp/discrete_sine_wave_poisson/version_0/best_loss.ckpt"),
+        NegBinomNN.load_from_checkpoint("chkp/discrete_sine_wave_nbinom/version_0/best_loss.ckpt"),
         GaussianNN.load_from_checkpoint(
             "chkp/discrete_sine_wave_gaussian/version_0/best_loss.ckpt"
         ),
-        PoissonNN.load_from_checkpoint("chkp/discrete_sine_wave_poisson/version_0/best_loss.ckpt"),
-        NegBinomNN.load_from_checkpoint("chkp/discrete_sine_wave_nbinom/version_0/best_loss.ckpt"),
-        DoublePoissonNN.load_from_checkpoint(
-            "chkp/discrete_sine_wave_ddpn/version_0/best_loss.ckpt"
-        ),
     ]
-    names = ["Gaussian DNN", "Poisson DNN", "NB DNN", "Double Poisson DNN"]
+    names = ["Poisson DNN", "NB DNN", "Gaussian DNN"]
     produce_figure(models, names, save_path, dataset_path)

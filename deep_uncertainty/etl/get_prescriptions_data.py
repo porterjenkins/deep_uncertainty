@@ -25,7 +25,7 @@ def save_train_val_test_split(output_dir: str = "."):
 
     csv_filepath = output_dir / "prescriptions.csv"
     if not os.path.exists(csv_filepath):
-        FILE_ID = "1XbyJDk3YjBRZxjIOoGdfhhKhhqcbIcYd"  # Publicly hosted on Spencer's Google Drive.
+        FILE_ID = "1XbyJDk3YjBRZxjIOoGdfhhKhhqcbIcYd"  # Publicly hosted on Google Drive.
         URL = f"https://docs.google.com/uc?export=download&id={FILE_ID}"
         csv_filepath = wget.download(URL, str(output_dir))
 

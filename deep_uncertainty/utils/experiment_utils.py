@@ -13,7 +13,6 @@ from deep_uncertainty.datamodules import COCOPeopleDataModule
 from deep_uncertainty.datamodules import MNISTDataModule
 from deep_uncertainty.datamodules import ReviewsDataModule
 from deep_uncertainty.datamodules import TabularDataModule
-from deep_uncertainty.datamodules import VEDAIDataModule
 from deep_uncertainty.enums import DatasetType
 from deep_uncertainty.enums import HeadType
 from deep_uncertainty.enums import ImageDatasetName
@@ -124,15 +123,6 @@ def get_datamodule(
                 root_dir="./data/mnist",
                 batch_size=batch_size,
                 num_workers=8,
-                persistent_workers=True,
-            )
-        elif dataset_spec == ImageDatasetName.COINS:
-            raise NotImplementedError("Coins dataset not currently implemented.")
-        elif dataset_spec == ImageDatasetName.VEHICLES:
-            return VEDAIDataModule(
-                root_dir="./data/vehicles",
-                batch_size=batch_size,
-                num_workers=9,
                 persistent_workers=True,
             )
         elif dataset_spec == ImageDatasetName.COCO_PEOPLE:

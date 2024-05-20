@@ -1,7 +1,0 @@
-dataset:
-  dir: "./data/nonlinear_count_data/"
-  name: "toy_data_nonlinear_count"
-  # name: "toy_data_continuous"
-optim:
-  batch_size: 32
-  epochs: 500

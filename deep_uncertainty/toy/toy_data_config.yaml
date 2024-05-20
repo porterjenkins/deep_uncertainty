@@ -1,9 +1,0 @@
-dataset:
-  task: generate_discrete_overdispersed_parabola
-  generation_params:
-    n: 1000
-  train_pct: 0.8
-  val_pct: 0.1
-  test_pct: 0.1
-  name: discrete_parabola
-  output_dir: "./data/discrete_parabola/"

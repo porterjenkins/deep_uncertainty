@@ -3,7 +3,7 @@ random_seed: 1998
 head_type: double_poisson
 dataset:
   type: tabular
-  spec: /Users/spenceryoung/Desktop/DAI/code/deep_uncertainty/data/nonlinear_count_data/toy_data_nonlinear_count.npz
+  spec: path/to/tabular/dataset.npz
   input_dim: 1
 training:
   accelerator: cpu
@@ -14,7 +14,7 @@ training:
       beta_0: 1.0
       beta_1: 1.0
       last_epoch: -1
-  chkp_dir: /Users/spenceryoung/Desktop/DAI/code/deep_uncertainty/chkp
+  chkp_dir: path/to/chkp/dir
   chkp_freq: 20
   num_epochs: 100
   optimizer:
@@ -30,4 +30,4 @@ training:
       last_epoch: -1
 evaluation:
   num_trials: 1
-  log_dir: /Users/spenceryoung/Desktop/DAI/code/deep_uncertainty/logs
+  log_dir: path/to/log/dir

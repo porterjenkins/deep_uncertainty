@@ -1,6 +1,31 @@
 # Predictive Uncertainty with Deep Learning and Count Data
 
-## Setup
+This repository contains the official implementation of "Flexible Heteroscedastic Count Regression with Deep Double Poisson Networks".
+
+## Important Links
+
+Important figures used in the paper, along with the code that generated them, can be found in [this directory](deep_uncertainty/figures/ddpn).
+
+Our implementations of various "single forward pass" techniques referenced in the paper can be found at the following locations:
+
+- [Gaussian DNN](deep_uncertainty/models/gaussian_nn.py)
+- [Poisson DNN](deep_uncertainty/models/poisson_nn.py)
+- [NB DNN](deep_uncertainty/models/neg_binom_nn.py)
+- [Stirn et al.](deep_uncertainty/models/faithful_gaussian_nn.py)
+- [Seitzer et al.](deep_uncertainty/models/gaussian_nn.py) (with a `beta_scheduler`)
+- [Immer et al.](deep_uncertainty/models/natural_gaussian_nn.py)
+- [DDPN (ours)](deep_uncertainty/models/double_poisson_nn.py)
+- [β-DDPN (ours)](deep_uncertainty/models/double_poisson_nn.py) (with a `beta_scheduler`)
+
+Implementations of "deep ensembles" referenced in the paper are found at:
+
+- [Laksh. et al.](deep_uncertainty/models/ensembles/gaussian_mixture_nn.py)
+- [Poisson DNN Mixture](deep_uncertainty/models/ensembles/poisson_mixture_nn.py)
+- [NB DNN Mixture](deep_uncertainty/models/ensembles/neg_binom_mixture_nn.py)
+- [DDPN Mixture](deep_uncertainty/models/ensembles/double_poisson_mixture_nn.py)
+- [β-DDPN Mixture](deep_uncertainty/models/ensembles/double_poisson_mixture_nn.py)
+
+## Getting Started
 
 ### Install Project Dependencies
 
@@ -30,6 +55,8 @@ For example, to get a `.npz` file for the `Bikes` dataset, run the following:
 python deep_uncertainty/etl/get_bikes_data.py --output-dir path/to/your/data/dir
 ```
 
+## Experiments
+
 ### Training models
 
 To train a model, first fill out a config (using [this config](deep_uncertainty/training/sample_train_config.yaml) as a template). Then, from the terminal, run
@@ -49,7 +76,6 @@ If fitting a model on tabular data, the training script assumes the dataset will
 The currently-supported image datasets for training models are:
 
 - `MNIST` (We regress the digit labels instead of classifying)
-- `Vehicles` (VEDAI, labeled with the count of vehicle annotations)
 - `COCO-People` (All images in COCO containing people, labeled with the count of "person" annotations)
 
 To train a model on any of these datasets, simply specify `"image"` for the `dataset` `type` key in the config, then set `dataset` `spec` to the requisite dataset name (see the options in the `ImageDatasetName` class [here](deep_uncertainty/enums.py))

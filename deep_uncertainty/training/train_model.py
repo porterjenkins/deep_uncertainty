@@ -1,7 +1,6 @@
 import math
 from argparse import ArgumentParser
 from argparse import Namespace
-from pathlib import Path
 
 import lightning as L
 from lightning.pytorch.loggers import CSVLogger
@@ -11,7 +10,6 @@ from deep_uncertainty.utils.experiment_utils import fix_random_seed
 from deep_uncertainty.utils.experiment_utils import get_chkp_callbacks
 from deep_uncertainty.utils.experiment_utils import get_datamodule
 from deep_uncertainty.utils.experiment_utils import get_model
-from deep_uncertainty.utils.experiment_utils import save_metrics_plots
 
 
 def main(config: TrainingConfig):
@@ -43,8 +41,6 @@ def main(config: TrainingConfig):
             precision=config.precision,
         )
         trainer.fit(model=model, datamodule=datamodule)
-        log_dir = Path(logger.log_dir)
-        save_metrics_plots(log_dir)
 
 
 def parse_args() -> Namespace:

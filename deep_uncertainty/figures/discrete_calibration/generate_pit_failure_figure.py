@@ -177,7 +177,7 @@ def produce_figure(save_path: str | Path):
         n=(mean**2 / (variance + eps - mean)).round(), p=(mean / (variance + eps))
     )
 
-    fig, axs = plt.subplots(4, 4, figsize=(7, 5))
+    fig, axs = plt.subplots(4, 4, figsize=(7, 5), sharey="row")
     hist_alpha = 0.6
     hist_rwidth = 0.9
 

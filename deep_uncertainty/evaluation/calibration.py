@@ -1,5 +1,3 @@
-from typing import Callable
-
 import numpy as np
 from scipy.stats import entropy
 from scipy.stats import norm
@@ -113,54 +111,6 @@ def compute_cluster_ece(y: np.ndarray, probs: np.ndarray, cluster_labels: np.nda
         unnormalized_ece += divergences.sum()
 
     return unnormalized_ece / len(unique_cluster_indices)
-
-
-def compute_mcmd(
-    grid: np.ndarray,
-    x: np.ndarray,
-    y: np.ndarray,
-    x_prime: np.ndarray,
-    y_prime: np.ndarray,
-    x_kernel: Callable[[np.ndarray, np.ndarray], np.ndarray],
-    y_kernel: Callable[[np.ndarray, np.ndarray], np.ndarray],
-    lmbda: float = 0.01,
-) -> np.ndarray:
-    """Given a ground-truth conditional distribution and samples from a model's approximation of that distribution, compute the maximum conditional mean discrepancy (MCMD) along the provided grid.
-
-    Args:
-        grid (np.ndarray): Grid of values (assumed to be drawn from X) to compute MCMD across.
-        x (np.ndarray): The conditioning values that produced y.
-        y (np.ndarray): Ground truth samples from the conditional distribution.
-        x_prime (np.ndarray): The conditioning values that produced y_prime.
-        y_prime (np.ndarray): Samples from a model's approximation of the ground truth conditional distribution.
-        x_kernel (Callable[[np.ndarray, np.ndarray], np.ndarray]): Kernel function to use for the conditioning variable (x).
-        y_kernel (Callable[[np.ndarray, np.ndarray], np.ndarray]): Kernel function to use for the output variable (y).
-        lmbda (float, optional): Regularization parameter. Defaults to 0.01.
-
-    Returns:
-        np.ndarray: MCMD values along the provided grid.
-    """
-    n = len(x)
-    m = len(x_prime)
-
-    K_X = x_kernel(x.reshape(-1, 1), x.reshape(-1, 1))
-    K_X_prime = x_kernel(x_prime.reshape(-1, 1), x_prime.reshape(-1, 1))
-
-    W_X = np.linalg.inv(K_X + n * lmbda * np.eye(n))
-    W_X_prime = np.linalg.inv(K_X_prime + m * lmbda * np.eye(m))
-
-    K_Y = y_kernel(y.reshape(-1, 1), y.reshape(-1, 1))
-    K_Y_prime = y_kernel(y_prime.reshape(-1, 1), y_prime.reshape(-1, 1))
-    K_Y_Y_prime = y_kernel(y.reshape(-1, 1), y_prime.reshape(-1, 1))
-
-    k_X = x_kernel(x.reshape(-1, 1), grid.reshape(-1, 1))
-    k_X_prime = x_kernel(x_prime.reshape(-1, 1), grid.reshape(-1, 1))
-
-    first_term = np.diag(k_X.T @ W_X @ K_Y @ W_X.T @ k_X)
-    second_term = np.diag(2 * k_X.T @ W_X @ K_Y_Y_prime @ W_X_prime.T @ k_X_prime)
-    third_term = np.diag(k_X_prime.T @ W_X_prime @ K_Y_prime @ W_X_prime.T @ k_X_prime)
-
-    return first_term - second_term + third_term
 
 
 if __name__ == "__main__":

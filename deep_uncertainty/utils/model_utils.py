@@ -173,3 +173,22 @@ def get_hdi(rv: RandomVariable, p: float = 0.95):
 
     hdi_low_tail_prob = fmin(interval_width, p_inv, ftol=1e-8, disp=False)[0]
     return rv.ppf(hdi_low_tail_prob), rv.ppf(p + hdi_low_tail_prob)
+
+
+def extract_state_dict(model_chkp_path: str, state_dict_path: str):
+    """
+    Extracts the state dictionary from a saved PyTorch model checkpoint and saves it to a specified path.
+
+    Args:
+        model_chkp_path (str): The path to the saved PyTorch model checkpoint.
+        state_dict_path (str): The path where the extracted state dictionary should be saved.
+
+    Example:
+        extract_state_dict('path/to/model/checkpoint.pth', 'path/to/save/state_dict.pth')
+
+    Note:
+        The saved state dictionary can be loaded with `torch.load('path/to/save/state_dict.pth')`.
+    """
+    m = torch.load(model_chkp_path, map_location="cpu")
+    state_dict = m["state_dict"]
+    torch.save(state_dict, state_dict_path)

@@ -79,7 +79,7 @@ class DiscreteRegressionNN(L.LightningModule):
 
         return optim_dict
 
-    def training_step(self, batch: torch.Tensor) -> torch.Tensor:
+    def training_step(self, batch: tuple[torch.Tensor, torch.LongTensor]) -> torch.Tensor:
         x, y = batch
         y_hat = self._forward_impl(x)
         loss = self.loss_fn(y_hat, y.view(-1, 1).float())

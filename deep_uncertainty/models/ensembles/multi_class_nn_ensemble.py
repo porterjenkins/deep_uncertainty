@@ -20,7 +20,7 @@ class MultiClassNNEnsemble(L.LightningModule):
     """
 
     def __init__(self, members: list[MultiClassNN]):
-        super(MultiClassNN, self).__init__()
+        super(MultiClassNNEnsemble, self).__init__()
         self.members = members
         [member.eval() for member in self.members]
 

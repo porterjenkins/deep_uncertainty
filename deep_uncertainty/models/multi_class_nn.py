@@ -117,7 +117,7 @@ class MultiClassNN(DiscreteRegressionNN):
         self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor
     ):
         probs = torch.softmax(y_hat, dim=-1)
-        targets = y.flatten()
+        targets = y.flatten().long()
         target_probs = torch.tensor(
             data=[probs[i][targets[i] - min(self.discrete_values)] for i in range(len(targets))],
             device=probs.device,

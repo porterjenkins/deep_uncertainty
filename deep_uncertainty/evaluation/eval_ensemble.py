@@ -8,6 +8,7 @@ import yaml
 from deep_uncertainty.enums import HeadType
 from deep_uncertainty.models.ensembles import DoublePoissonMixtureNN
 from deep_uncertainty.models.ensembles import GaussianMixtureNN
+from deep_uncertainty.models.ensembles import MultiClassNNEnsemble
 from deep_uncertainty.models.ensembles import NegBinomMixtureNN
 from deep_uncertainty.models.ensembles import PoissonMixtureNN
 from deep_uncertainty.utils.configs import EnsembleConfig
@@ -35,6 +36,8 @@ def main(config_path: str):
         ensemble = PoissonMixtureNN.from_config(config)
     elif config.member_head_type == HeadType.NEGATIVE_BINOMIAL:
         ensemble = NegBinomMixtureNN.from_config(config)
+    elif config.member_head_type == HeadType.MULTI_CLASS:
+        ensemble = MultiClassNNEnsemble.from_config(config)
     else:
         raise NotImplementedError(f"Haven't implemented ensemble for {config.member_head_type}.")
 

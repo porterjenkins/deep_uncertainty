@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 
 import pandas as pd
-import wget
+import requests
 from torch.utils.data import Dataset
 
 
@@ -45,8 +45,13 @@ class ReviewsDataset(Dataset):
         return (self.root_dir / "Patio_Lawn_and_Garden_5.json").exists()
 
     def _download(self):
-        gz_filename = wget.download(self.DOWNLOAD_URL, str(self.root_dir))
+        gz_filename = "Patio_Lawn_and_Garden_5.json.gz"
         target_filename = "Patio_Lawn_and_Garden_5.json"
+
+        response = requests.get(self.DOWNLOAD_URL, verify=False,)
+        with open(self.root_dir / gz_filename, "wb") as f:
+            f.write(response.content)
+
         with gzip.open(self.root_dir / gz_filename, "rb") as f_in:
             with open(self.root_dir / target_filename, "wb") as f_out:
                 shutil.copyfileobj(f_in, f_out)

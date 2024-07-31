@@ -21,6 +21,7 @@ from deep_uncertainty.models import DoublePoissonNN
 from deep_uncertainty.models import FaithfulGaussianNN
 from deep_uncertainty.models import GaussianNN
 from deep_uncertainty.models import MeanNN
+from deep_uncertainty.models import MultiClassNN
 from deep_uncertainty.models import NaturalGaussianNN
 from deep_uncertainty.models import NegBinomNN
 from deep_uncertainty.models import PoissonNN
@@ -30,7 +31,6 @@ from deep_uncertainty.models.backbones import LargerMLP
 from deep_uncertainty.models.backbones import MLP
 from deep_uncertainty.models.backbones import MNISTCNN
 from deep_uncertainty.models.backbones import MobileNetV3
-from deep_uncertainty.models.backbones import SmallCNN
 from deep_uncertainty.models.backbones import ViT
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
 from deep_uncertainty.utils.configs import TrainingConfig
@@ -69,6 +69,22 @@ def get_model(config: TrainingConfig, return_initializer: bool = False) -> Discr
             initializer = DoublePoissonNN
     elif config.head_type in (HeadType.NEGATIVE_BINOMIAL, HeadType.NEGATIVE_BINOMIAL_GLM):
         initializer = NegBinomNN
+    elif config.head_type == HeadType.MULTI_CLASS:
+        if config.dataset_type == DatasetType.IMAGE:
+            if config.dataset_spec != ImageDatasetName.MNIST:
+                raise ValueError("Can only train MultiClassNN on MNIST or Reviews.")
+            else:
+                discrete_values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        elif config.dataset_type == DatasetType.TEXT:
+            # Must be Amazon Reviews.
+            discrete_values = [1, 2, 3, 4, 5]
+        else:
+            raise ValueError("Can only train MultiClassNN on MNIST or Reviews.")
+
+        initializer = partialclass(
+            MultiClassNN,
+            discrete_values=discrete_values,
+        )
 
     if config.dataset_type == DatasetType.TABULAR:
         if "collision" in str(config.dataset_spec):
@@ -84,8 +100,6 @@ def get_model(config: TrainingConfig, return_initializer: bool = False) -> Discr
     elif config.dataset_type == DatasetType.IMAGE:
         if config.dataset_spec == ImageDatasetName.MNIST:
             backbone_type = MNISTCNN
-        elif config.dataset_spec == ImageDatasetName.COINS:
-            backbone_type = SmallCNN
         elif config.dataset_spec == ImageDatasetName.COCO_PEOPLE:
             backbone_type = ViT
         else:

@@ -58,7 +58,7 @@ def get_model(config: TrainingConfig, return_initializer: bool = False) -> Discr
         initializer = NaturalGaussianNN
     elif config.head_type in (HeadType.POISSON, HeadType.POISSON_GLM):
         initializer = PoissonNN
-    elif config.head_type == HeadType.DOUBLE_POISSON:
+    elif config.head_type in (HeadType.DOUBLE_POISSON, HeadType.DOUBLE_POISSON_GLM):
         if config.beta_scheduler_type is not None:
             initializer = partialclass(
                 DoublePoissonNN,
@@ -87,10 +87,14 @@ def get_model(config: TrainingConfig, return_initializer: bool = False) -> Discr
         )
 
     if config.dataset_type == DatasetType.TABULAR:
-        if "collision" in str(config.dataset_spec):
-            backbone_type = LargerMLP
-        elif config.head_type in (HeadType.POISSON_GLM, HeadType.NEGATIVE_BINOMIAL_GLM):
+        if config.head_type in (
+            HeadType.POISSON_GLM,
+            HeadType.NEGATIVE_BINOMIAL_GLM,
+            HeadType.DOUBLE_POISSON_GLM,
+        ):
             backbone_type = Identity
+        elif "collision" in str(config.dataset_spec):
+            backbone_type = LargerMLP
         else:
             backbone_type = MLP
         backbone_kwargs = {"input_dim": config.input_dim}

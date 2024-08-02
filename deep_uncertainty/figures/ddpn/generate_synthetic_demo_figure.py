@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from matplotlib.ticker import FuncFormatter
 from matplotlib.ticker import MultipleLocator
+from scipy.interpolate import CubicSpline
 from scipy.stats import nbinom
 from scipy.stats import norm
 from scipy.stats import poisson
@@ -89,8 +90,21 @@ def produce_figure(
             ax=ax,
             ylims=(0, 45),
             legend=False,
-            error_color="gray",
+            error_color="cornflowerblue",
         )
+
+        # TODO: Needs formalizing.
+        uncertainty_data = np.load("disc_sine_wave_gt_uncertainty.npz")
+        uncertainty_x = uncertainty_data["X"].flatten()
+        order = np.argsort(uncertainty_x)
+        lb = uncertainty_data["lower"][order]
+        ub = uncertainty_data["upper"][order]
+        lb_interp = CubicSpline(uncertainty_x[order], lb)
+        ub_interp = CubicSpline(uncertainty_x[order], ub)
+        foo = np.linspace(uncertainty_x.min(), uncertainty_x.max())
+        ax.plot(foo, lb_interp(foo), "--", c="gray")
+        ax.plot(foo, ub_interp(foo), "--", c="gray")
+
         ax.set_title(model_name)
         ax.annotate(f"MAE: {mae:.3f}", (0.2, 41))
         ax.annotate(f"NLL: {nll:.3f}", (0.2, 37))
@@ -99,12 +113,29 @@ def produce_figure(
         ax.set_xlabel(None)
         ax.set_ylabel(None)
 
-    fig.tight_layout()
+    # TODO: This could be more elegant.
+    gt_data = ax.scatter(
+        X[0], y[0], facecolors="none", edgecolors="gray", alpha=0.4, label="Test data"
+    )
+    (gt_aleatoric,) = ax.plot(foo[0], lb_interp(foo[0]), "--", c="gray", label="G.T. Aleatoric")
+    (learned_mean,) = ax.plot([0], [0], "k", label="Learned Mean")
+    learned_aleatoric = ax.fill_between(
+        [0], [0], [0], alpha=0.2, color="cornflowerblue", label="Learned Aleatoric"
+    )
+
+    fig.tight_layout(rect=[0, 0.1, 1, 1])
+    fig.subplots_adjust(bottom=0.2)
+    fig.legend(
+        handles=[gt_data, gt_aleatoric, learned_aleatoric, learned_mean],
+        loc="lower center",
+        ncol=len(models),
+    )
+
     fig.savefig(save_path, format="pdf", dpi=150)
 
 
 if __name__ == "__main__":
-    save_path = "deep_uncertainty/figures/ddpn/artifacts/synthetic_demo.pdf"
+    save_path = "deep_uncertainty/figures/ddpn/artifacts/synthetic_demo_ii.pdf"
     dataset_path = "data/discrete_sine_wave/discrete_sine_wave.npz"
     models = [
         GaussianNN.load_from_checkpoint(

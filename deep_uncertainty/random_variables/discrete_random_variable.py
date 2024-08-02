@@ -78,7 +78,7 @@ class DiscreteRandomVariable:
             int | np.ndarray | torch.Tensor: The smallest value(s) at which this distribution has mass >= `q` to the left of it.
         """
         if not isinstance(q, Iterable):
-            q = np.array([q]) if not self.use_torch else torch.tensor(q, device=self.device)
+            q = np.array([q]) if not self.use_torch else torch.tensor([q], device=self.device)
 
         if q.shape not in {(1,), (self.dimension,)}:
             raise ValueError(

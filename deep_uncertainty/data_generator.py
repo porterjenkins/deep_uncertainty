@@ -150,7 +150,7 @@ class DataGenerator:
 
     @staticmethod
     def generate_count_dataset_with_isolated_points(
-        n: int = 1000,
+        n: int = 498,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Create a count dataset similar to the continuous one used in Figure 2 of "Faithful Heteroscedastic Regression with Neural Networks".
 
@@ -168,13 +168,16 @@ class DataGenerator:
         X = np.random.uniform(low=3, high=8, size=n)
 
         y_mu = np.ceil(X * np.sin(X)) + 15
-        eps_phi = (y_mu / 20) * (6 - 0.5 * X)
-        y = np.array([DoublePoisson(mu, phi).rvs(1).item() for mu, phi in zip(y_mu, eps_phi)])
+        y_phi = (y_mu / 20) * (6 - 0.5 * X)
+        y = np.array([DoublePoisson(mu, phi).rvs(1) for mu, phi in zip(y_mu, y_phi)])
 
         isolated_X = np.array([1, 10])
         isolated_y = np.ceil(isolated_X * np.sin(isolated_X)) + 15
 
-        return X, y, isolated_X, isolated_y
+        X = np.concatenate([X, isolated_X])
+        y = np.concatenate([y, isolated_y])
+
+        return X, y
 
     @staticmethod
     def generate_discrete_conflation_sine_wave(n: int = 1000) -> tuple[np.ndarray, np.ndarray]:
@@ -197,7 +200,7 @@ class DataGenerator:
         X = np.array(x_vals)
         y = np.array(y_vals)
         np.savez(
-            "disc_sine_wave_gt_uncertainty.npz",
+            "data/discrete_sine_wave/gt_uncertainty.npz",
             X=X,
             y=y,
             lower=np.array(lower_bounds),

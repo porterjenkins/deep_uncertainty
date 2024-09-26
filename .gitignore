@@ -1,12 +1,16 @@
 .idea
-/data
+data/*
 __pycache__
 .DS_Store
 *.env
 */.ipynb_checkpoints
 .vscode
 /logs/
-/chkp/
+chkp/*
 *.png
 /ignore/
 *.log
+
+# Specific dirs to include within ignored paths.
+!data/discrete_sine_wave
+!data/isolated_count_data

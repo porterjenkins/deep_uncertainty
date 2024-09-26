@@ -1,3 +1,4 @@
+# TODO: Make this match other version.
 from pathlib import Path
 from typing import Sequence
 
@@ -10,6 +11,7 @@ from scipy.interpolate import CubicSpline
 from scipy.stats import nbinom
 from scipy.stats import norm
 from scipy.stats import poisson
+
 from deep_uncertainty.evaluation.plotting import plot_posterior_predictive
 from deep_uncertainty.models import DoublePoissonNN
 from deep_uncertainty.models import GaussianNN
@@ -17,10 +19,10 @@ from deep_uncertainty.models import NegBinomNN
 from deep_uncertainty.models import PoissonNN
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
 from deep_uncertainty.random_variables import DoublePoisson
-from deep_uncertainty.utils.figure_utils import multiple_formatter
 
 
 gt_color = "#e79148"
+
 
 def produce_figure(
     models: list[DiscreteRegressionNN],
@@ -42,8 +44,6 @@ def produce_figure(
     data: dict[str, np.ndarray] = np.load(dataset_path)
     X = data["X_test"].flatten()
     y = data["y_test"].flatten()
-
-
 
     count = 0
 
@@ -98,14 +98,14 @@ def produce_figure(
             ylims=(0, 45),
             legend=False,
             error_color="gray",
-            line_color='#326394',
+            line_color="#326394",
             line_font=1.5,
             error_alpha=0.6,
-            boundary_color='#a9a9a9',
+            boundary_color="#a9a9a9",
             boundary_width=0.9,
         )
 
-        uncertainty_data = np.load("disc_sine_wave_gt_uncertainty.npz")
+        uncertainty_data = np.load("data/discrete_sine_wave/gt_uncertainty.npz")
         uncertainty_x = uncertainty_data["X"].flatten()
         order = np.argsort(uncertainty_x)
         lb = uncertainty_data["lower"][order]
@@ -122,16 +122,18 @@ def produce_figure(
         ax.set_title(model_name)
         ax.annotate(f"MAE: {mae:.3f}", (0.2, 41))
         ax.annotate(f"NLL: {nll:.3f}", (0.2, 37))
-        
+
         ax.xaxis.set_major_locator(MultipleLocator(2 * np.pi))
-        ax.xaxis.set_major_formatter(FuncFormatter(lambda x, _: '0' if x == 0 else f'{x / np.pi:.0f}π'))
-        ax.set_xlabel(r"$x$", labelpad=-10, fontsize=14, fontname='Times New Roman')
+        ax.xaxis.set_major_formatter(
+            FuncFormatter(lambda x, _: "0" if x == 0 else f"{x / np.pi:.0f}π")
+        )
+        ax.set_xlabel(r"$x$", labelpad=-10, fontsize=14, fontname="Times New Roman")
         ax.set_ylabel(None)
 
-        ax.spines['bottom'].set_linewidth(1.5)
-        ax.spines['left'].set_linewidth(1.5)
-        ax.spines['top'].set_linewidth(1.5)
-        ax.spines['right'].set_linewidth(1.5)
+        ax.spines["bottom"].set_linewidth(1.5)
+        ax.spines["left"].set_linewidth(1.5)
+        ax.spines["top"].set_linewidth(1.5)
+        ax.spines["right"].set_linewidth(1.5)
 
         ax.xaxis.set_tick_params(width=1.5)
         ax.yaxis.set_tick_params(width=1.5)
@@ -139,17 +141,19 @@ def produce_figure(
         count += 1
 
     gt_data = ax.scatter(
-        # dots
         X[0], y[0], facecolors="none", edgecolors="#a9a9a9", alpha=0.4, label="Test data"
     )
-    # (gt_aleatoric,) = ax.plot(foo[0], lb_interp(foo[0]), "--", c="gray", label="G.T. Aleatoric", linewidth=1.7)
-    (gt_aleatoric,) = ax.plot(foo[0], lb_interp(foo[0]), "--", c=gt_color, label="G.T. Aleatoric", linewidth=1.7)
+    (gt_aleatoric,) = ax.plot(
+        foo[0], lb_interp(foo[0]), "--", c=gt_color, label="G.T. Aleatoric", linewidth=1.7
+    )
     (learned_mean,) = ax.plot([0], [0], "k", label="Learned Mean")
     learned_aleatoric = ax.fill_between(
         [0], [0], [0], alpha=0.2, color="cornflowerblue", label="Learned Aleatoric"
     )
 
-    fig.text(-0.02, 0.5, 'y', va='center', rotation='vertical', fontsize=10, fontname='Times New Roman')
+    fig.text(
+        -0.02, 0.5, "y", va="center", rotation="vertical", fontsize=10, fontname="Times New Roman"
+    )
     fig.subplots_adjust(bottom=0.2)
     fig.legend(
         handles=[gt_data, gt_aleatoric, learned_aleatoric, learned_mean],
@@ -161,18 +165,13 @@ def produce_figure(
 
 
 if __name__ == "__main__":
-    save_path = "deep_uncertainty/figures/ddpn/artifacts/synthetic_demo_ii.pdf"
+    save_path = "deep_uncertainty/figures/ddpn/artifacts/synthetic_demo_iii.pdf"
     dataset_path = "data/discrete_sine_wave/discrete_sine_wave.npz"
     models = [
-        GaussianNN.load_from_checkpoint(
-            "chkp/discrete_sine_wave_gaussian/version_0/best_loss.ckpt"
-        ),
-        PoissonNN.load_from_checkpoint("chkp/discrete_sine_wave_poisson/version_0/best_loss.ckpt"),
-        NegBinomNN.load_from_checkpoint("chkp/discrete_sine_wave_nbinom/version_0/best_loss.ckpt"),
-        DoublePoissonNN.load_from_checkpoint(
-            "chkp/discrete_sine_wave_ddpn/version_0/best_loss.ckpt"
-        ),
+        GaussianNN.load_from_checkpoint("weights/discrete_sine_wave_gaussian/model.ckpt"),
+        PoissonNN.load_from_checkpoint("weights/discrete_sine_wave_poisson/model.ckpt"),
+        NegBinomNN.load_from_checkpoint("weights/discrete_sine_wave_nbinom/model.ckpt"),
+        DoublePoissonNN.load_from_checkpoint("weights/discrete_sine_wave_ddpn/model.ckpt"),
     ]
     names = ["Gaussian DNN", "Poisson DNN", "NB DNN", "DDPN (Ours)"]
     produce_figure(models, names, save_path, dataset_path)
-

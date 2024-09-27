@@ -25,6 +25,7 @@ class TrainingConfig:
         chkp_dir (Path): Directory to checkpoint model weights in.
         chkp_freq (int): Number of epochs to wait in between checkpointing model weights.
         batch_size (int): The batch size to train with.
+        accumulate_grad_batches (int): How many batches to accumulate gradients for before updating.
         num_epochs (int): The number of epochs through the data to complete during training.
         optim_type (OptimizerType): The type of optimizer to use for training the network, e.g. "adam", "sgd", etc.
         optim_kwargs (dict): Key-value argument specifications for the chosen optimizer, e.g. {"lr": 1e-3, "weight_decay": 1e-5}.
@@ -51,6 +52,7 @@ class TrainingConfig:
         chkp_dir: Path,
         chkp_freq: int,
         batch_size: int,
+        accumulate_grad_batches: int,
         num_epochs: int,
         optim_type: OptimizerType,
         optim_kwargs: dict,
@@ -74,6 +76,7 @@ class TrainingConfig:
         self.chkp_dir = chkp_dir
         self.chkp_freq = chkp_freq
         self.batch_size = batch_size
+        self.accumulate_grad_batches = accumulate_grad_batches
         self.num_epochs = num_epochs
         self.optim_type = optim_type
         self.optim_kwargs = optim_kwargs
@@ -111,6 +114,7 @@ class TrainingConfig:
         chkp_dir = Path(training_dict["chkp_dir"])
         chkp_freq = training_dict["chkp_freq"]
         batch_size = training_dict["batch_size"]
+        accumulate_grad_batches = training_dict.get("accumulate_grad_batches", 1)
         num_epochs = training_dict["num_epochs"]
         precision = training_dict.get("precision")
         optim_type = OptimizerType(training_dict["optimizer"]["type"])
@@ -153,6 +157,7 @@ class TrainingConfig:
             chkp_dir=chkp_dir,
             chkp_freq=chkp_freq,
             batch_size=batch_size,
+            accumulate_grad_batches=accumulate_grad_batches,
             num_epochs=num_epochs,
             optim_type=optim_type,
             optim_kwargs=optim_kwargs,

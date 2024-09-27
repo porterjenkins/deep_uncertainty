@@ -82,8 +82,8 @@ def produce_figure(config_path: Path, chkp_path: Path | None, save_path: Path, t
 
     with torch.inference_mode():
         max_val = 500
-        disc_support = torch.arange(0, 6, device=device)
-        cont_support = torch.linspace(0, 5, steps=500, device=device)
+        disc_support = torch.arange(0, 10, device=device)
+        cont_support = torch.linspace(0, 10, steps=500, device=device)
 
         ax_counter = 0
         for i, (batch_encoding, _) in enumerate(reviews_loader):
@@ -168,12 +168,12 @@ def produce_figure(config_path: Path, chkp_path: Path | None, save_path: Path, t
                         probs = y_hat[:, :max_val].permute(1, 0)
                         review_pmf_ax.plot(
                             disc_support.detach().cpu().numpy(),
-                            probs[:6].detach().cpu().numpy(),
+                            probs[:10].detach().cpu().numpy(),
                             ".-",
                             color=id_color,
                         )
 
-                review_pmf_ax.set_xticks([0, 1, 2, 3, 4, 5])
+                review_pmf_ax.set_xticks(list(range(10)))
 
         ax_counter = 0
         for i, (batch_encoding, _) in enumerate(bible_loader):
@@ -258,11 +258,11 @@ def produce_figure(config_path: Path, chkp_path: Path | None, save_path: Path, t
                         probs = y_hat[:, :max_val].permute(1, 0)
                         rating_pmf_ax.plot(
                             disc_support.detach().cpu().numpy(),
-                            probs[:6].detach().cpu().numpy(),
+                            probs[:10].detach().cpu().numpy(),
                             ".-",
                             color=ood_color,
                         )
-                rating_pmf_ax.set_xticks([0, 1, 2, 3, 4, 5])
+                rating_pmf_ax.set_xticks(list(range(10)))
 
     lower = -0.1
     upper = max(review_pmf_ax.get_ylim()[1], 1.1)
@@ -272,7 +272,7 @@ def produce_figure(config_path: Path, chkp_path: Path | None, save_path: Path, t
     upper = max(rating_pmf_ax.get_ylim()[1], 1.1)
     rating_pmf_ax.set_ylim(lower, upper)
 
-    fig.suptitle(title, fontsize=12)
+    fig.suptitle(rf"{title}", fontsize=12)
     fig.tight_layout()
     fig.savefig(save_path, dpi=150, format="pdf")
 

@@ -39,6 +39,7 @@ def main(config: TrainingConfig):
             callbacks=chkp_callbacks,
             logger=logger,
             precision=config.precision,
+            accumulate_grad_batches=config.accumulate_grad_batches,
         )
         trainer.fit(model=model, datamodule=datamodule)
 

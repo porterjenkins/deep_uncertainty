@@ -14,3 +14,4 @@ chkp/*
 # Specific dirs to include within ignored paths.
 !data/discrete_sine_wave
 !data/isolated_count_data
+!data/nbinom_bowtie

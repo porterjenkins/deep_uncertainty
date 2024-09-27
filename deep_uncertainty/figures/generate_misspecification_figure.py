@@ -72,7 +72,7 @@ def produce_figure(
             ax=ax,
             ylims=(0, 45),
             legend=False,
-            error_color="gray",
+            error_color="cornflowerblue",
         )
         ax.set_title(model_name)
         ax.annotate(f"MAE: {mae:.3f}", (0.2, 41))
@@ -89,12 +89,12 @@ def produce_figure(
 if __name__ == "__main__":
     save_path = "deep_uncertainty/figures/artifacts/misspecification_recovery.pdf"
     dataset_path = "data/nbinom_bowtie/nbinom_bowtie.npz"
+    weights_dir = Path("weights/nbinom_bowtie")
     models = [
-        NegBinomNN.load_from_checkpoint("chkp/misspecified_ii_nbinom/version_0/best_mae.ckpt"),
-        DoublePoissonNN.load_from_checkpoint("chkp/misspecified_ii_ddpn/version_0/best_mae.ckpt"),
-        DoublePoissonNN.load_from_checkpoint(
-            "chkp/misspecified_ii_beta_ddpn/version_0/best_mae.ckpt"
-        ),
+        NegBinomNN.load_from_checkpoint(weights_dir / "nbinom.ckpt"),
+        DoublePoissonNN.load_from_checkpoint(weights_dir / "ddpn.ckpt"),
+        DoublePoissonNN.load_from_checkpoint(weights_dir / "beta_ddpn_0.5.ckpt"),
+        DoublePoissonNN.load_from_checkpoint(weights_dir / "beta_ddpn_1.0.ckpt"),
     ]
-    names = ["NB DNN", "DDPN (Ours)", r"$\beta$-DDPN (Ours)"]
+    names = ["NB DNN", "DDPN (Ours)", r"$\beta_{0.5}$-DDPN (Ours)", r"$\beta_{1.0}$-DDPN (Ours)"]
     produce_figure(models, names, save_path, dataset_path)

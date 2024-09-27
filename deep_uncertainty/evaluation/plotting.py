@@ -20,32 +20,40 @@ def plot_posterior_predictive(
     upper: np.ndarray,
     lower: np.ndarray,
     error_color: str = "r",
-    error_alpha: float = 0.8,
-    line_color: str = 'black',
-    line_font: float = 0.5,
+    error_alpha: float = 0.2,
     show: bool = True,
     legend: bool = True,
     title: str = "",
     ax: plt.Axes | None = None,
     ylims: tuple[float] | None = None,
-    boundary_color: str = 'blue',
-    boundary_width: float = 1.5,
 ):
+    """Visualize a model's posterior predictive distribution over a 1d dataset (`x`, `y` both scalars) by showing the expected value and error bounds across the regression targets.
+
+    Args:
+        x (np.ndarray): The x values (inputs).
+        y (np.ndarray): The ground truth y values (outputs).
+        mu (np.ndarray): The expected values of the model's posterior predictive distribution over `y`.
+        upper (np.ndarray): Upper bounds for the model's posterior predictive distribution over `y`.
+        lower (np.ndarray): Lower bounds for the model's posterior predictive distribution over `y`.
+        error_color (str, optional): Color with which to fill the model's error bounds. Defaults to "r".
+        alpha (float, optional): Transparency value for the model's error bounds. Defaults to 0.2.
+        show (bool, optional): Whether/not to show the resultant plot. Defaults to True.
+        legend (bool, optional): Whether/not to put a legend in the resultant plot. Defaults to True.
+        title (str, optional): If specified, a title for the resultant plot. Defaults to "".
+        ax (plt.Axes | None, optional): If given, the axis on which to plot the posterior predictive distribution. Defaults to None (axis is created).
+        ylims (tuple[float] | None, optional): If given, the lower/upper axis limits for the plot. Defaults to None.
+    """
     order = x.argsort()
+
     ax = plt.subplots(1, 1, figsize=(10, 6))[1] if ax is None else ax
-    
-    ax.scatter(x[order], y[order], alpha=0.8, label="Test Data", 
-               edgecolors='#a9a9a9', linewidths=1.2, facecolors='none', s=45)
-    
-    ax.plot(x[order], mu[order], color=line_color, linewidth=line_font)
 
+    ax.scatter(
+        x[order], y[order], facecolors="none", edgecolors="gray", alpha=0.4, label="Test Data"
+    )
+    ax.plot(x[order], mu[order], "k")
     ax.fill_between(
-        x[order], lower[order], upper[order], color="#e2e9fa", alpha=error_alpha, label="95% CI"
-    ) # cornflowerblue, #cecece
-
-    ax.plot(x[order], upper[order], color=boundary_color, linewidth=boundary_width, label="upper")
-    ax.plot(x[order], lower[order], color=boundary_color, linewidth=boundary_width, label="lower")
-
+        x[order], lower[order], upper[order], color=error_color, alpha=error_alpha, label="95% CI"
+    )
     ax.set_xlabel("x")
     ax.set_ylabel("y")
     if legend:

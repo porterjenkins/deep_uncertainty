@@ -26,11 +26,11 @@ def produce_figure(root_dir: Path | str, save_path: Path | str):
     palette = color_palette()
     domain = np.linspace(0, 3, num=200)
     fig, axs = plt.subplots(
-        1, len(ENSEMBLE_HEADS_TO_NAMES), figsize=(8, 2), sharey="row", sharex="row"
+        1, len(ENSEMBLE_HEADS_TO_NAMES), figsize=(12, 2), sharey="row", sharex="row"
     )
     axs: Sequence[Axes]
     for col_num, (head, name) in enumerate(ENSEMBLE_HEADS_TO_NAMES.items()):
-        log_dir = root_dir / head / "ensemble"
+        log_dir = root_dir / head
         reg_entropies = torch.load(log_dir / "reviews_entropies.pt").detach().cpu().numpy()
         ood_entropies = torch.load(log_dir / "bible_entropies.pt").detach().cpu().numpy()
         with open(log_dir / "difference_of_means_results.yaml") as f:

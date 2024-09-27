@@ -107,7 +107,7 @@ def parse_args() -> Namespace:
     parser.add_argument(
         "--chkp-path",
         type=str,
-        default="chkp/coco_people_beta_ddpn/version_0/best_mae.ckpt",
+        default="chkp/coco_people_beta_ddpn_1.0/version_0/best_mae.ckpt",
         help="Filepath where the model weights are saved.",
     )
     parser.add_argument(

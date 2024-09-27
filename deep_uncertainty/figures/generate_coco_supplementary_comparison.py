@@ -11,6 +11,7 @@ from scipy.stats import rv_discrete
 
 from deep_uncertainty.datamodules import COCOPeopleDataModule
 from deep_uncertainty.models import DoublePoissonNN
+from deep_uncertainty.models import FaithfulGaussianNN
 from deep_uncertainty.models import GaussianNN
 from deep_uncertainty.models import NegBinomNN
 from deep_uncertainty.models import PoissonNN
@@ -46,10 +47,10 @@ def main(chkp_dir: str | Path, save_path: str | Path, image_indices: list[int], 
             batches.append(x)
 
     beta_ddpn_model = DoublePoissonNN.load_from_checkpoint(
-        chkp_dir / "coco_people_beta_ddpn" / "version_0" / "best_mae.ckpt"
+        chkp_dir / "coco_people_beta_ddpn_1.0" / "version_0" / "best_mae.ckpt"
     )
-    beta_gaussian_model = GaussianNN.load_from_checkpoint(
-        chkp_dir / "coco_people_beta_gaussian" / "version_0" / "best_mae.ckpt"
+    faithful_gaussian_model = FaithfulGaussianNN.load_from_checkpoint(
+        chkp_dir / "coco_people_faithful_gaussian" / "version_0" / "best_mae.ckpt"
     )
     poisson_model = PoissonNN.load_from_checkpoint(
         chkp_dir / "coco_people_poisson" / "version_0" / "best_mae.ckpt"
@@ -60,7 +61,7 @@ def main(chkp_dir: str | Path, save_path: str | Path, image_indices: list[int], 
 
     beta_ddpn_members = [
         DoublePoissonNN.load_from_checkpoint(
-            chkp_dir / "coco_people_beta_ddpn" / f"version_{i}" / "best_mae.ckpt"
+            chkp_dir / "coco_people_beta_ddpn_1.0" / f"version_{i}" / "best_mae.ckpt"
         )
         for i in range(5)
     ]
@@ -106,7 +107,7 @@ def main(chkp_dir: str | Path, save_path: str | Path, image_indices: list[int], 
             .numpy()
         )
         mean, var = (
-            beta_gaussian_model._predict_impl(image_tensor.to(beta_gaussian_model.device))
+            faithful_gaussian_model._predict_impl(image_tensor.to(faithful_gaussian_model.device))
             .flatten()
             .detach()
             .cpu()
@@ -146,7 +147,7 @@ def main(chkp_dir: str | Path, save_path: str | Path, image_indices: list[int], 
             disc_support,
             ddpn_dist.pmf(disc_support),
             ".-",
-            label=r"$\beta$-DDPN (ours)",
+            label=r"$\beta_{1.0}$-DDPN (ours)",
             alpha=0.5,
         )
         single_dist_ax.plot(
@@ -156,7 +157,7 @@ def main(chkp_dir: str | Path, save_path: str | Path, image_indices: list[int], 
             disc_support, nbinom_dist.pmf(disc_support), ".-", label="NB DNN", alpha=0.5
         )
         single_dist_ax.plot(
-            cont_support, gauss_dist.pdf(cont_support), label="Seitzer et al. ('23)", alpha=0.5
+            cont_support, gauss_dist.pdf(cont_support), label="Stirn et al. ('23)", alpha=0.5
         )
         single_dist_ax.scatter(label, 0.02, marker="*", s=150, c="black", zorder=10)
         single_dist_ax.set_ylim(-0.01, 1.1)
@@ -170,7 +171,7 @@ def main(chkp_dir: str | Path, save_path: str | Path, image_indices: list[int], 
             .numpy()
         )
         mu, var = (
-            gaussian_quasi_mixture._predict_impl(image_tensor.to(beta_gaussian_model.device))
+            gaussian_quasi_mixture._predict_impl(image_tensor.to(faithful_gaussian_model.device))
             .flatten()
             .detach()
             .cpu()
@@ -200,7 +201,7 @@ def main(chkp_dir: str | Path, save_path: str | Path, image_indices: list[int], 
             disc_support,
             ddpn_dist.pmf(disc_support),
             ".-",
-            label=r"$\beta$-DDPN Mixture (ours)",
+            label=r"$\beta_{1.0}$-DDPN Mixture (ours)",
             alpha=0.5,
         )
         ensemble_dist_ax.plot(
@@ -236,14 +237,14 @@ def parse_args() -> Namespace:
         "--image-indices",
         nargs="+",
         type=int,
-        default=[50, 81, 186],
+        default=[6, 10, 14],
         help="Indices of the images in the test split of COCO-People to show. Specify as `idx_0 idx_1 ...`. Must be in ascending order.",
     )
     parser.add_argument(
         "--xlims",
         nargs="+",
         type=int,
-        default=[0, 6, 0, 12, 0, 6],
+        default=[0, 6, 0, 6, 0, 12],
         help="The xlims to set for the dist. plot with each image. Specify as `xmin_0 xmax_0 xmin_1 xmax_1 ...`.",
     )
     return parser.parse_args()

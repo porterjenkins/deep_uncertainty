@@ -16,11 +16,11 @@ HEADS_TO_NAMES = OrderedDict(
 
 ENSEMBLE_HEADS_TO_NAMES = OrderedDict(
     {
-        "nbinom": "NB Mixture",
-        "poisson": "Poisson Mixture",
-        "gaussian": "Laksh. et al. ('17)",
-        "beta_ddpn_0.5": r"$\beta_{0.5}$-DDPN Mixture (Ours)",
-        "beta_ddpn_1.0": r"$\beta_{1.0}$-DDPN Mixture (Ours)",
-        "ddpn": "DDPN Mixture (Ours)",
+        "nbinom_mixture": "NB Mixture",
+        "poisson_mixture": "Poisson Mixture",
+        "gaussian_quasi_mixture": "Laksh. et al. ('17)",
+        "beta_ddpn_0.5_mixture": r"$\beta_{0.5}$-DDPN Mixture (Ours)",
+        "beta_ddpn_1.0_mixture": r"$\beta_{1.0}$-DDPN Mixture (Ours)",
+        "ddpn_mixture": "DDPN Mixture (Ours)",
     }
 )

@@ -154,7 +154,7 @@ class DataGenerator:
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Create a count dataset similar to the continuous one used in Figure 2 of "Faithful Heteroscedastic Regression with Neural Networks".
 
-        This dataset is created by sampling x ~ Uniform(3, 8). Define mu = ceil(xsin(x)) + 15, phi = (mu / 20)(6 - 0.5x).
+        This dataset is created by sampling x ~ Uniform(3, 8). Define mu = ceil(xsin(x)) + 15, phi = (6 - 0.03x^2).
         We sample y ~ DoublePoisson(mu, phi).
 
         The isolated points (X = 0, Y = ceil(sin(0)) + 15) and (X = 10, Y = ceil(10sin(10)) + 15) are returned separately.
@@ -162,13 +162,11 @@ class DataGenerator:
         Returns:
             np.ndarray: X
             np.ndarray: y
-            np.ndarray: X values for the isolated points.
-            np.ndarray: y values for the isolated points.
         """
         X = np.random.uniform(low=3, high=8, size=n)
 
         y_mu = np.ceil(X * np.sin(X)) + 15
-        y_phi = (y_mu / 20) * (6 - 0.5 * X)
+        y_phi = 6 - 0.03 * X**2
         y = np.array([DoublePoisson(mu, phi).rvs(1) for mu, phi in zip(y_mu, y_phi)])
 
         isolated_X = np.array([1, 10])

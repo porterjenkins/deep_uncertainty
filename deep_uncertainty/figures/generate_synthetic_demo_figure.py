@@ -165,13 +165,13 @@ def produce_figure(
 
 
 if __name__ == "__main__":
-    save_path = "deep_uncertainty/figures/ddpn/artifacts/synthetic_demo_iii.pdf"
+    save_path = "deep_uncertainty/figures/artifacts/synthetic_demo_iii.pdf"
     dataset_path = "data/discrete_sine_wave/discrete_sine_wave.npz"
     models = [
-        GaussianNN.load_from_checkpoint("weights/discrete_sine_wave_gaussian/model.ckpt"),
-        PoissonNN.load_from_checkpoint("weights/discrete_sine_wave_poisson/model.ckpt"),
-        NegBinomNN.load_from_checkpoint("weights/discrete_sine_wave_nbinom/model.ckpt"),
-        DoublePoissonNN.load_from_checkpoint("weights/discrete_sine_wave_ddpn/model.ckpt"),
+        GaussianNN.load_from_checkpoint("weights/discrete_sine_wave/gaussian.ckpt"),
+        PoissonNN.load_from_checkpoint("weights/discrete_sine_wave/poisson.ckpt"),
+        NegBinomNN.load_from_checkpoint("weights/discrete_sine_wave/nbinom.ckpt"),
+        DoublePoissonNN.load_from_checkpoint("weights/discrete_sine_wave/ddpn.ckpt"),
     ]
     names = ["Gaussian DNN", "Poisson DNN", "NB DNN", "DDPN (Ours)"]
     produce_figure(models, names, save_path, dataset_path)

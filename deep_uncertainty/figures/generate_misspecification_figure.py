@@ -87,7 +87,7 @@ def produce_figure(
 
 
 if __name__ == "__main__":
-    save_path = "deep_uncertainty/figures/ddpn/artifacts/misspecification_recovery.pdf"
+    save_path = "deep_uncertainty/figures/artifacts/misspecification_recovery.pdf"
     dataset_path = "data/nbinom_bowtie/nbinom_bowtie.npz"
     models = [
         NegBinomNN.load_from_checkpoint("chkp/misspecified_ii_nbinom/version_0/best_mae.ckpt"),

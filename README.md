@@ -4,7 +4,7 @@ This repository contains the official implementation of "Flexible Heteroscedasti
 
 ## Important Links
 
-Important figures used in the paper, along with the code that generated them, can be found in [this directory](deep_uncertainty/figures/ddpn).
+Important figures used in the paper, along with the code that generated them, can be found in [this directory](deep_uncertainty/figures).
 
 Our implementations of various "single forward pass" techniques referenced in the paper can be found at the following locations:
 

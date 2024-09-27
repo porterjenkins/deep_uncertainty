@@ -230,7 +230,7 @@ def parse_args() -> Namespace:
     parser.add_argument(
         "--save-path",
         type=str,
-        default="deep_uncertainty/figures/ddpn/artifacts/coco_supplementary_comparison.pdf",
+        default="deep_uncertainty/figures/artifacts/coco_supplementary_comparison.pdf",
     )
     parser.add_argument(
         "--image-indices",

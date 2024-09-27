@@ -113,7 +113,7 @@ def parse_args() -> Namespace:
     parser.add_argument(
         "--save-path",
         type=str,
-        default="deep_uncertainty/figures/ddpn/artifacts/coco_people_beta_ddpn_case_study.pdf",
+        default="deep_uncertainty/figures/artifacts/coco_people_beta_ddpn_case_study.pdf",
         help="Filepath where the resultant figure should be saved.",
     )
     parser.add_argument(

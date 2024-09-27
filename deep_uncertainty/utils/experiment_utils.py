@@ -31,6 +31,7 @@ from deep_uncertainty.models.backbones import LargerMLP
 from deep_uncertainty.models.backbones import MLP
 from deep_uncertainty.models.backbones import MNISTCNN
 from deep_uncertainty.models.backbones import MobileNetV3
+from deep_uncertainty.models.backbones import SmallerMLP
 from deep_uncertainty.models.backbones import ViT
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
 from deep_uncertainty.utils.configs import TrainingConfig
@@ -95,6 +96,8 @@ def get_model(config: TrainingConfig, return_initializer: bool = False) -> Discr
             backbone_type = Identity
         elif "collision" in str(config.dataset_spec):
             backbone_type = LargerMLP
+        elif "isolated" in str(config.dataset_spec):
+            backbone_type = SmallerMLP
         else:
             backbone_type = MLP
         backbone_kwargs = {"input_dim": config.input_dim}

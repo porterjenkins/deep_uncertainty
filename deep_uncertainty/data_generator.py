@@ -157,7 +157,7 @@ class DataGenerator:
         This dataset is created by sampling x ~ Uniform(3, 8). Define mu = ceil(xsin(x)) + 15, phi = (6 - 0.03x^2).
         We sample y ~ DoublePoisson(mu, phi).
 
-        The isolated points (X = 0, Y = ceil(sin(0)) + 15) and (X = 10, Y = ceil(10sin(10)) + 15) are returned separately.
+        The isolated points (X = 1, Y = ceil(sin(1)) + 15) and (X = 10, Y = ceil(10sin(10)) + 15) are returned separately.
 
         Returns:
             np.ndarray: X

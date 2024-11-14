@@ -124,7 +124,9 @@ def faithful_gaussian_nll(outputs: torch.Tensor, targets: torch.Tensor) -> torch
             f"Targets tensor for `faithful_gaussian_nll` expected to be of shape (n, 1) but got shape {targets.shape}. This may result in unexpected training behavior."
         )
 
-    mu, logvar = torch.split(outputs, [1, 1], dim=-1)
+    # mu, logvar = torch.split(outputs, [1, 1], dim=-1)
+    logmu, logvar = torch.split(outputs, [1, 1], dim=-1)
+    mu = logmu.exp()
     dist = torch.distributions.Normal(loc=mu.detach(), scale=logvar.exp().sqrt())
 
     mse_penalty = 0.5 * (targets - mu) ** 2

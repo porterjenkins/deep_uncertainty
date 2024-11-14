@@ -73,9 +73,11 @@ class FaithfulGaussianNN(DiscreteRegressionNN):
         If viewing outputs as (mu, logvar), use `torch.split(y_hat, [1, 1], dim=-1)` to separate.
         """
         h: torch.Tensor = self.backbone(x)
-        mu = self.mu_head(h)
+        # mu = self.mu_head(h)
+        logmu = self.mu_head(h)
         logvar = self.logvar_head(h.detach())
-        y_hat = torch.cat((mu, logvar), dim=-1)
+        # y_hat = torch.cat((mu, logvar), dim=-1)
+        y_hat = torch.cat((logmu, logvar), dim=-1)
         return y_hat
 
     def _predict_impl(self, x: torch.Tensor) -> torch.Tensor:
@@ -93,15 +95,18 @@ class FaithfulGaussianNN(DiscreteRegressionNN):
         y_hat = self._forward_impl(x)
         self.backbone.train()
 
-        # Apply torch.exp to the logvar dimension.
-        output_shape = y_hat.shape
-        reshaped = y_hat.view(-1, 2)
-        y_hat = torch.stack([reshaped[:, 0], torch.exp(reshaped[:, 1])], dim=1).view(*output_shape)
+        y_hat = y_hat.exp()
+        # # Apply torch.exp to the logvar dimension.
+        # output_shape = y_hat.shape
+        # reshaped = y_hat.view(-1, 2)
+        # y_hat = torch.stack([reshaped[:, 0], torch.exp(reshaped[:, 1])], dim=1).view(*output_shape)
 
         return y_hat
 
     def _point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
         mu, _ = torch.split(y_hat, [1, 1], dim=-1)
+        if training:
+            return mu.exp().round()
         return mu.round()
 
     def _addl_test_metrics_dict(self) -> dict[str, Metric]:

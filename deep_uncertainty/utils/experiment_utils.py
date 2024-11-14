@@ -17,6 +17,7 @@ from deep_uncertainty.enums import DatasetType
 from deep_uncertainty.enums import HeadType
 from deep_uncertainty.enums import ImageDatasetName
 from deep_uncertainty.enums import TextDatasetName
+from deep_uncertainty.models import DoublePoissonHomoscedasticNN
 from deep_uncertainty.models import DoublePoissonNN
 from deep_uncertainty.models import FaithfulGaussianNN
 from deep_uncertainty.models import GaussianNN
@@ -59,7 +60,7 @@ def get_model(config: TrainingConfig, return_initializer: bool = False) -> Discr
         initializer = NaturalGaussianNN
     elif config.head_type in (HeadType.POISSON, HeadType.POISSON_GLM):
         initializer = PoissonNN
-    elif config.head_type in (HeadType.DOUBLE_POISSON, HeadType.DOUBLE_POISSON_GLM):
+    elif config.head_type == HeadType.DOUBLE_POISSON:
         if config.beta_scheduler_type is not None:
             initializer = partialclass(
                 DoublePoissonNN,
@@ -68,6 +69,15 @@ def get_model(config: TrainingConfig, return_initializer: bool = False) -> Discr
             )
         else:
             initializer = DoublePoissonNN
+    elif config.head_type == HeadType.DOUBLE_POISSON_GLM:
+        if config.beta_scheduler_type is not None:
+            initializer = partialclass(
+                DoublePoissonHomoscedasticNN,
+                beta_scheduler_type=config.beta_scheduler_type,
+                beta_scheduler_kwargs=config.beta_scheduler_kwargs,
+            )
+        else:
+            initializer = DoublePoissonHomoscedasticNN
     elif config.head_type in (HeadType.NEGATIVE_BINOMIAL, HeadType.NEGATIVE_BINOMIAL_GLM):
         initializer = NegBinomNN
     elif config.head_type == HeadType.MULTI_CLASS:

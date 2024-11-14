@@ -9,6 +9,7 @@ from deep_uncertainty.enums import HeadType
 from deep_uncertainty.models.ensembles import DoublePoissonMixtureNN
 from deep_uncertainty.models.ensembles import GaussianMixtureNN
 from deep_uncertainty.models.ensembles import MultiClassNNEnsemble
+from deep_uncertainty.models.ensembles import NaturalGaussianMixtureNN
 from deep_uncertainty.models.ensembles import NegBinomMixtureNN
 from deep_uncertainty.models.ensembles import PoissonMixtureNN
 from deep_uncertainty.utils.configs import EnsembleConfig
@@ -30,11 +31,13 @@ def main(config_path: str):
 
     if config.member_head_type == HeadType.GAUSSIAN:
         ensemble = GaussianMixtureNN.from_config(config)
-    elif config.member_head_type == HeadType.DOUBLE_POISSON:
+    elif config.member_head_type == HeadType.NATURAL_GAUSSIAN:
+        ensemble = NaturalGaussianMixtureNN.from_config(config)
+    elif config.member_head_type in (HeadType.DOUBLE_POISSON, HeadType.DOUBLE_POISSON_GLM):
         ensemble = DoublePoissonMixtureNN.from_config(config)
-    elif config.member_head_type == HeadType.POISSON:
+    elif config.member_head_type in (HeadType.POISSON, HeadType.POISSON_GLM):
         ensemble = PoissonMixtureNN.from_config(config)
-    elif config.member_head_type == HeadType.NEGATIVE_BINOMIAL:
+    elif config.member_head_type in (HeadType.NEGATIVE_BINOMIAL, HeadType.NEGATIVE_BINOMIAL_GLM):
         ensemble = NegBinomMixtureNN.from_config(config)
     elif config.member_head_type == HeadType.MULTI_CLASS:
         ensemble = MultiClassNNEnsemble.from_config(config)

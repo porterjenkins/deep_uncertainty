@@ -90,7 +90,7 @@ class NaturalGaussianNN(DiscreteRegressionNN):
         Returns:
             torch.Tensor: Output tensor, with shape (N, 2).
 
-        If viewing outputs as (mu, var), use `torch.split(y_hat, [1, 1], dim=-1)` to separate.
+        If viewing outputs as (eta_1, eta_2), use `torch.split(y_hat, [1, 1], dim=-1)` to separate.
         """
         self.backbone.eval()
         y_hat = self._forward_impl(x)

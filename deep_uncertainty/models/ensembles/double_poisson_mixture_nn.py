@@ -4,6 +4,7 @@ from typing import Iterable
 
 import torch
 
+from deep_uncertainty.models import DoublePoissonHomoscedasticNN
 from deep_uncertainty.models import DoublePoissonNN
 from deep_uncertainty.models.ensembles.base_discrete_mixture_nn import BaseDiscreteMixtureNN
 from deep_uncertainty.random_variables import DiscreteMixture
@@ -18,11 +19,15 @@ class DoublePoissonMixtureNN(BaseDiscreteMixtureNN):
     This model is not meant to be trained, and should strictly be used for prediction.
     """
 
-    def __init__(self, members: Iterable[DoublePoissonNN], max_value: int = 2000):
+    def __init__(
+        self,
+        members: Iterable[DoublePoissonNN | DoublePoissonHomoscedasticNN],
+        max_value: int = 2000,
+    ):
         """Initialize a `DoublePoissonMixtureNN`.
 
         Args:
-            members (Iterable[DoublePoissonNN]): The members of the ensemble.
+            members (Iterable[DoublePoissonNN | DoublePoissonHomoscedasticNN]): The members of the ensemble.
             max_value (int, optional): The max value to output probabilities for. Defaults to 2000.
         """
         super(DoublePoissonMixtureNN, self).__init__(members=members, max_value=max_value)
@@ -58,6 +63,9 @@ class DoublePoissonMixtureNN(BaseDiscreteMixtureNN):
         checkpoint_paths = config.members
         members = []
         for path in checkpoint_paths:
-            member = DoublePoissonNN.load_from_checkpoint(path)
+            try:
+                member = DoublePoissonNN.load_from_checkpoint(path)
+            except RuntimeError:
+                member = DoublePoissonHomoscedasticNN.load_from_checkpoint(path)
             members.append(member)
         return DoublePoissonMixtureNN(members=members)

@@ -4,24 +4,24 @@ from typing import Iterable
 
 import torch
 
-from deep_uncertainty.models import NaturalGaussianNN
+from deep_uncertainty.models import FaithfulGaussianNN
 from deep_uncertainty.models.ensembles.gaussian_mixture_nn import GaussianMixtureNN
 from deep_uncertainty.utils.configs import EnsembleConfig
 
 
-class NaturalGaussianMixtureNN(GaussianMixtureNN):
-    """An ensemble of naturally-parametrized Gaussian NNs that outputs the predictive mean and variance of the implied uniform mixture.
+class FaithfulGaussianMixtureNN(GaussianMixtureNN):
+    """An ensemble of Faithful Gaussian NNs that outputs the predictive mean and variance of the implied uniform mixture.
 
     See https://proceedings.neurips.cc/paper_files/paper/2017/hash/9ef2ed4b7fd2c810847ffa5fa85bce38-Abstract.html for details.
 
     This model is not trained, and should strictly be used for prediction.
 
     Args:
-        members (Iterable[NaturalGaussianNN]): The members of the ensemble.
+        members (Iterable[FaithfulGaussianNN]): The members of the ensemble.
     """
 
-    def __init__(self, members: Iterable[NaturalGaussianNN]):
-        super(NaturalGaussianMixtureNN, self).__init__(members)
+    def __init__(self, members: Iterable[FaithfulGaussianNN]):
+        super(FaithfulGaussianMixtureNN, self).__init__(members)
         self.members = members
         [member.eval() for member in self.members]
 
@@ -39,9 +39,7 @@ class NaturalGaussianMixtureNN(GaussianMixtureNN):
         mu_vals = []
         var_vals = []
         for member in self.members:
-            eta_1, eta_2 = torch.split(member._predict_impl(x), [1, 1], dim=-1)
-            mu = member._natural_to_mu(eta_1, eta_2)
-            var = member._natural_to_var(eta_2)
+            mu, var = torch.split(member._predict_impl(x), [1, 1], dim=-1)
             mu_vals.append(mu)
             var_vals.append(var)
         mu_vals = torch.cat(mu_vals, dim=1)
@@ -53,18 +51,18 @@ class NaturalGaussianMixtureNN(GaussianMixtureNN):
         return torch.stack([mixture_mu, mixture_var], dim=1)
 
     @staticmethod
-    def from_config(config: EnsembleConfig) -> NaturalGaussianMixtureNN:
-        """Construct a NaturalGaussianMixtureNN from a config. This is the primary way of building an ensemble.
+    def from_config(config: EnsembleConfig) -> FaithfulGaussianMixtureNN:
+        """Construct a FaithfulGaussianMixtureNN from a config. This is the primary way of building an ensemble.
 
         Args:
             config (EnsembleConfig): Ensemble config object.
 
         Returns:
-            NaturalGaussianMixtureNN: The specified ensemble of NaturalGaussianNN models.
+            NaturalGaussianMixtureNN: The specified ensemble of FaithfulGaussianNNaussianNN models.
         """
         checkpoint_paths = config.members
         members = []
         for path in checkpoint_paths:
-            member = NaturalGaussianNN.load_from_checkpoint(path)
+            member = FaithfulGaussianNN.load_from_checkpoint(path)
             members.append(member)
-        return NaturalGaussianMixtureNN(members=members)
+        return FaithfulGaussianMixtureNN(members=members)

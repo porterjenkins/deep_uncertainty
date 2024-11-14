@@ -1,4 +1,5 @@
 from .double_poisson_mixture_nn import DoublePoissonMixtureNN
+from .faithful_gaussian_mixture_nn import FaithfulGaussianMixtureNN
 from .gaussian_mixture_nn import GaussianMixtureNN
 from .multi_class_nn_ensemble import MultiClassNNEnsemble
 from .natural_gaussian_mixture_nn import NaturalGaussianMixtureNN

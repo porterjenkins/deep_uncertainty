@@ -7,6 +7,7 @@ import yaml
 
 from deep_uncertainty.enums import HeadType
 from deep_uncertainty.models.ensembles import DoublePoissonMixtureNN
+from deep_uncertainty.models.ensembles import FaithfulGaussianMixtureNN
 from deep_uncertainty.models.ensembles import GaussianMixtureNN
 from deep_uncertainty.models.ensembles import MultiClassNNEnsemble
 from deep_uncertainty.models.ensembles import NaturalGaussianMixtureNN
@@ -31,6 +32,8 @@ def main(config_path: str):
 
     if config.member_head_type == HeadType.GAUSSIAN:
         ensemble = GaussianMixtureNN.from_config(config)
+    elif config.member_head_type == HeadType.FAITHFUL_GAUSSIAN:
+        ensemble = FaithfulGaussianMixtureNN.from_config(config)
     elif config.member_head_type == HeadType.NATURAL_GAUSSIAN:
         ensemble = NaturalGaussianMixtureNN.from_config(config)
     elif config.member_head_type in (HeadType.DOUBLE_POISSON, HeadType.DOUBLE_POISSON_GLM):

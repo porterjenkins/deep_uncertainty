@@ -47,13 +47,7 @@ When you commit new code, the pre-commit hook will run a series of scripts to st
 
 ### Downloading Data
 
-Some of the datasets we are using to run experiments are in a non-standard format online. ETL code for this data has been pre-defined in the `etl` module and can be invoked from the command line.
-
-For example, to get a `.npz` file for the `Bikes` dataset, run the following:
-
-```bash
-python deep_uncertainty/etl/get_bikes_data.py --output-dir path/to/your/data/dir
-```
+Contact the authors for access to the datasets used in the experiments.
 
 ## Experiments
 
@@ -79,6 +73,14 @@ The currently-supported image datasets for training models are:
 - `COCO-People` (All images in COCO containing people, labeled with the count of "person" annotations)
 
 To train a model on any of these datasets, simply specify `"image"` for the `dataset` `type` key in the config, then set `dataset` `spec` to the requisite dataset name (see the options in the `ImageDatasetName` class [here](deep_uncertainty/enums.py))
+
+#### Training on Text Datasets
+
+The currently-supported text datasets for training models are:
+
+- `Amazon Reviews` (We predict the review rating (1-5 stars) from its associated text)
+
+To train a model on this dataset, simply specify `"text"` for the `dataset` `type` key in the config, then set `dataset` `spec` to the requisite dataset name (see the options in the `TextDatasetName` class [here](deep_uncertainty/enums.py))
 
 ### Evaluating Models
 

@@ -1,9 +1,7 @@
 from pathlib import Path
 
 import lightning as L
-import numpy as np
 from torch.utils.data import DataLoader
-from torch.utils.data import Subset
 from torchvision.transforms import AutoAugment
 from torchvision.transforms import Compose
 from torchvision.transforms import Normalize
@@ -11,7 +9,6 @@ from torchvision.transforms import Resize
 from torchvision.transforms import ToTensor
 
 from deep_uncertainty.custom_datasets import COCOPeopleDataset
-from deep_uncertainty.custom_datasets import ImageDatasetWrapper
 
 
 class COCOPeopleDataModule(L.LightningDataModule):
@@ -34,8 +31,8 @@ class COCOPeopleDataModule(L.LightningDataModule):
         self.surface_image_path = surface_image_path
 
     def prepare_data(self) -> None:
-        # Force images to be downloaded.
-        COCOPeopleDataset(self.root_dir)
+        # Force check if images are already downloaded.
+        COCOPeopleDataset(self.root_dir, split="train")
 
     def setup(self, stage):
         resize = Resize((self.IMG_SIZE, self.IMG_SIZE))
@@ -45,30 +42,23 @@ class COCOPeopleDataModule(L.LightningDataModule):
         train_transforms = Compose([resize, augment, to_tensor, normalize])
         inference_transforms = Compose([resize, to_tensor, normalize])
 
-        full_dataset = COCOPeopleDataset(
-            self.root_dir,
+        self.train = COCOPeopleDataset(
+            root_dir=self.root_dir,
+            split="train",
+            transform=train_transforms,
             surface_image_path=self.surface_image_path,
         )
-        num_instances = len(full_dataset)
-        generator = np.random.default_rng(seed=1998)
-        shuffled_indices = generator.permutation(np.arange(num_instances))
-        num_train = int(0.7 * num_instances)
-        num_val = int(0.1 * num_instances)
-        train_indices = shuffled_indices[:num_train]
-        val_indices = shuffled_indices[num_train : num_train + num_val]
-        test_indices = shuffled_indices[num_train + num_val :]
-
-        self.train = ImageDatasetWrapper(
-            base_dataset=Subset(full_dataset, train_indices),
-            transforms=train_transforms,
+        self.val = COCOPeopleDataset(
+            root_dir=self.root_dir,
+            split="val",
+            transform=inference_transforms,
+            surface_image_path=self.surface_image_path,
         )
-        self.val = ImageDatasetWrapper(
-            base_dataset=Subset(full_dataset, val_indices),
-            transforms=inference_transforms,
-        )
-        self.test = ImageDatasetWrapper(
-            base_dataset=Subset(full_dataset, test_indices),
-            transforms=inference_transforms,
+        self.test = COCOPeopleDataset(
+            root_dir=self.root_dir,
+            split="test",
+            transform=inference_transforms,
+            surface_image_path=self.surface_image_path,
         )
 
     def train_dataloader(self) -> DataLoader:

@@ -80,7 +80,7 @@ def generate_case_study_plot(
 def produce_figure(chkp_path: str, save_path: str, image_indices: list[int], xlims: list[int]):
     beta_ddpn_model = DoublePoissonNN.load_from_checkpoint(chkp_path)
     datamodule = COCOPeopleDataModule(
-        root_dir="data/coco_people",
+        root_dir="data/coco-people",
         batch_size=1,
         num_workers=1,
         persistent_workers=False,

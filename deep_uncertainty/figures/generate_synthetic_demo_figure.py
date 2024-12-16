@@ -94,7 +94,7 @@ def produce_figure(
         )
 
         # TODO: Needs formalizing.
-        uncertainty_data = np.load("data/discrete_sine_wave/gt_uncertainty.npz")
+        uncertainty_data = np.load("data/discrete-wave/gt_uncertainty.npz")
         uncertainty_x = uncertainty_data["X"].flatten()
         order = np.argsort(uncertainty_x)
         lb = uncertainty_data["lower"][order]
@@ -136,7 +136,7 @@ def produce_figure(
 
 if __name__ == "__main__":
     save_path = "deep_uncertainty/figures/artifacts/synthetic_demo.pdf"
-    dataset_path = "data/discrete_sine_wave/discrete_sine_wave.npz"
+    dataset_path = "data/discrete-wave/discrete_sine_wave.npz"
     models = [
         GaussianNN.load_from_checkpoint("weights/discrete_sine_wave/gaussian.ckpt"),
         PoissonNN.load_from_checkpoint("weights/discrete_sine_wave/poisson.ckpt"),

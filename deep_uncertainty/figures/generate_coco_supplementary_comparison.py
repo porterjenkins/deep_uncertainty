@@ -29,7 +29,7 @@ def main(chkp_dir: str | Path, save_path: str | Path, image_indices: list[int], 
     eps = 1e-6
 
     datamodule = COCOPeopleDataModule(
-        root_dir="data/coco_people",
+        root_dir="data/coco-people",
         batch_size=1,
         num_workers=1,
         persistent_workers=False,

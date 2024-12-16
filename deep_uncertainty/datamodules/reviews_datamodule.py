@@ -4,7 +4,6 @@ from typing import Iterable
 import lightning as L
 import torch
 from torch.utils.data import DataLoader
-from torch.utils.data import random_split
 from transformers import BatchEncoding
 from transformers import DistilBertTokenizer
 
@@ -21,21 +20,21 @@ class ReviewsDataModule(L.LightningDataModule):
         batch_size: int,
         num_workers: int,
         persistent_workers: bool,
-        max_instances: int | None = None,
     ):
         super().__init__()
         self.root_dir = root_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.persistent_workers = persistent_workers
-        self.max_instances = max_instances
+
+    def prepare_data(self) -> None:
+        # Force check if reviews are already downloaded.
+        ReviewsDataset(self.root_dir, split="train")
 
     def setup(self, stage):
-        self.train, self.val, self.test = random_split(
-            dataset=ReviewsDataset(self.root_dir, self.max_instances),
-            lengths=[0.7, 0.1, 0.2],
-            generator=torch.Generator().manual_seed(1998),
-        )
+        self.train = ReviewsDataset(self.root_dir, split="train")
+        self.val = ReviewsDataset(self.root_dir, split="val")
+        self.test = ReviewsDataset(self.root_dir, split="test")
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(

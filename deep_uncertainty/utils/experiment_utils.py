@@ -158,7 +158,7 @@ def get_datamodule(
             )
         elif dataset_spec == ImageDatasetName.COCO_PEOPLE:
             return COCOPeopleDataModule(
-                root_dir="./data/coco_people",
+                root_dir="./data/coco-people",
                 batch_size=batch_size,
                 num_workers=16,
                 persistent_workers=True,
@@ -166,7 +166,7 @@ def get_datamodule(
     elif dataset_type == DatasetType.TEXT:
         if dataset_spec == TextDatasetName.REVIEWS:
             return ReviewsDataModule(
-                root_dir="./data/amazon_reviews",
+                root_dir="./data/amazon-reviews",
                 batch_size=batch_size,
                 num_workers=16,
                 max_instances=None,

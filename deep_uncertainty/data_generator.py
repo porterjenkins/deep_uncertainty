@@ -198,7 +198,7 @@ class DataGenerator:
         X = np.array(x_vals)
         y = np.array(y_vals)
         np.savez(
-            "data/discrete_sine_wave/gt_uncertainty.npz",
+            "data/discrete-wave/gt_uncertainty.npz",
             X=X,
             y=y,
             lower=np.array(lower_bounds),

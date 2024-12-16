@@ -1,5 +1,4 @@
 black==22.3.0
-imgdl==2.0.1
 lightning==2.2.0.post0
 matplotlib==3.7.2
 numpy==1.25.1

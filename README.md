@@ -51,6 +51,26 @@ Contact the authors for access to the datasets used in the experiments.
 
 ## Experiments
 
+### Reproducibility
+
+Training configs for each model benchmarked in "Flexible Heteroscedastic Count Regression with Deep Double Poisson Networks" can be found in the top-level [configs directory](configs).
+
+To re-run the experiments from the paper, first contact the authors for the requisite dataset files and ensure they are saved in a top-level `data` directory. Then run the following command:
+
+```bash
+bash deep_uncertainty/scripts/train_models.sh <dataset-name>
+```
+
+The resultant model weights will be saved to `chkp/{dataset_name}`.
+
+Models can then be evaluated via
+
+```bash
+bash deep_uncertainty/scripts/eval_models.sh <dataset-name> <results-dir>
+```
+
+Results will be saved to `results-dir/{dataset_name}`.
+
 ### Training models
 
 To train a model, first fill out a config (using [this config](deep_uncertainty/training/sample_train_config.yaml) as a template). Then, from the terminal, run

@@ -21,6 +21,8 @@ from deep_uncertainty.models import DoublePoissonHomoscedasticNN
 from deep_uncertainty.models import DoublePoissonNN
 from deep_uncertainty.models import FaithfulGaussianNN
 from deep_uncertainty.models import GaussianNN
+from deep_uncertainty.models import LogFaithfulGaussianNN
+from deep_uncertainty.models import LogGaussianNN
 from deep_uncertainty.models import MeanNN
 from deep_uncertainty.models import MultiClassNN
 from deep_uncertainty.models import NaturalGaussianNN
@@ -54,8 +56,19 @@ def get_model(config: TrainingConfig, return_initializer: bool = False) -> Discr
             )
         else:
             initializer = GaussianNN
+    elif config.head_type == HeadType.LOG_GAUSSIAN:
+        if config.beta_scheduler_type is not None:
+            initializer = partialclass(
+                LogGaussianNN,
+                beta_scheduler_type=config.beta_scheduler_type,
+                beta_scheduler_kwargs=config.beta_scheduler_kwargs,
+            )
+        else:
+            initializer = LogGaussianNN
     elif config.head_type == HeadType.FAITHFUL_GAUSSIAN:
         initializer = FaithfulGaussianNN
+    elif config.head_type == HeadType.LOG_FAITHFUL_GAUSSIAN:
+        initializer = LogFaithfulGaussianNN
     elif config.head_type == HeadType.NATURAL_GAUSSIAN:
         initializer = NaturalGaussianNN
     elif config.head_type in (HeadType.POISSON, HeadType.POISSON_GLM):

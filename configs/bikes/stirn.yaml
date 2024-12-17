@@ -1,0 +1,27 @@
+experiment_name: stirn
+random_seed: 1998
+head_type: log_faithful_gaussian
+dataset:
+  type: tabular
+  spec: data/bikes/bikes.npz
+  input_dim: 15
+training:
+  accelerator: cpu
+  batch_size: 128
+  chkp_dir: chkp/bikes
+  chkp_freq: 100
+  num_epochs: 100
+  optimizer:
+    type: adam_w
+    kwargs:
+      lr: 0.001
+      weight_decay: 0.00001
+  lr_scheduler:
+    type: cosine_annealing
+    kwargs:
+      T_max: 100
+      eta_min: 0
+      last_epoch: -1
+evaluation:
+  num_trials: 5
+  log_dir: logs/bikes

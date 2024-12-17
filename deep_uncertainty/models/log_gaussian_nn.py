@@ -2,6 +2,7 @@ from functools import partial
 from typing import Type
 
 import torch
+from scipy.stats import norm
 from torch import nn
 from torchmetrics import Metric
 
@@ -9,27 +10,27 @@ from deep_uncertainty.enums import BetaSchedulerType
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
 from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
+from deep_uncertainty.evaluation.custom_torchmetrics import ContinuousExpectedCalibrationError
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.backbones import Backbone
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
-from deep_uncertainty.random_variables import DoublePoisson
 from deep_uncertainty.training.beta_schedulers import CosineAnnealingBetaScheduler
 from deep_uncertainty.training.beta_schedulers import LinearBetaScheduler
-from deep_uncertainty.training.losses import double_poisson_nll
+from deep_uncertainty.training.losses import gaussian_nll
 
 
-class DoublePoissonHomoscedasticNN(DiscreteRegressionNN):
-    """A neural network that learns the parameters of a Double Poisson distribution over each regression target (conditioned on the input).
+class LogGaussianNN(DiscreteRegressionNN):
+    """A neural network that learns the parameters of a Gaussian distribution over each regression target (conditioned on the input).
 
-    A single value of phi is learned over the dataset, as opposed to the heteroscedastic approach.
+    This implementation internally regresses logmu instead of mu (it still outputs mu, logvar from its forward pass).
 
     Attributes:
         backbone (Backbone): Backbone to use for feature extraction.
         loss_fn (Callable): The loss function to use for training this NN.
         optim_type (OptimizerType): The type of optimizer to use for training the network, e.g. "adam", "sgd", etc.
         optim_kwargs (dict): Key-value argument specifications for the chosen optimizer, e.g. {"lr": 1e-3, "weight_decay": 1e-5}.
-        lr_scheduler_type (LRSchedulerType | None): If specified, the type of learning rate scheduler to use during training, e.g. "cosine_annealing". Defaults to None.
-        lr_scheduler_kwargs (dict | None): If specified, key-value argument specifications for the chosen lr scheduler, e.g. {"T_max": 500}. Defaults to None.
+        lr_scheduler_type (LRSchedulerType | None): If specified, the type of learning rate scheduler to use during training, e.g. "cosine_annealing".
+        lr_scheduler_kwargs (dict | None): If specified, key-value argument specifications for the chosen lr scheduler, e.g. {"T_max": 500}.
         beta_scheduler_type (BetaSchedulerType | None, optional): If specified, the type of beta scheduler to use for training loss (if applicable). Defaults to None.
         beta_scheduler_kwargs (dict | None, optional): If specified, key-value argument specifications for the chosen beta scheduler, e.g. {"beta_0": 1.0, "beta_1": 0.5}. Defaults to None.
     """
@@ -45,7 +46,7 @@ class DoublePoissonHomoscedasticNN(DiscreteRegressionNN):
         beta_scheduler_type: BetaSchedulerType | None = None,
         beta_scheduler_kwargs: dict | None = None,
     ):
-        """Instantiate a DoublePoissonHomoscedasticNN.
+        """Instantiate a LogGaussianNN.
 
         Args:
             backbone_type (Type[Backbone]): Type of backbone to use for feature extraction (can be initialized with backbone_type()).
@@ -64,9 +65,9 @@ class DoublePoissonHomoscedasticNN(DiscreteRegressionNN):
         else:
             self.beta_scheduler = None
 
-        super().__init__(
+        super(LogGaussianNN, self).__init__(
             loss_fn=partial(
-                double_poisson_nll,
+                gaussian_nll,
                 beta=(
                     self.beta_scheduler.current_value if self.beta_scheduler is not None else None
                 ),
@@ -78,12 +79,14 @@ class DoublePoissonHomoscedasticNN(DiscreteRegressionNN):
             lr_scheduler_type=lr_scheduler_type,
             lr_scheduler_kwargs=lr_scheduler_kwargs,
         )
-        self.head = nn.Linear(self.backbone.output_dim, 1)
-        self.logphi = nn.Parameter(torch.randn(1))
+        self.head = nn.Linear(self.backbone.output_dim, 2)
 
+        self.continuous_ece = ContinuousExpectedCalibrationError(
+            param_list=["loc", "scale"],
+            rv_class_type=norm,
+        )
         self.nll = AverageNLL()
         self.mp = MedianPrecision()
-
         self.save_hyperparameters()
 
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
@@ -95,12 +98,12 @@ class DoublePoissonHomoscedasticNN(DiscreteRegressionNN):
         Returns:
             torch.Tensor: Output tensor, with shape (N, 2).
 
-        If viewing outputs as (logmu, logphi), use `torch.split(y_hat, [1, 1], dim=-1)` to separate.
+        If viewing outputs as (mu, logvar), use `torch.split(y_hat, [1, 1], dim=-1)` to separate.
         """
         h = self.backbone(x)
-        logmu = self.head(h)
-        logphi = self.logphi.expand_as(logmu)
-        y_hat = torch.cat((logmu, logphi), dim=-1)
+        y_hat = self.head(h)  # Interpreted as (mu, logvar)
+        logmu, logvar = torch.split(y_hat, [1, 1], dim=-1)
+        y_hat = torch.cat([logmu.exp(), logvar], dim=-1)
         return y_hat
 
     def _predict_impl(self, x: torch.Tensor) -> torch.Tensor:
@@ -112,21 +115,26 @@ class DoublePoissonHomoscedasticNN(DiscreteRegressionNN):
         Returns:
             torch.Tensor: Output tensor, with shape (N, 2).
 
-        If viewing outputs as (mu, phi), use `torch.split(y_hat, [1, 1], dim=-1)` to separate.
+        If viewing outputs as (mu, var), use `torch.split(y_hat, [1, 1], dim=-1)` to separate.
         """
         self.backbone.eval()
-        y_hat = self._forward_impl(x)  # Interpreted as (logmu, logphi)
+        y_hat = self._forward_impl(x)
         self.backbone.train()
 
-        return torch.exp(y_hat)
+        # Apply torch.exp to the logvar dimension.
+        output_shape = y_hat.shape
+        reshaped = y_hat.view(-1, 2)
+        y_hat = torch.stack([reshaped[:, 0], torch.exp(reshaped[:, 1])], dim=1).view(*output_shape)
+
+        return y_hat
 
     def _point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
-        dist = self._convert_output_to_dist(y_hat, log_output=training)
-        mode = torch.argmax(dist.pmf_vals, axis=0)
-        return mode
+        mu, _ = torch.split(y_hat, [1, 1], dim=-1)
+        return mu.round()
 
     def _addl_test_metrics_dict(self) -> dict[str, Metric]:
         return {
+            "continuous_ece": self.continuous_ece,
             "nll": self.nll,
             "mp": self.mp,
         }
@@ -134,34 +142,23 @@ class DoublePoissonHomoscedasticNN(DiscreteRegressionNN):
     def _update_addl_test_metrics_batch(
         self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor
     ):
-        dist = self._convert_output_to_dist(y_hat, log_output=False)
-        mu, phi = dist.mu, dist.phi
-        precision = phi / mu
+        mu, var = torch.split(y_hat, [1, 1], dim=-1)
+        mu = mu.flatten()
+        var = var.flatten()
+        precision = 1 / var
+        std = torch.sqrt(var)
         targets = y.flatten()
-        target_probs = dist.pmf(targets.long())
 
-        self.nll.update(target_probs)
+        self.continuous_ece.update({"loc": mu, "scale": std}, targets)
         self.mp.update(precision)
 
-    def _convert_output_to_dist(self, y_hat: torch.Tensor, log_output: bool) -> DoublePoisson:
-        """Convert a network output to the implied Double Poisson distribution.
-
-        Args:
-            y_hat (torch.Tensor): Output from a `DoublePoissonNN` (mu, phi for the predicted distribution over y).
-            log_output (bool): Whether/not output is in log space (such as during training).
-
-        Returns:
-            DoublePoisson: The implied Double Poisson distribution over y.
-        """
-        output = y_hat.exp() if log_output else y_hat
-        mu, phi = torch.split(output, [1, 1], dim=-1)
-        mu = mu.flatten()
-        phi = phi.flatten()
-        dist = DoublePoisson(mu, phi)
-        return dist
+        # We compute "probability" with the continuity correction (probability of +- 0.5 of the value).
+        dist = torch.distributions.Normal(loc=mu, scale=std)
+        target_probs = dist.cdf(targets + 0.5) - dist.cdf(targets - 0.5)
+        self.nll.update(target_probs)
 
     def on_train_epoch_end(self):
         if self.beta_scheduler is not None:
             self.beta_scheduler.step()
-            self.loss_fn = partial(double_poisson_nll, beta=self.beta_scheduler.current_value)
+            self.loss_fn = partial(gaussian_nll, beta=self.beta_scheduler.current_value)
         super().on_train_epoch_end()

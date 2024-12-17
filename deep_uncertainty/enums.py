@@ -11,6 +11,7 @@ class AcceleratorType(Enum):
 class HeadType(Enum):
     MEAN = "mean"
     GAUSSIAN = "gaussian"
+    LOG_GAUSSIAN = "log_gaussian"
     POISSON = "poisson"
     DOUBLE_POISSON = "double_poisson"
     NEGATIVE_BINOMIAL = "negative_binomial"
@@ -18,6 +19,7 @@ class HeadType(Enum):
     NEGATIVE_BINOMIAL_GLM = "negative_binomial_glm"
     DOUBLE_POISSON_GLM = "double_poisson_glm"
     FAITHFUL_GAUSSIAN = "faithful_gaussian"
+    LOG_FAITHFUL_GAUSSIAN = "log_faithful_gaussian"
     NATURAL_GAUSSIAN = "natural_gaussian"
     MULTI_CLASS = "multi_class"
 

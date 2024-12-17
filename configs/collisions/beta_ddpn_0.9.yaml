@@ -1,0 +1,33 @@
+experiment_name: beta_ddpn_0.9
+random_seed: 1998
+head_type: double_poisson
+dataset:
+  type: tabular
+  spec: data/collisions/collisions.npz
+  input_dim: 1630
+training:
+  accelerator: cpu
+  batch_size: 32
+  chkp_dir: chkp/collisions
+  chkp_freq: 100
+  num_epochs: 100
+  beta_scheduler:
+    type: cosine_annealing
+    kwargs:
+      beta_0: 0.9
+      beta_1: 0.9
+      last_epoch: -1
+  optimizer:
+    type: adam_w
+    kwargs:
+      lr: 0.00001
+      weight_decay: 0.00001
+  lr_scheduler:
+    type: cosine_annealing
+    kwargs:
+      T_max: 100
+      eta_min: 0
+      last_epoch: -1
+evaluation:
+  num_trials: 5
+  log_dir: logs/collisions

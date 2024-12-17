@@ -30,10 +30,10 @@ class ReviewsDataset(Dataset):
         self.instances = self._get_instances_df()
 
     def _already_downloaded(self) -> bool:
-        return (self.root_dir / "dataset.csv").exists()
+        return (self.root_dir / "dataset.json").exists()
 
     def _get_instances_df(self) -> pd.DataFrame:
-        full_instances = pd.read_csv(self.root_dir / "dataset.csv")
+        full_instances = pd.read_json(self.root_dir / "dataset.json", orient="records")
         mask = full_instances["split"] == self.split
         return full_instances[mask][["review_text", "rating"]]
 

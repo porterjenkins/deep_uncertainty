@@ -182,7 +182,6 @@ def get_datamodule(
                 root_dir="./data/amazon-reviews",
                 batch_size=batch_size,
                 num_workers=16,
-                max_instances=None,
                 persistent_workers=True,
             )
 

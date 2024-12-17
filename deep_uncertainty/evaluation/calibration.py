@@ -50,31 +50,6 @@ def compute_continuous_ece(
     return ece
 
 
-def compute_young_calibration(y_true: np.ndarray, posterior_predictive: rv_continuous) -> float:
-    """Given targets and a probabilistic regression model (represented as a continuous random variable over the targets), compute the Young calibration of the model.
-
-    The Young calibration is defined as 1 minus 4/3 the area between the calibration curve of a perfectly calibrated model (y = x)
-    and the given model (the 4/3 multiplier is so that the score lives between 0 and 1)
-
-    Args:
-        y_true (ndarray, (n,)): The true values of the regression targets.
-        posterior_predictive (rv_continuous): Random variable representing the posterior predictive distribution over the targets.
-    """
-    epsilon = 1e-4
-    n = 1000
-    p_vals, binwidth = np.linspace(0 + epsilon, 1 - epsilon, num=n, retstep=True)
-
-    area_between_model_and_perfect_calibration_curve = (
-        binwidth
-        * np.abs(
-            p_vals - (posterior_predictive.cdf(y_true) <= p_vals.reshape(-1, 1)).mean(axis=1)
-        ).sum()
-    )
-
-    calibration_score = 1 - ((4 / 3) * area_between_model_and_perfect_calibration_curve)
-    return calibration_score
-
-
 def compute_cluster_ece(y: np.ndarray, probs: np.ndarray, cluster_labels: np.ndarray):
     """Estimate the calibration error by clustering in x.
 
@@ -124,6 +99,4 @@ if __name__ == "__main__":
     sigma_pred = np.ones_like(x)
     posterior = norm(y_pred, sigma_pred)
 
-    # Should be close to 1.
-    print(f"Mean Calibration: {compute_young_calibration(y_true, posterior)}")
     print(f"Expected Calibration Error: {compute_continuous_ece(y_true, posterior)}")

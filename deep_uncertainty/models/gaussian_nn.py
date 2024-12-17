@@ -12,9 +12,7 @@ from deep_uncertainty.enums import OptimizerType
 from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
 from deep_uncertainty.evaluation.custom_torchmetrics import ContinuousExpectedCalibrationError
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
-from deep_uncertainty.evaluation.custom_torchmetrics import YoungCalibration
 from deep_uncertainty.models.backbones import Backbone
-from deep_uncertainty.models.backbones import MLP
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
 from deep_uncertainty.training.beta_schedulers import CosineAnnealingBetaScheduler
 from deep_uncertainty.training.beta_schedulers import LinearBetaScheduler
@@ -81,12 +79,6 @@ class GaussianNN(DiscreteRegressionNN):
         )
         self.head = nn.Linear(self.backbone.output_dim, 2)
 
-        self.mean_calibration = YoungCalibration(
-            param_list=["loc", "scale"],
-            rv_class_type=norm,
-            mean_param_name="loc",
-            is_scalar=isinstance(self.backbone, MLP) and self.backbone.input_dim == 1,
-        )
         self.continuous_ece = ContinuousExpectedCalibrationError(
             param_list=["loc", "scale"],
             rv_class_type=norm,
@@ -138,7 +130,6 @@ class GaussianNN(DiscreteRegressionNN):
 
     def _addl_test_metrics_dict(self) -> dict[str, Metric]:
         return {
-            "mean_calibration": self.mean_calibration,
             "continuous_ece": self.continuous_ece,
             "nll": self.nll,
             "mp": self.mp,
@@ -154,7 +145,6 @@ class GaussianNN(DiscreteRegressionNN):
         std = torch.sqrt(var)
         targets = y.flatten()
 
-        self.mean_calibration.update({"loc": mu, "scale": std}, x, targets)
         self.continuous_ece.update({"loc": mu, "scale": std}, targets)
         self.mp.update(precision)
 

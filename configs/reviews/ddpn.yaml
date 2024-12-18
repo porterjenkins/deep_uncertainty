@@ -1,0 +1,29 @@
+experiment_name: ddpn
+random_seed: 1998
+head_type: double_poisson
+hidden_dim: 256
+dataset:
+  type: text
+  spec: reviews
+training:
+  accelerator: gpu
+  accumulate_grad_batches: 4
+  batch_size: 256
+  chkp_dir: chkp/reviews
+  chkp_freq: 10
+  num_epochs: 10
+  precision: bf16-mixed
+  optimizer:
+    type: adam_w
+    kwargs:
+      lr: 0.0001
+      weight_decay: 0.00001
+  lr_scheduler:
+    type: cosine_annealing
+    kwargs:
+      T_max: 10
+      eta_min: 0
+      last_epoch: -1
+evaluation:
+  num_trials: 5
+  log_dir: logs/reviews

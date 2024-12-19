@@ -61,7 +61,7 @@ To re-run the experiments from the paper, first contact the authors for the requ
 bash deep_uncertainty/scripts/train_models.sh <dataset-name>
 ```
 
-The resultant model weights will be saved to `chkp/{dataset_name}`. Note that some aspects of training configs may need to be adjusted depending on available hardware (# GPUs / GPU capacity) to ensure that the effective batch size matches what is reported in the paper.
+The resultant model weights will be saved to `chkp/{dataset-name}`. Note that some aspects of training configs may need to be adjusted depending on available hardware (# GPUs / GPU capacity) to ensure that the effective batch size matches what is reported in the paper.
 
 Models can then be evaluated via
 
@@ -69,7 +69,13 @@ Models can then be evaluated via
 bash deep_uncertainty/scripts/eval_models.sh <dataset-name> <results-dir>
 ```
 
-Results will be saved to `results-dir/{dataset_name}`.
+Ensembles are evaluated via
+
+```bash
+bash deep_uncertainty/scripts/eval_ensembles.sh <dataset_name>
+```
+
+Results will be saved to `{results-dir}/{dataset-name}`.
 
 ### Training models
 

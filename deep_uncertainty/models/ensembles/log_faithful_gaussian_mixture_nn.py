@@ -4,13 +4,15 @@ from typing import Iterable
 
 import torch
 
-from deep_uncertainty.models import FaithfulGaussianNN
+from deep_uncertainty.models import LogFaithfulGaussianNN
 from deep_uncertainty.models.ensembles.gaussian_mixture_nn import GaussianMixtureNN
 from deep_uncertainty.utils.configs import EnsembleConfig
 
 
-class FaithfulGaussianMixtureNN(GaussianMixtureNN):
+class LogFaithfulGaussianMixtureNN(GaussianMixtureNN):
     """An ensemble of Faithful Gaussian NNs that outputs the predictive mean and variance of the implied uniform mixture.
+
+    Individual members output logmu instead of mu.
 
     See https://proceedings.neurips.cc/paper_files/paper/2017/hash/9ef2ed4b7fd2c810847ffa5fa85bce38-Abstract.html for details.
 
@@ -20,8 +22,8 @@ class FaithfulGaussianMixtureNN(GaussianMixtureNN):
         members (Iterable[FaithfulGaussianNN]): The members of the ensemble.
     """
 
-    def __init__(self, members: Iterable[FaithfulGaussianNN]):
-        super(FaithfulGaussianMixtureNN, self).__init__(members)
+    def __init__(self, members: Iterable[LogFaithfulGaussianNN]):
+        super(LogFaithfulGaussianMixtureNN, self).__init__(members)
         self.members = members
         [member.eval() for member in self.members]
 
@@ -51,18 +53,18 @@ class FaithfulGaussianMixtureNN(GaussianMixtureNN):
         return torch.stack([mixture_mu, mixture_var], dim=1)
 
     @staticmethod
-    def from_config(config: EnsembleConfig) -> FaithfulGaussianMixtureNN:
-        """Construct a FaithfulGaussianMixtureNN from a config. This is the primary way of building an ensemble.
+    def from_config(config: EnsembleConfig) -> LogFaithfulGaussianMixtureNN:
+        """Construct a LogFaithfulGaussianMixtureNN from a config. This is the primary way of building an ensemble.
 
         Args:
             config (EnsembleConfig): Ensemble config object.
 
         Returns:
-            FaithfulGaussianMixtureNN: The specified ensemble of FaithfulGaussianNNaussianNN models.
+            LogFaithfulGaussianMixtureNN: The specified ensemble of FaithfulGaussianNNaussianNN models.
         """
         checkpoint_paths = config.members
         members = []
         for path in checkpoint_paths:
-            member = FaithfulGaussianNN.load_from_checkpoint(path)
+            member = LogFaithfulGaussianNN.load_from_checkpoint(path)
             members.append(member)
-        return FaithfulGaussianMixtureNN(members=members)
+        return LogFaithfulGaussianMixtureNN(members=members)

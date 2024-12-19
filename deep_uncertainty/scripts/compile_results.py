@@ -23,6 +23,18 @@ def main(dataset: str, results_dir: str):
             df["model"].append(head)
             df["nll"].append(nll)
             df["mae"].append(mae)
+        ensemble_metrics_path = os.path.join(
+            dataset_results_dir, f"ensembles/{head}_ensemble/test_metrics.yaml"
+        )
+        if not os.path.exists(ensemble_metrics_path):
+            continue
+        with open(ensemble_metrics_path) as f:
+            ensemble_metrics = yaml.safe_load(f)
+        nll = ensemble_metrics["nll"]
+        mae = ensemble_metrics["mae"]
+        df["model"].append(f"{head}_ensemble")
+        df["nll"].append(nll)
+        df["mae"].append(mae)
     result = pd.DataFrame(df).groupby("model").agg(["mean", "std", "count"]).reset_index()
     result.to_csv(
         os.path.join(dataset_results_dir, "aggregated_results.csv"),

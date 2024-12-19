@@ -1,0 +1,14 @@
+experiment_name: ddpn_ensemble
+accelerator: cpu
+batch_size: 32
+member_head_type: double_poisson
+members:
+  - chkp/length-of-stay/ddpn/version_0/best_loss.ckpt
+  - chkp/length-of-stay/ddpn/version_1/best_loss.ckpt
+  - chkp/length-of-stay/ddpn/version_2/best_loss.ckpt
+  - chkp/length-of-stay/ddpn/version_3/best_loss.ckpt
+  - chkp/length-of-stay/ddpn/version_4/best_loss.ckpt
+dataset:
+  type: tabular
+  spec: data/length-of-stay/length_of_stay.npz
+log_dir: results/length-of-stay/ensembles

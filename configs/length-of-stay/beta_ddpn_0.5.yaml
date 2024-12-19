@@ -1,0 +1,33 @@
+experiment_name: beta_ddpn_0.5
+random_seed: 1998
+head_type: double_poisson
+dataset:
+  type: tabular
+  spec: data/length-of-stay/length_of_stay.npz
+  input_dim: 35
+training:
+  accelerator: cpu
+  batch_size: 128
+  chkp_dir: chkp/length-of-stay
+  chkp_freq: 15
+  num_epochs: 15
+  beta_scheduler:
+    type: cosine_annealing
+    kwargs:
+      beta_0: 0.5
+      beta_1: 0.5
+      last_epoch: -1
+  optimizer:
+    type: adam_w
+    kwargs:
+      lr: 0.0001
+      weight_decay: 0.0001
+  lr_scheduler:
+    type: cosine_annealing
+    kwargs:
+      T_max: 15
+      eta_min: 0
+      last_epoch: -1
+evaluation:
+  num_trials: 5
+  log_dir: logs/length-of-stay

@@ -1,0 +1,33 @@
+experiment_name: beta_ddpn_1.0
+random_seed: 1998
+head_type: double_poisson
+dataset:
+  type: image
+  spec: coco_people
+training:
+  accelerator: gpu
+  batch_size: 128
+  chkp_dir: chkp/coco-people
+  chkp_freq: 30
+  num_epochs: 30
+  optimizer:
+    type: adam_w
+    kwargs:
+      lr: 0.001
+      weight_decay: 0.00001
+  precision: bf16-mixed
+  beta_scheduler:
+    type: cosine_annealing
+    kwargs:
+      beta_0: 1.0
+      beta_1: 1.0
+      last_epoch: -1
+  lr_scheduler:
+    type: cosine_annealing
+    kwargs:
+      T_max: 30
+      eta_min: 0
+      last_epoch: -1
+evaluation:
+  num_trials: 5
+  log_dir: logs/coco-people

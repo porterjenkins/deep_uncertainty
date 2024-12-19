@@ -1,0 +1,14 @@
+experiment_name: nbinom_ensemble
+accelerator: cpu
+batch_size: 32
+member_head_type: negative_binomial
+members:
+  - chkp/collisions/nbinom/version_0/best_loss.ckpt
+  - chkp/collisions/nbinom/version_1/best_loss.ckpt
+  - chkp/collisions/nbinom/version_2/best_loss.ckpt
+  - chkp/collisions/nbinom/version_3/best_loss.ckpt
+  - chkp/collisions/nbinom/version_4/best_loss.ckpt
+dataset:
+  type: tabular
+  spec: data/collisions/collisions.npz
+log_dir: results/collisions/ensembles

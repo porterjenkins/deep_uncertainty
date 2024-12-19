@@ -27,6 +27,6 @@ for head in "${head_list[@]}"; do
         python deep_uncertainty/evaluation/eval_model.py \
             --config-path ${configs_dir}/${head}.yaml \
             --log-dir ${results_dir}/${dataset}/${head}/version_${v} \
-            --chkp-path chkp/${dataset}/${head}/version_${v}/best_mae.ckpt
+            --chkp-path chkp/${dataset}/${head}/version_${v}/best_loss.ckpt
     done
 done

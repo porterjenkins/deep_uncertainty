@@ -1,4 +1,4 @@
-experiment_name: seitzer_0.7
+experiment_name: seitzer_1.0
 random_seed: 1998
 head_type: gaussian
 dataset:
@@ -19,8 +19,8 @@ training:
   beta_scheduler:
     type: cosine_annealing
     kwargs:
-      beta_0: 0.7
-      beta_1: 0.7
+      beta_0: 1.0
+      beta_1: 1.0
       last_epoch: -1
   lr_scheduler:
     type: cosine_annealing

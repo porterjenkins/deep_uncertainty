@@ -1,7 +1,9 @@
 model,mae,mae,mae,nll,nll,nll
 ,mean,std,count,mean,std,count
-beta_ddpn_0.7,28.038,0.373,5,4.674,0.015,5
-beta_ddpn_0.7_ensemble,25.329,,1,4.562,,1
+beta_ddpn_0.5,30.393,1.023,5,4.733,0.032,5
+beta_ddpn_0.5_ensemble,27.380,,1,4.647,,1
+beta_ddpn_1.0,28.924,0.681,5,4.703,0.018,5
+beta_ddpn_1.0_ensemble,26.395,,1,4.599,,1
 ddpn,28.890,1.100,5,4.671,0.021,5
 ddpn_ensemble,26.379,,1,4.595,,1
 dpo_glm,132.489,4.832,5,8.265,0.761,5
@@ -20,5 +22,7 @@ poisson_glm,110.073,2.590,5,9.814,0.019,5
 poisson_glm_ensemble,109.430,,1,9.724,,1
 seitzer_0.5,28.547,0.832,5,4.731,0.022,5
 seitzer_0.5_ensemble,26.125,,1,4.636,,1
+seitzer_1.0,30.310,0.707,5,4.862,0.036,5
+seitzer_1.0_ensemble,27.542,,1,4.767,,1
 stirn,28.836,0.894,5,4.887,0.053,5
 stirn_ensemble,26.692,,1,4.791,,1

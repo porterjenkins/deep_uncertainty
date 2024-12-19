@@ -1,0 +1,14 @@
+experiment_name: beta_ddpn_0.5_ensemble
+accelerator: cpu
+batch_size: 32
+member_head_type: double_poisson
+members:
+  - chkp/bikes/beta_ddpn_0.5/version_0/best_loss.ckpt
+  - chkp/bikes/beta_ddpn_0.5/version_1/best_loss.ckpt
+  - chkp/bikes/beta_ddpn_0.5/version_2/best_loss.ckpt
+  - chkp/bikes/beta_ddpn_0.5/version_3/best_loss.ckpt
+  - chkp/bikes/beta_ddpn_0.5/version_4/best_loss.ckpt
+dataset:
+  type: tabular
+  spec: data/bikes/bikes.npz
+log_dir: results/bikes/ensembles

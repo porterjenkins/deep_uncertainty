@@ -1,6 +1,8 @@
 experiment_name: test-run
 random_seed: 1998
 head_type: double_poisson
+logging:
+  wandb_project: deep-uncertainty
 dataset:
   type: tabular
   spec: path/to/tabular/dataset.npz

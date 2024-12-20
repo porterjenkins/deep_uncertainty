@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 from argparse import Namespace
 
 import lightning as L
-from lightning.pytorch.loggers import CSVLogger
+from lightning.pytorch.loggers import WandbLogger
 
 from deep_uncertainty.utils.configs import TrainingConfig
 from deep_uncertainty.utils.experiment_utils import fix_random_seed
@@ -27,7 +27,7 @@ def main(config: TrainingConfig):
         model = get_model(config)
         chkp_dir = config.chkp_dir / config.experiment_name / f"version_{i}"
         chkp_callbacks = get_chkp_callbacks(chkp_dir, config.chkp_freq)
-        logger = CSVLogger(save_dir=config.log_dir, name=config.experiment_name)
+        logger = WandbLogger(project=config.wandb_project, name=config.experiment_name)
 
         trainer = L.Trainer(
             accelerator=config.accelerator_type.value,

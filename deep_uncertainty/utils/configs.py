@@ -42,6 +42,7 @@ class TrainingConfig:
         input_dim (int | None, optional): If dataset is tabular, the input dim of the data (used to construct the MLP). Defaults to None.
         hidden_dim (int, optional): Feature dimension used in the model (before feeding the representation to the output head). Defaults to 64.
         random_seed (int | None, optional): If specified, the random seed to use for reproducibility. Defaults to None.
+        wandb_project (str | None, optional): If specified, the name of the wandb project to log results to. Defaults to None.
     """
 
     def __init__(
@@ -69,6 +70,7 @@ class TrainingConfig:
         hidden_dim: int = 64,
         precision: str | None = None,
         random_seed: int | None = None,
+        wandb_project: str | None = None
     ):
         self.experiment_name = experiment_name
         self.accelerator_type = accelerator_type
@@ -93,6 +95,7 @@ class TrainingConfig:
         self.hidden_dim = hidden_dim
         self.precision = precision
         self.random_seed = random_seed
+        self.wandb_project = wandb_project
 
     @staticmethod
     def from_yaml(config_path: str | Path) -> TrainingConfig:
@@ -149,6 +152,8 @@ class TrainingConfig:
         input_dim = config_dict["dataset"].get("input_dim")
         hidden_dim = config_dict.get("hidden_dim", 64)
         random_seed = config_dict.get("random_seed")
+        logging_dict = config_dict.get("logging")
+        wandb_project = logging_dict.get("wandb_project")
 
         return TrainingConfig(
             experiment_name=experiment_name,
@@ -174,6 +179,7 @@ class TrainingConfig:
             hidden_dim=hidden_dim,
             precision=precision,
             random_seed=random_seed,
+            wandb_project=wandb_project
         )
 
     def to_yaml(self, filepath: str | Path):

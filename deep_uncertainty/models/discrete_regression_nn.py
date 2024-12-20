@@ -60,6 +60,7 @@ class DiscreteRegressionNN(L.LightningModule):
         self.val_mae = MeanAbsoluteError()
         self.test_rmse = MeanSquaredError(squared=False)
         self.test_mae = MeanAbsoluteError()
+        self.save_hyperparameters()
 
     def configure_optimizers(self) -> dict:
         if self.optim_type == OptimizerType.ADAM:

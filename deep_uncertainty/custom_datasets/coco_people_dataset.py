@@ -56,7 +56,9 @@ class COCOPeopleDataset(Dataset):
         )
 
     def _get_instances_df(self) -> pd.DataFrame:
-        annotations = pd.read_csv(self.annotations_path)
+        annotations = pd.read_csv(
+            self.annotations_path, dtype={"image_id": str, "split": str, "count": int}
+        )
         mask = annotations["split"] == self.split
         instances = {"image_path": [], "count": []}
         for _, row in annotations[mask].iterrows():

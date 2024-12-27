@@ -14,11 +14,14 @@ class Backbone(nn.Module):
 
     Attributes:
         output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
+        freeze_backbone (bool, optional): Whether to freeze the backbone during training. Defaults to False.
+            - Only takes effect for subclasses that load pretrained weights (e.g. MobileNetV3, DistilBert, ViT).
     """
 
-    def __init__(self, output_dim: int = 64):
+    def __init__(self, output_dim: int = 64, freeze_backbone: bool = False):
         super(Backbone, self).__init__()
         self.output_dim = output_dim
+        self.freeze_backbone = freeze_backbone
 
 
 class Identity(Backbone):
@@ -31,14 +34,15 @@ class Identity(Backbone):
         output_dim (int): Dimension of output feature vectors. Will be the same as the input feature dim.
     """
 
-    def __init__(self, input_dim: int, output_dim: int | None = None):
+    def __init__(self, input_dim: int, output_dim: int | None = None, freeze_backbone: bool = False):
         """Instantiate an Identity backbone.
 
         Args:
             input_dim (int): Dimension of input feature vectors.
             output_dim (int | None, optional): Dimension of output feature vectors (here for compatibility only). Unused.
+            freeze_backbone (bool, optional): Whether to freeze the Identity backbone. Defaults to False. Unused.
         """
-        super(Identity, self).__init__(output_dim=input_dim)
+        super(Identity, self).__init__(output_dim=input_dim, freeze_backbone=freeze_backbone)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return x
@@ -51,15 +55,16 @@ class SmallerMLP(Backbone):
         layers (nn.Sequential): The layers of this MLP.
     """
 
-    def __init__(self, input_dim: int = 1, output_dim: int = 64):
+    def __init__(self, input_dim: int = 1, output_dim: int = 64, freeze_backbone: bool = False):
         """Instantiate an MLP backbone.
 
         Args:
             input_dim (int, optional): Dimension of input feature vectors. Defaults to 1.
             output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
+            freeze_backbone (bool, optional): Whether to freeze the MLP backbone. Defaults to False. Unused.
         """
         self.input_dim = input_dim
-        super(SmallerMLP, self).__init__(output_dim=output_dim)
+        super(SmallerMLP, self).__init__(output_dim=output_dim, freeze_backbone=freeze_backbone)
 
         self.layers = nn.Sequential(
             nn.Linear(input_dim, 128),
@@ -79,15 +84,16 @@ class MLP(Backbone):
         layers (nn.Sequential): The layers of this MLP.
     """
 
-    def __init__(self, input_dim: int = 1, output_dim: int = 64):
+    def __init__(self, input_dim: int = 1, output_dim: int = 64, freeze_backbone: bool = False):
         """Instantiate an MLP backbone.
 
         Args:
             input_dim (int, optional): Dimension of input feature vectors. Defaults to 1.
             output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
+            freeze_backbone (bool, optional): Whether to freeze the MLP backbone. Defaults to False. Unused.
         """
         self.input_dim = input_dim
-        super(MLP, self).__init__(output_dim=output_dim)
+        super(MLP, self).__init__(output_dim=output_dim, freeze_backbone=freeze_backbone)
 
         self.layers = nn.Sequential(
             nn.Linear(input_dim, 128),
@@ -109,10 +115,11 @@ class MNISTCNN(Backbone):
 
     Attributes:
         output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
+        freeze_backbone (bool, optional): Whether to freeze the MNISTCNN backbone. Defaults to False. Unused.
     """
 
-    def __init__(self, output_dim: int = 64):
-        super(MNISTCNN, self).__init__(output_dim=output_dim)
+    def __init__(self, output_dim: int = 64, freeze_backbone: bool = False):
+        super(MNISTCNN, self).__init__(output_dim=output_dim, freeze_backbone=freeze_backbone)
 
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3)
         self.bn1 = nn.BatchNorm2d(32)
@@ -139,10 +146,11 @@ class SmallCNN(Backbone):
 
     Attributes:
         output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
+        freeze_backbone (bool, optional): Whether to freeze the SmallCNN backbone. Defaults to False. Unused.
     """
 
-    def __init__(self, output_dim: int = 64):
-        super(SmallCNN, self).__init__(output_dim=output_dim)
+    def __init__(self, output_dim: int = 64, freeze_backbone: bool = False):
+        super(SmallCNN, self).__init__(output_dim=output_dim, freeze_backbone=freeze_backbone)
 
         self.conv1 = nn.Conv2d(3, 32, kernel_size=3)
         self.bn1 = nn.BatchNorm2d(32)
@@ -181,10 +189,10 @@ class MobileNetV3(Backbone):
             output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
             freeze_backbone (bool, optional): Whether to freeze the MobileNetV3 backbone. Defaults to False.
         """
-        super(MobileNetV3, self).__init__(output_dim=output_dim)
+        super(MobileNetV3, self).__init__(output_dim=output_dim, freeze_backbone=freeze_backbone)
 
         self.backbone = mobilenet_v3_large(weights=MobileNet_V3_Large_Weights.DEFAULT).features
-        if freeze_backbone:
+        if self.freeze_backbone:
             for param in self.backbone.parameters():
                 param.requires_grad = False
         self.avg_pool = nn.AdaptiveAvgPool2d(output_size=(1, 1))
@@ -211,9 +219,9 @@ class DistilBert(Backbone):
             output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
             freeze_backbone (bool, optional): Whether to freeze the DistilBert backbone. Defaults to False.
         """
-        super(DistilBert, self).__init__(output_dim=output_dim)
+        super(DistilBert, self).__init__(output_dim=output_dim, freeze_backbone=freeze_backbone)
         self.backbone = DistilBertModel.from_pretrained("distilbert-base-cased")
-        if freeze_backbone:
+        if self.freeze_backbone:
             for param in self.backbone.parameters():
                 param.requires_grad = False
         self.projection_1 = nn.Linear(768, 384)
@@ -242,9 +250,9 @@ class ViT(Backbone):
             output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
             freeze_backbone (bool, optional): Whether to freeze the ViT backbone. Defaults
         """
-        super(ViT, self).__init__(output_dim=output_dim)
+        super(ViT, self).__init__(output_dim=output_dim, freeze_backbone=freeze_backbone)
         self.backbone = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k")
-        if freeze_backbone:
+        if self.freeze_backbone:
             for param in self.backbone.parameters():
                 param.requires_grad = False
         self.projection_1 = nn.Linear(768, 384)
@@ -266,15 +274,16 @@ class LargerMLP(Backbone):
         layers (nn.Sequential): The layers of this MLP.
     """
 
-    def __init__(self, input_dim: int = 1, output_dim: int = 64):
+    def __init__(self, input_dim: int = 1, output_dim: int = 64, freeze_backbone: bool = False):
         """Instantiate an MLP backbone.
 
         Args:
             input_dim (int, optional): Dimension of input feature vectors. Defaults to 1.
             output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
+            freeze_backbone (bool, optional): Whether to freeze the MLP backbone. Defaults to False. Unused.
         """
         self.input_dim = input_dim
-        super(LargerMLP, self).__init__(output_dim=output_dim)
+        super(LargerMLP, self).__init__(output_dim=output_dim, freeze_backbone=freeze_backbone)
 
         self.layers = nn.Sequential(
             nn.Linear(input_dim, 512),

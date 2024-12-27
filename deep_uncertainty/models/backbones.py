@@ -174,15 +174,19 @@ class MobileNetV3(Backbone):
         output_dim (int): Dimension of output feature vectors.
     """
 
-    def __init__(self, output_dim: int = 64):
+    def __init__(self, output_dim: int = 64, freeze_backbone: bool = False):
         """Initialize a MobileNetV3 feature extractor.
 
         Args:
             output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
+            freeze_backbone (bool, optional): Whether to freeze the MobileNetV3 backbone. Defaults to False.
         """
         super(MobileNetV3, self).__init__(output_dim=output_dim)
 
         self.backbone = mobilenet_v3_large(weights=MobileNet_V3_Large_Weights.DEFAULT).features
+        if freeze_backbone:
+            for param in self.backbone.parameters():
+                param.requires_grad = False
         self.avg_pool = nn.AdaptiveAvgPool2d(output_size=(1, 1))
         self.flatten = nn.Flatten(start_dim=2)
         self.conv1d = nn.Conv1d(in_channels=960, out_channels=self.output_dim, kernel_size=1)
@@ -231,14 +235,18 @@ class ViT(Backbone):
         output_dim (int): Dimension of output feature vectors.
     """
 
-    def __init__(self, output_dim: int = 64):
+    def __init__(self, output_dim: int = 64, freeze_backbone: bool = False):
         """Initialize a ViT image feature extractor.
 
         Args:
             output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
+            freeze_backbone (bool, optional): Whether to freeze the ViT backbone. Defaults
         """
         super(ViT, self).__init__(output_dim=output_dim)
         self.backbone = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k")
+        if freeze_backbone:
+            for param in self.backbone.parameters():
+                param.requires_grad = False
         self.projection_1 = nn.Linear(768, 384)
         self.projection_2 = nn.Linear(384, self.output_dim)
         self.relu = nn.ReLU()

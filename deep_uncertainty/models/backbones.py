@@ -200,14 +200,18 @@ class DistilBert(Backbone):
         output_dim (int): Dimension of output feature vectors.
     """
 
-    def __init__(self, output_dim: int = 64):
+    def __init__(self, output_dim: int = 64, freeze_backbone: bool = False):
         """Initialize a DistilBert text feature extractor.
 
         Args:
             output_dim (int, optional): Dimension of output feature vectors. Defaults to 64.
+            freeze_backbone (bool, optional): Whether to freeze the DistilBert backbone. Defaults to False.
         """
         super(DistilBert, self).__init__(output_dim=output_dim)
         self.backbone = DistilBertModel.from_pretrained("distilbert-base-cased")
+        if freeze_backbone:
+            for param in self.backbone.parameters():
+                param.requires_grad = False
         self.projection_1 = nn.Linear(768, 384)
         self.projection_2 = nn.Linear(384, self.output_dim)
         self.relu = nn.ReLU()

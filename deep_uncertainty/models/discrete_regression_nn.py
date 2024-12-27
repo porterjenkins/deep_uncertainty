@@ -68,7 +68,7 @@ class DiscreteRegressionNN(L.LightningModule):
             optim_class = torch.optim.AdamW
         elif self.optim_type == OptimizerType.SGD:
             optim_class = torch.optim.SGD
-        optimizer = optim_class(self.parameters(), **self.optim_kwargs)
+        optimizer = optim_class(filter(lambda p: p.requires_grad, self.parameters()), **self.optim_kwargs)
         optim_dict = {"optimizer": optimizer}
 
         if self.lr_scheduler_type is not None:

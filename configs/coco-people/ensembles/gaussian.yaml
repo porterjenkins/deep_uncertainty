@@ -1,0 +1,14 @@
+experiment_name: gaussian_ensemble
+accelerator: gpu
+batch_size: 256
+member_head_type: gaussian
+members:
+  - chkp/coco-people/gaussian/version_0/best_loss.ckpt
+  - chkp/coco-people/gaussian/version_1/best_loss.ckpt
+  - chkp/coco-people/gaussian/version_2/best_loss.ckpt
+  - chkp/coco-people/gaussian/version_3/best_loss.ckpt
+  - chkp/coco-people/gaussian/version_4/best_loss.ckpt
+dataset:
+  type: image
+  spec: coco_people
+log_dir: results/coco-people/ensembles

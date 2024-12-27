@@ -1,0 +1,14 @@
+experiment_name: immer_ensemble
+accelerator: gpu
+batch_size: 256
+member_head_type: natural_gaussian
+members:
+  - chkp/coco-people/immer/version_0/best_loss.ckpt
+  - chkp/coco-people/immer/version_1/best_loss.ckpt
+  - chkp/coco-people/immer/version_2/best_loss.ckpt
+  - chkp/coco-people/immer/version_3/best_loss.ckpt
+  - chkp/coco-people/immer/version_4/best_loss.ckpt
+dataset:
+  type: image
+  spec: coco_people
+log_dir: results/coco-people/ensembles

@@ -14,6 +14,7 @@ training:
       beta_0: 1.0
       beta_1: 1.0
       last_epoch: -1
+  freeze_backbone: False
   chkp_dir: path/to/chkp/dir
   chkp_freq: 20
   num_epochs: 100

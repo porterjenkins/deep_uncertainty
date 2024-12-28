@@ -77,6 +77,9 @@ class DiscreteRegressionNN(L.LightningModule):
             lr_scheduler = lr_scheduler_class(optimizer, **self.lr_scheduler_kwargs)
             optim_dict["lr_scheduler"] = lr_scheduler
 
+        num_params = sum(p.numel() for group in optimizer.param_groups for p in group['params'])
+        print(f"Number of parameters tracked by the optimizer: {num_params}")
+
         return optim_dict
 
     def training_step(self, batch: tuple[torch.Tensor, torch.LongTensor]) -> torch.Tensor:

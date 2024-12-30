@@ -231,7 +231,7 @@ class DistilBert(Backbone):
         self.projection_1 = nn.Linear(768, 384)
         self.projection_2 = nn.Linear(384, self.output_dim)
         self.relu = nn.ReLU()
-        self._freeze_backbone(method='last_block_linear')
+        self._freeze_backbone(method='last_block')
 
     def forward(self, x: BatchEncoding) -> torch.Tensor:
         outputs: BaseModelOutput = self.backbone(**x)

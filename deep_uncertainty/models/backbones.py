@@ -23,6 +23,10 @@ class Backbone(nn.Module):
         self.output_dim = output_dim
         self.freeze_backbone = freeze_backbone
 
+    def _freeze_backbone(self) -> None:
+        """Freeze the backbone during training. Implemented by base class"""
+        pass
+
 
 class Identity(Backbone):
     """Placeholder class for training a generalized linear model. Performs no transformations on input data.
@@ -192,17 +196,20 @@ class MobileNetV3(Backbone):
         super(MobileNetV3, self).__init__(output_dim=output_dim, freeze_backbone=freeze_backbone)
 
         self.backbone = mobilenet_v3_large(weights=MobileNet_V3_Large_Weights.DEFAULT).features
-        if self.freeze_backbone:
-            for param in self.backbone.parameters():
-                param.requires_grad = False
         self.avg_pool = nn.AdaptiveAvgPool2d(output_size=(1, 1))
         self.flatten = nn.Flatten(start_dim=2)
         self.conv1d = nn.Conv1d(in_channels=960, out_channels=self.output_dim, kernel_size=1)
+        self._freeze_backbone()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         h = self.flatten(self.avg_pool(self.backbone(x)))
         h = self.conv1d(h).squeeze(-1)
         return h
+
+    def _freeze_backbone(self) -> None:
+        if self.freeze_backbone:
+            for param in self.backbone.parameters():
+                param.requires_grad = False
 
 
 class DistilBert(Backbone):
@@ -221,12 +228,10 @@ class DistilBert(Backbone):
         """
         super(DistilBert, self).__init__(output_dim=output_dim, freeze_backbone=freeze_backbone)
         self.backbone = DistilBertModel.from_pretrained("distilbert-base-cased")
-        if self.freeze_backbone:
-            for param in self.backbone.parameters():
-                param.requires_grad = False
         self.projection_1 = nn.Linear(768, 384)
         self.projection_2 = nn.Linear(384, self.output_dim)
         self.relu = nn.ReLU()
+        self._freeze_backbone(method='last_block_linear')
 
     def forward(self, x: BatchEncoding) -> torch.Tensor:
         outputs: BaseModelOutput = self.backbone(**x)
@@ -234,6 +239,41 @@ class DistilBert(Backbone):
         h = self.relu(self.projection_1(h))
         h = self.relu(self.projection_2(h))
         return h
+
+    def _freeze_backbone(self, method: str = 'all') -> None:
+        """
+            Freeze the backbone during training based on the specified method.
+
+            Args:
+                method (str, optional): Method to selectively unfreeze parts of the backbone.
+                    Options are:
+                            - 'all': Freeze all layers.
+                            - 'last_block': Freeze all layers except the last transformer block.
+                            - 'last_block_linear':  Freeze all layers except linear layers and layer norm in the last transformer block.
+
+            Raises:
+                ValueError: If an invalid method is provided.
+            """
+
+        if self.freeze_backbone:
+            # freeze all BERT layers
+            for param in self.backbone.parameters():
+                param.requires_grad = False
+
+            if method == 'all':
+                return None
+
+            elif method == "last_block":
+                # manually unfreeze all layers in last transformer block
+                for param in self.backbone.transformer.layer[-1].parameters():
+                    param.requires_grad = True
+            elif method == "last_block_linear":
+                # manually unfreeze only linear layers (and layer norm) in final transformer block
+                for param in self.backbone.transformer.layer[-1].ffn.parameters():
+                    param.requires_grad = True
+                self.backbone.transformer.layer[-1].output_layer_norm.weight.requires_grad = True
+            else:
+                ValueError(f"Invalid method: {method}")
 
 
 class ViT(Backbone):
@@ -252,12 +292,10 @@ class ViT(Backbone):
         """
         super(ViT, self).__init__(output_dim=output_dim, freeze_backbone=freeze_backbone)
         self.backbone = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k")
-        if self.freeze_backbone:
-            for param in self.backbone.parameters():
-                param.requires_grad = False
         self.projection_1 = nn.Linear(768, 384)
         self.projection_2 = nn.Linear(384, self.output_dim)
         self.relu = nn.ReLU()
+        self._freeze_backbone()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         outputs: BaseModelOutputWithPooling = self.backbone(pixel_values=x)
@@ -266,6 +304,10 @@ class ViT(Backbone):
         h = self.relu(self.projection_2(h))
         return h
 
+    def _freeze_backbone(self) -> None:
+        if self.freeze_backbone:
+            for param in self.backbone.parameters():
+                param.requires_grad = False
 
 class LargerMLP(Backbone):
     """A larger MLP feature extractor for (N, d) input data.

@@ -68,7 +68,7 @@ class DiscreteRegressionNN(L.LightningModule):
             optim_class = torch.optim.AdamW
         elif self.optim_type == OptimizerType.SGD:
             optim_class = torch.optim.SGD
-        optimizer = optim_class(self.parameters(), **self.optim_kwargs)
+        optimizer = optim_class(filter(lambda p: p.requires_grad, self.parameters()), **self.optim_kwargs)
         optim_dict = {"optimizer": optimizer}
 
         if self.lr_scheduler_type is not None:
@@ -76,6 +76,9 @@ class DiscreteRegressionNN(L.LightningModule):
                 lr_scheduler_class = torch.optim.lr_scheduler.CosineAnnealingLR
             lr_scheduler = lr_scheduler_class(optimizer, **self.lr_scheduler_kwargs)
             optim_dict["lr_scheduler"] = lr_scheduler
+
+        num_params = sum(p.numel() for group in optimizer.param_groups for p in group['params'])
+        print(f"Number of parameters tracked by the optimizer: {num_params}")
 
         return optim_dict
 

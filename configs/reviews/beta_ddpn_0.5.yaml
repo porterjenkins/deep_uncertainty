@@ -18,6 +18,7 @@ training:
     kwargs:
       lr: 0.0001
       weight_decay: 0.00001
+  freeze_backbone: True
   beta_scheduler:
     type: cosine_annealing
     kwargs:

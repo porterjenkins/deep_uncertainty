@@ -133,6 +133,7 @@ def get_model(config: TrainingConfig, return_initializer: bool = False) -> Discr
             backbone_type = MobileNetV3
         backbone_kwargs = {}
     backbone_kwargs["output_dim"] = config.hidden_dim
+    backbone_kwargs["freeze_backbone"] = config.freeze_backbone
 
     model = initializer(
         backbone_type=backbone_type,

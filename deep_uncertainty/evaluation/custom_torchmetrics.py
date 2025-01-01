@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from matplotlib.figure import Figure
+from scipy import stats
 from torchmetrics import Metric
 
 from deep_uncertainty.evaluation.calibration import compute_continuous_ece
@@ -128,3 +129,55 @@ class MedianPrecision(Metric):
         ax.set_ylabel("Density")
 
         return fig
+
+
+class AverageMutualInformation(Metric):
+    """A custom `torchmetric` for computing the mutual information between an ensemble's predictions and its individual member's predictions."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.add_state("all_member_probs", default=[])
+        self.add_state("all_ensemble_probs", default=[])
+
+    def update(self, member_probs: list[torch.Tensor], ensemble_probs: torch.Tensor):
+        """Update the state with the given member/ensemble probabilities.
+
+        Args:
+            member_probs (list[torch.Tensor]): A list of (N, support_dim) tensors. Each tensor represents a member's predicted probability distributions on a batch of inputs.
+            ensemble_probs (torch.Tensor): A (N, support_dim) tensor of probabilities, representing the ensemble's predictive distributions for a batch of inputs.
+        """
+        self.all_member_probs.append(torch.stack(member_probs, dim=0))
+        self.all_ensemble_probs.append(ensemble_probs)
+
+    def compute(self) -> torch.Tensor:
+        """Get the average mutual information (negative log probability of all test targets).
+
+        Returns:
+            torch.Tensor: The average NLL.
+        """
+        all_ensemble_probs = torch.cat(self.all_ensemble_probs, dim=0).detach().cpu().numpy()
+        all_member_probs = torch.cat(self.all_member_probs, dim=1).detach().cpu().numpy()
+        ensemble_entropies = stats.entropy(all_ensemble_probs, axis=1)
+        avg_member_entropies = stats.entropy(all_member_probs, axis=2).mean(axis=0)
+        diversities = ensemble_entropies - avg_member_entropies
+        return diversities.mean()
+
+
+class AverageMutualInformationGaussian(Metric):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.add_state("member_vars", default=[])
+        self.add_state("ensemble_vars", default=[])
+
+    def update(self, member_vars: list[torch.Tensor], ensemble_var: torch.Tensor):
+        self.member_vars.append(torch.stack(member_vars, dim=0))
+        self.ensemble_vars.append(ensemble_var)
+
+    def compute(self) -> torch.Tensor:
+        member_vars = torch.cat(self.member_vars, dim=1).flatten(1)
+        ensemble_vars = torch.cat(self.ensemble_vars).flatten()
+
+        ensemble_entropies = 0.5 * (torch.log(2 * torch.pi * ensemble_vars) + 1)
+        avg_member_entropies = 0.5 * (torch.log(2 * torch.pi * member_vars) + 1).mean(dim=0)
+        diversities = ensemble_entropies - avg_member_entropies
+        return diversities.mean()

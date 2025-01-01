@@ -1,0 +1,14 @@
+experiment_name: homoscedastic_seitzer_0.5_ensemble
+accelerator: cpu
+batch_size: 32
+member_head_type: homoscedastic_gaussian
+members:
+  - chkp/length-of-stay/homoscedastic_seitzer_0.5/version_0/best_loss.ckpt
+  - chkp/length-of-stay/homoscedastic_seitzer_0.5/version_1/best_loss.ckpt
+  - chkp/length-of-stay/homoscedastic_seitzer_0.5/version_2/best_loss.ckpt
+  - chkp/length-of-stay/homoscedastic_seitzer_0.5/version_3/best_loss.ckpt
+  - chkp/length-of-stay/homoscedastic_seitzer_0.5/version_4/best_loss.ckpt
+dataset:
+  type: tabular
+  spec: data/length-of-stay/length_of_stay.npz
+log_dir: results/length-of-stay/ensembles

@@ -10,6 +10,10 @@ dpo_glm,1.320,0.152,5,1.915,0.133,5
 dpo_glm_ensemble,1.185,,1,1.806,,1
 gaussian,0.545,0.010,5,1.002,0.015,5
 gaussian_ensemble,0.535,,1,0.989,,1
+homoscedastic_gaussian,0.520,0.006,5,1.262,0.093,5
+homoscedastic_gaussian_ensemble,0.506,,1,1.240,,1
+homoscedastic_seitzer_0.5,0.520,0.007,5,1.263,0.094,5
+homoscedastic_seitzer_0.5_ensemble,0.508,,1,1.241,,1
 immer,0.534,0.015,5,1.187,0.022,5
 immer_ensemble,0.518,,1,1.164,,1
 nbinom,0.732,0.011,5,1.634,0.002,5

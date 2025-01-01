@@ -1,6 +1,7 @@
 from .double_poisson_mixture_nn import DoublePoissonMixtureNN
 from .faithful_gaussian_mixture_nn import FaithfulGaussianMixtureNN
 from .gaussian_mixture_nn import GaussianMixtureNN
+from .homoscedastic_gaussian_mixture_nn import HomoscedasticGaussianMixtureNN
 from .log_faithful_gaussian_mixture_nn import LogFaithfulGaussianMixtureNN
 from .log_gaussian_mixture_nn import LogGaussianMixtureNN
 from .multi_class_nn_ensemble import MultiClassNNEnsemble

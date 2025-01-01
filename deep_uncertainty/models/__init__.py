@@ -2,6 +2,7 @@ from .double_poisson_nn import DoublePoissonNN
 from .dp_homoscedastic_nn import DoublePoissonHomoscedasticNN
 from .faithful_gaussian_nn import FaithfulGaussianNN
 from .gaussian_nn import GaussianNN
+from .homoscedastic_gaussian_nn import HomoscedasticGaussianNN
 from .log_faithful_gaussian_nn import LogFaithfulGaussianNN
 from .log_gaussian_nn import LogGaussianNN
 from .mean_nn import MeanNN

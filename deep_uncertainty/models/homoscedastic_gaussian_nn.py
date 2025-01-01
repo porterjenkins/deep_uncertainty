@@ -17,10 +17,10 @@ from deep_uncertainty.training.beta_schedulers import LinearBetaScheduler
 from deep_uncertainty.training.losses import gaussian_nll
 
 
-class LogGaussianNN(DiscreteRegressionNN):
+class HomoscedasticGaussianNN(DiscreteRegressionNN):
     """A neural network that learns the parameters of a Gaussian distribution over each regression target (conditioned on the input).
 
-    This implementation internally regresses logmu instead of mu (it still outputs mu, logvar from its forward pass).
+    In this modeling approach, we assume constant variance across inputs (homoscedasticity).
 
     Attributes:
         backbone (Backbone): Backbone to use for feature extraction.
@@ -44,7 +44,7 @@ class LogGaussianNN(DiscreteRegressionNN):
         beta_scheduler_type: BetaSchedulerType | None = None,
         beta_scheduler_kwargs: dict | None = None,
     ):
-        """Instantiate a LogGaussianNN.
+        """Instantiate a HomoscedasticGaussianNN.
 
         Args:
             backbone_type (Type[Backbone]): Type of backbone to use for feature extraction (can be initialized with backbone_type()).
@@ -63,7 +63,7 @@ class LogGaussianNN(DiscreteRegressionNN):
         else:
             self.beta_scheduler = None
 
-        super(LogGaussianNN, self).__init__(
+        super(HomoscedasticGaussianNN, self).__init__(
             loss_fn=partial(
                 gaussian_nll,
                 beta=(
@@ -77,7 +77,8 @@ class LogGaussianNN(DiscreteRegressionNN):
             lr_scheduler_type=lr_scheduler_type,
             lr_scheduler_kwargs=lr_scheduler_kwargs,
         )
-        self.head = nn.Linear(self.backbone.output_dim, 2)
+        self.mu_head = nn.Linear(self.backbone.output_dim, 1)
+        self.logvar = nn.Parameter(torch.randn(1))
 
         self.nll = AverageNLL()
         self.mp = MedianPrecision()
@@ -95,9 +96,9 @@ class LogGaussianNN(DiscreteRegressionNN):
         If viewing outputs as (mu, logvar), use `torch.split(y_hat, [1, 1], dim=-1)` to separate.
         """
         h = self.backbone(x)
-        y_hat = self.head(h)  # Interpreted as (mu, logvar)
-        logmu, logvar = torch.split(y_hat, [1, 1], dim=-1)
-        y_hat = torch.cat([logmu.exp(), logvar], dim=-1)
+        mu_hat = self.mu_head(h)
+        logvar_hat = self.logvar.expand_as(mu_hat)
+        y_hat = torch.cat((mu_hat, logvar_hat), dim=-1)
         return y_hat
 
     def _predict_impl(self, x: torch.Tensor) -> torch.Tensor:

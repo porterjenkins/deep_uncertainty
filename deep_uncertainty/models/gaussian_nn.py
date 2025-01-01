@@ -2,7 +2,6 @@ from functools import partial
 from typing import Type
 
 import torch
-from scipy.stats import norm
 from torch import nn
 from torchmetrics import Metric
 
@@ -10,7 +9,6 @@ from deep_uncertainty.enums import BetaSchedulerType
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
 from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
-from deep_uncertainty.evaluation.custom_torchmetrics import ContinuousExpectedCalibrationError
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.backbones import Backbone
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
@@ -78,11 +76,6 @@ class GaussianNN(DiscreteRegressionNN):
             lr_scheduler_kwargs=lr_scheduler_kwargs,
         )
         self.head = nn.Linear(self.backbone.output_dim, 2)
-
-        self.continuous_ece = ContinuousExpectedCalibrationError(
-            param_list=["loc", "scale"],
-            rv_class_type=norm,
-        )
         self.nll = AverageNLL()
         self.mp = MedianPrecision()
         self.save_hyperparameters()
@@ -130,7 +123,6 @@ class GaussianNN(DiscreteRegressionNN):
 
     def _addl_test_metrics_dict(self) -> dict[str, Metric]:
         return {
-            "continuous_ece": self.continuous_ece,
             "nll": self.nll,
             "mp": self.mp,
         }
@@ -145,7 +137,6 @@ class GaussianNN(DiscreteRegressionNN):
         std = torch.sqrt(var)
         targets = y.flatten()
 
-        self.continuous_ece.update({"loc": mu, "scale": std}, targets)
         self.mp.update(precision)
 
         # We compute "probability" with the continuity correction (probability of +- 0.5 of the value).

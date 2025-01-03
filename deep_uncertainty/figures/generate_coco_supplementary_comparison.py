@@ -164,32 +164,24 @@ def main(chkp_dir: str | Path, save_path: str | Path, image_indices: list[int], 
         single_dist_ax.legend()
 
         beta_ddpn_probs = (
-            beta_ddpn_mixture._predict_impl(image_tensor.to(beta_ddpn_model.device))
+            beta_ddpn_mixture(image_tensor.to(beta_ddpn_model.device))
             .flatten()
             .detach()
             .cpu()
             .numpy()
         )
-        mu, var = (
-            gaussian_quasi_mixture._predict_impl(image_tensor.to(faithful_gaussian_model.device))
+        mu, var, _, _ = (
+            gaussian_quasi_mixture(image_tensor.to(faithful_gaussian_model.device))
             .flatten()
             .detach()
             .cpu()
             .numpy()
         )
         poisson_probs = (
-            poisson_mixture._predict_impl(image_tensor.to(poisson_model.device))
-            .flatten()
-            .detach()
-            .cpu()
-            .numpy()
+            poisson_mixture(image_tensor.to(poisson_model.device)).flatten().detach().cpu().numpy()
         )
         nbinom_probs = (
-            nbinom_mixture._predict_impl(image_tensor.to(nbinom_model.device))
-            .flatten()
-            .detach()
-            .cpu()
-            .numpy()
+            nbinom_mixture(image_tensor.to(nbinom_model.device)).flatten().detach().cpu().numpy()
         )
 
         ddpn_dist = rv_discrete(0, 2000, values=(range(2000), beta_ddpn_probs))

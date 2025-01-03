@@ -1,39 +1,18 @@
-from __future__ import annotations
-
-from typing import Iterable
-
-import lightning as L
 import torch
-from torchmetrics import MeanAbsoluteError
-from torchmetrics import MeanSquaredError
-from torchmetrics import Metric
 
-from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
-from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models import GaussianNN
-from deep_uncertainty.utils.configs import EnsembleConfig
+from deep_uncertainty.models.ensembles.deep_regression_ensemble import DeepRegressionEnsemble
 
 
-class GaussianMixtureNN(L.LightningModule):
-    """An ensemble of Gaussian Neural Nets that outputs the predictive mean and variance of the implied uniform mixture.
+class GaussianMixtureNN(DeepRegressionEnsemble[GaussianNN]):
+    """An ensemble of Gaussian Neural Nets, formed into a mixture as specified in https://arxiv.org/abs/1612.01474.
 
-    See https://proceedings.neurips.cc/paper_files/paper/2017/hash/9ef2ed4b7fd2c810847ffa5fa85bce38-Abstract.html for details.
+    Aleatoric / epistemic uncertainty is calculated according to https://arxiv.org/abs/1703.04977.
 
-    This model is not trained, and should strictly be used for prediction.
-
-    Args:
-        members (Iterable[GaussianNN]): The members of the ensemble.
+    This model does not "train" and should strictly be used for prediction.
     """
 
-    def __init__(self, members: Iterable[GaussianNN]):
-        super(GaussianMixtureNN, self).__init__()
-        self.members = members
-        [member.eval() for member in self.members]
-
-        self.rmse = MeanSquaredError(squared=False)
-        self.mae = MeanAbsoluteError()
-        self.nll = AverageNLL()
-        self.mp = MedianPrecision()
+    member_type = GaussianNN
 
     def _predict_impl(self, x: torch.Tensor) -> torch.Tensor:
         """Make a forward pass through the ensemble.
@@ -42,9 +21,7 @@ class GaussianMixtureNN(L.LightningModule):
             x (torch.Tensor): Batched input tensor, with shape (N, ...).
 
         Returns:
-            torch.Tensor: Output mean and variance tensor, with shape (N, 2).
-
-        If viewing outputs as (mu, var), use `torch.split(y_hat, [1, 1], dim=-1)` to separate.
+            torch.Tensor: Output tensor, with shape (N, 4). Output is (mean, predictive_uncertainty, aleatoric_uncertainty, epistemic_uncertainty) for each input.
         """
         mu_vals = []
         var_vals = []
@@ -55,22 +32,23 @@ class GaussianMixtureNN(L.LightningModule):
         mu_vals = torch.cat(mu_vals, dim=1)
         var_vals = torch.cat(var_vals, dim=1)
 
-        mixture_mu = mu_vals.mean(dim=1)
-        mixture_var = (var_vals + mu_vals**2).mean(dim=1) - mixture_mu**2
+        pred_mean = mu_vals.mean(dim=1)
+        aleatoric_uncertainty = var_vals.mean(dim=1)
+        epistemic_uncertainty = mu_vals.var(dim=1)
+        pred_uncertainty = aleatoric_uncertainty + epistemic_uncertainty
+        output = torch.stack(
+            [
+                pred_mean,
+                pred_uncertainty,
+                aleatoric_uncertainty,
+                epistemic_uncertainty,
+            ],
+            dim=1,
+        )
+        return output
 
-        return torch.stack([mixture_mu, mixture_var], dim=1)
-
-    @property
-    def _test_metrics_dict(self) -> dict[str, Metric]:
-        return {
-            "rmse": self.rmse,
-            "mae": self.mae,
-            "nll": self.nll,
-            "mp": self.mp,
-        }
-
-    def _update_test_metrics_batch(self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
-        mu, var = torch.split(y_hat, [1, 1], dim=-1)
+    def _update_test_metrics(self, y_hat: torch.Tensor, y: torch.Tensor):
+        mu, var, aleatoric, epistemic = torch.split(y_hat, [1, 1, 1, 1], dim=-1)
         mu = mu.flatten()
         var = var.flatten()
         precision = 1 / var
@@ -86,35 +64,3 @@ class GaussianMixtureNN(L.LightningModule):
         self.mae.update(preds, targets)
         self.nll.update(target_probs=target_probs)
         self.mp.update(precision)
-
-    def test_step(self, batch: torch.Tensor) -> torch.Tensor:
-        x, y = batch
-        y_hat = self._predict_impl(x)
-        self._update_test_metrics_batch(x, y_hat, y.view(-1, 1).float())
-        return y_hat
-
-    def predict_step(self, batch: torch.Tensor) -> torch.Tensor:
-        x, _ = batch
-        y_hat = self._predict_impl(x)
-        return y_hat
-
-    def on_test_epoch_end(self):
-        for name, metric_tracker in self._test_metrics_dict.items():
-            self.log(name, metric_tracker.compute())
-
-    @staticmethod
-    def from_config(config: EnsembleConfig) -> GaussianMixtureNN:
-        """Construct a GaussianMixtureNN from a config. This is the primary way of building an ensemble.
-
-        Args:
-            config (EnsembleConfig): Ensemble config object.
-
-        Returns:
-            GaussianMixtureNN: The specified ensemble of GaussianNN models.
-        """
-        checkpoint_paths = config.members
-        members = []
-        for path in checkpoint_paths:
-            member = GaussianNN.load_from_checkpoint(path)
-            members.append(member)
-        return GaussianMixtureNN(members=members)

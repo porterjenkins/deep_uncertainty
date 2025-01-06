@@ -1,5 +1,6 @@
 import torch
 
+from deep_uncertainty.evaluation.custom_torchmetrics import ContinuousRankedProbabilityScore
 from deep_uncertainty.models import GaussianNN
 from deep_uncertainty.models.ensembles.deep_regression_ensemble import DeepRegressionEnsemble
 
@@ -13,6 +14,10 @@ class GaussianMixtureNN(DeepRegressionEnsemble[GaussianNN]):
     """
 
     member_type = GaussianNN
+
+    def __init__(self, members: list[GaussianNN]):
+        super().__init__(members=members)
+        self.crps = ContinuousRankedProbabilityScore(mode="gaussian")
 
     def _predict_impl(self, x: torch.Tensor) -> torch.Tensor:
         """Make a forward pass through the ensemble.
@@ -64,3 +69,4 @@ class GaussianMixtureNN(DeepRegressionEnsemble[GaussianNN]):
         self.mae.update(preds, targets)
         self.nll.update(target_probs=target_probs)
         self.mp.update(precision)
+        self.crps.update(torch.stack([mu, var], dim=1), targets)

@@ -7,6 +7,7 @@ from torchmetrics import Metric
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
 from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
+from deep_uncertainty.evaluation.custom_torchmetrics import ContinuousRankedProbabilityScore
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.backbones import Backbone
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
@@ -60,6 +61,7 @@ class LogFaithfulGaussianNN(DiscreteRegressionNN):
 
         self.nll = AverageNLL()
         self.mp = MedianPrecision()
+        self.crps = ContinuousRankedProbabilityScore(mode="gaussian")
 
         self.save_hyperparameters()
 
@@ -110,6 +112,7 @@ class LogFaithfulGaussianNN(DiscreteRegressionNN):
         return {
             "nll": self.nll,
             "mp": self.mp,
+            "crps": self.crps,
         }
 
     def _update_addl_test_metrics_batch(
@@ -127,3 +130,4 @@ class LogFaithfulGaussianNN(DiscreteRegressionNN):
         target_probs = dist.cdf(targets + 0.5) - dist.cdf(targets - 0.5)
         self.nll.update(target_probs)
         self.mp.update(precision)
+        self.crps.update(y_hat, targets)

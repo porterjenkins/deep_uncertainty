@@ -11,6 +11,7 @@ from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
 from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
 from deep_uncertainty.evaluation.custom_torchmetrics import ContinuousExpectedCalibrationError
+from deep_uncertainty.evaluation.custom_torchmetrics import ContinuousRankedProbabilityScore
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.backbones import Backbone
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
@@ -87,6 +88,7 @@ class LogGaussianNN(DiscreteRegressionNN):
         )
         self.nll = AverageNLL()
         self.mp = MedianPrecision()
+        self.crps = ContinuousRankedProbabilityScore(mode="gaussian")
         self.save_hyperparameters()
 
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
@@ -137,6 +139,7 @@ class LogGaussianNN(DiscreteRegressionNN):
             "continuous_ece": self.continuous_ece,
             "nll": self.nll,
             "mp": self.mp,
+            "crps": self.crps,
         }
 
     def _update_addl_test_metrics_batch(
@@ -156,6 +159,7 @@ class LogGaussianNN(DiscreteRegressionNN):
         dist = torch.distributions.Normal(loc=mu, scale=std)
         target_probs = dist.cdf(targets + 0.5) - dist.cdf(targets - 0.5)
         self.nll.update(target_probs)
+        self.crps.update(y_hat, targets)
 
     def on_train_epoch_end(self):
         if self.beta_scheduler is not None:

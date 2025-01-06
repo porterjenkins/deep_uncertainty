@@ -9,6 +9,7 @@ from torchmetrics import MeanAbsoluteError
 from torchmetrics import MeanSquaredError
 
 from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
+from deep_uncertainty.evaluation.custom_torchmetrics import ContinuousRankedProbabilityScore
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
 from deep_uncertainty.utils.configs import EnsembleConfig
@@ -43,6 +44,7 @@ class DeepRegressionEnsemble(LightningModule, Generic[T]):
         self.mae = MeanAbsoluteError()
         self.nll = AverageNLL()
         self.mp = MedianPrecision()
+        self.crps = ContinuousRankedProbabilityScore(mode="discrete")
 
     def _predict_impl(self, x: torch.Tensor) -> torch.Tensor:
         """Make a forward (prediction) pass through the ensemble.
@@ -91,3 +93,4 @@ class DeepRegressionEnsemble(LightningModule, Generic[T]):
         self.log("mae", self.mae.compute())
         self.log("nll", self.nll.compute())
         self.log("mp", self.mp.compute())
+        self.log("crps", self.crps.compute())

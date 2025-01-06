@@ -38,8 +38,8 @@ class PoissonMixtureNN(DeepRegressionEnsemble[PoissonNN]):
         mixture = DiscreteMixture(distributions=dists, weights=torch.ones(len(dists)))
         probabilities = mixture.pmf(torch.arange(self.max_value).unsqueeze(1)).transpose(0, 1)
 
-        means = torch.cat(means, dim=1)
-        variances = torch.cat(variances, dim=1)
+        means = torch.stack(means, dim=1)
+        variances = torch.stack(variances, dim=1)
         aleatoric = variances.mean(dim=1)
         epistemic = means.var(dim=1)
         uncertainties = torch.stack([aleatoric, epistemic], dim=1)
@@ -62,3 +62,4 @@ class PoissonMixtureNN(DeepRegressionEnsemble[PoissonNN]):
         self.mae.update(preds, targets)
         self.nll.update(target_probs)
         self.mp.update(precision)
+        self.crps.update(probabilities, targets)

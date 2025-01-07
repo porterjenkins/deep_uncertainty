@@ -26,9 +26,10 @@ def get_uncertainties(
         config_path (Path): Path to ensemble config.
         dataset (str): Either "amazon-reviews" or "bible".
     """
-    if not log_dir.exists():
-        os.makedirs(log_dir)
     config = EnsembleConfig.from_yaml(config_path)
+    experiment_log_dir = log_dir / config.experiment_name
+    if not experiment_log_dir.exists():
+        os.makedirs(experiment_log_dir)
     batch_size = config.batch_size
     num_workers = os.cpu_count()
     head_type = config.member_head_type
@@ -72,10 +73,11 @@ def get_uncertainties(
             aleatoric_uncertainties.append(aleatoric)
             epistemic_uncertainties.append(epistemic)
 
-        aleatoric_uncertainties = torch.cat(aleatoric_uncertainties)
-        epistemic_uncertainties = torch.cat(epistemic_uncertainties)
+        aleatoric_uncertainties = torch.cat(aleatoric_uncertainties).flatten()
+        epistemic_uncertainties = torch.cat(epistemic_uncertainties).flatten()
         save_dict = {"aleatoric": aleatoric_uncertainties, "epistemic": epistemic_uncertainties}
-        save_path = log_dir / config.experiment_name / f"{dataset}_entropies.pt"
+
+        save_path = experiment_log_dir / f"{dataset}_entropies.pt"
         print(f"Saving uncertainties to {save_path}")
         torch.save(save_dict, save_path)
 

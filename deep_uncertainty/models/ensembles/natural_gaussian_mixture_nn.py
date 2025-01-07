@@ -1,29 +1,21 @@
-from __future__ import annotations
-
-from typing import Iterable
-
 import torch
 
+from deep_uncertainty.evaluation.custom_torchmetrics import ContinuousRankedProbabilityScore
 from deep_uncertainty.models import NaturalGaussianNN
-from deep_uncertainty.models.ensembles.gaussian_mixture_nn import GaussianMixtureNN
-from deep_uncertainty.utils.configs import EnsembleConfig
+from deep_uncertainty.models.ensembles.deep_regression_ensemble import DeepRegressionEnsemble
 
 
-class NaturalGaussianMixtureNN(GaussianMixtureNN):
+class NaturalGaussianMixtureNN(DeepRegressionEnsemble[NaturalGaussianNN]):
     """An ensemble of naturally-parametrized Gaussian NNs that outputs the predictive mean and variance of the implied uniform mixture.
 
     See https://proceedings.neurips.cc/paper_files/paper/2017/hash/9ef2ed4b7fd2c810847ffa5fa85bce38-Abstract.html for details.
-
-    This model is not trained, and should strictly be used for prediction.
-
-    Args:
-        members (Iterable[NaturalGaussianNN]): The members of the ensemble.
     """
 
-    def __init__(self, members: Iterable[NaturalGaussianNN]):
-        super(NaturalGaussianMixtureNN, self).__init__(members)
-        self.members = members
-        [member.eval() for member in self.members]
+    member_type = NaturalGaussianNN
+
+    def __init__(self, members: list[NaturalGaussianNN]):
+        super().__init__(members=members)
+        self.crps = ContinuousRankedProbabilityScore(mode="gaussian")
 
     def _predict_impl(self, x: torch.Tensor) -> torch.Tensor:
         """Make a forward pass through the ensemble.
@@ -32,9 +24,7 @@ class NaturalGaussianMixtureNN(GaussianMixtureNN):
             x (torch.Tensor): Batched input tensor, with shape (N, ...).
 
         Returns:
-            torch.Tensor: Output mean and variance tensor, with shape (N, 2).
-
-        If viewing outputs as (mu, var), use `torch.split(y_hat, [1, 1], dim=-1)` to separate.
+            torch.Tensor: Output tensor, with shape (N, 4). Output is (mean, predictive_uncertainty, aleatoric_uncertainty, epistemic_uncertainty) for each input.
         """
         mu_vals = []
         var_vals = []
@@ -47,24 +37,30 @@ class NaturalGaussianMixtureNN(GaussianMixtureNN):
         mu_vals = torch.cat(mu_vals, dim=1)
         var_vals = torch.cat(var_vals, dim=1)
 
-        mixture_mu = mu_vals.mean(dim=1)
-        mixture_var = (var_vals + mu_vals**2).mean(dim=1) - mixture_mu**2
+        pred_mean = mu_vals.mean(dim=1)
+        aleatoric_uncertainty = var_vals.mean(dim=1)
+        epistemic_uncertainty = mu_vals.var(dim=1)
+        pred_uncertainty = aleatoric_uncertainty + epistemic_uncertainty
+        output = torch.stack(
+            [
+                pred_mean,
+                pred_uncertainty,
+                aleatoric_uncertainty,
+                epistemic_uncertainty,
+            ],
+            dim=1,
+        )
+        return output
 
-        return torch.stack([mixture_mu, mixture_var], dim=1)
+    def _update_test_metrics(self, y_hat: torch.Tensor, y: torch.Tensor):
+        mu, var, aleatoric, epistemic = torch.split(y_hat, [1, 1, 1, 1], dim=-1)
+        mu = mu.flatten()
+        var = var.flatten()
+        precision = 1 / var
+        targets = y.flatten()
 
-    @staticmethod
-    def from_config(config: EnsembleConfig) -> NaturalGaussianMixtureNN:
-        """Construct a NaturalGaussianMixtureNN from a config. This is the primary way of building an ensemble.
-
-        Args:
-            config (EnsembleConfig): Ensemble config object.
-
-        Returns:
-            NaturalGaussianMixtureNN: The specified ensemble of NaturalGaussianNN models.
-        """
-        checkpoint_paths = config.members
-        members = []
-        for path in checkpoint_paths:
-            member = NaturalGaussianNN.load_from_checkpoint(path)
-            members.append(member)
-        return NaturalGaussianMixtureNN(members=members)
+        # We compute "probability" by normalizing density over the discrete counts.
+        self.rmse.update(mu, targets)
+        self.mae.update(mu, targets)
+        self.mp.update(precision)
+        self.crps.update(torch.stack([mu, var], dim=1), targets)

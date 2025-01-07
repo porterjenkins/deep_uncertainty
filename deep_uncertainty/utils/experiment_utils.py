@@ -24,7 +24,6 @@ from deep_uncertainty.models import GaussianNN
 from deep_uncertainty.models import LogFaithfulGaussianNN
 from deep_uncertainty.models import LogGaussianNN
 from deep_uncertainty.models import MeanNN
-from deep_uncertainty.models import MultiClassNN
 from deep_uncertainty.models import NaturalGaussianNN
 from deep_uncertainty.models import NegBinomNN
 from deep_uncertainty.models import PoissonNN
@@ -92,22 +91,6 @@ def get_model(config: TrainingConfig, return_initializer: bool = False) -> Discr
             initializer = DoublePoissonHomoscedasticNN
     elif config.head_type in (HeadType.NEGATIVE_BINOMIAL, HeadType.NEGATIVE_BINOMIAL_GLM):
         initializer = NegBinomNN
-    elif config.head_type == HeadType.MULTI_CLASS:
-        if config.dataset_type == DatasetType.IMAGE:
-            if config.dataset_spec != ImageDatasetName.MNIST:
-                raise ValueError("Can only train MultiClassNN on MNIST or Reviews.")
-            else:
-                discrete_values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-        elif config.dataset_type == DatasetType.TEXT:
-            # Must be Amazon Reviews.
-            discrete_values = [1, 2, 3, 4, 5]
-        else:
-            raise ValueError("Can only train MultiClassNN on MNIST or Reviews.")
-
-        initializer = partialclass(
-            MultiClassNN,
-            discrete_values=discrete_values,
-        )
 
     if config.dataset_type == DatasetType.TABULAR:
         if config.head_type in (

@@ -1,0 +1,27 @@
+experiment_name: nbinom
+random_seed: 1998
+head_type: negative_binomial
+dataset:
+  type: tabular
+  spec: data/discrete-wave/discrete_sine_wave.npz
+  input_dim: 1
+training:
+  accelerator: cpu
+  batch_size: 32
+  chkp_dir: chkp/discrete-wave
+  chkp_freq: 200
+  num_epochs: 200
+  optimizer:
+    type: adam_w
+    kwargs:
+      lr: 0.001
+      weight_decay: 0.00001
+  lr_scheduler:
+    type: cosine_annealing
+    kwargs:
+      T_max: 200
+      eta_min: 0
+      last_epoch: -1
+evaluation:
+  num_trials: 5
+  log_dir: logs/discrete-wave

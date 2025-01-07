@@ -1,0 +1,14 @@
+accelerator: cpu
+batch_size: 32
+dataset:
+  spec: data/length-of-stay/length_of_stay.npz
+  type: tabular
+experiment_name: nbinom_glm_ensemble
+log_dir: results/length-of-stay/ensembles
+member_head_type: negative_binomial_glm
+members:
+- chkp/length-of-stay/nbinom_glm/version_0/best_loss.ckpt
+- chkp/length-of-stay/nbinom_glm/version_1/best_loss.ckpt
+- chkp/length-of-stay/nbinom_glm/version_2/best_loss.ckpt
+- chkp/length-of-stay/nbinom_glm/version_3/best_loss.ckpt
+- chkp/length-of-stay/nbinom_glm/version_4/best_loss.ckpt

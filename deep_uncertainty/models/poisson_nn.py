@@ -106,7 +106,8 @@ class PoissonNN(DiscreteRegressionNN):
         dist = torch.distributions.Poisson(lmbda)
         targets = y.flatten()
         precision = 1 / lmbda
-        probs_over_support = torch.exp(dist.log_prob(torch.arange(2000).view(-1, 1))).T
+        support = torch.arange(2000, device=y_hat.device).view(-1, 1)
+        probs_over_support = torch.exp(dist.log_prob(support)).T
 
         self.mp.update(precision)
         self.crps.update(probs_over_support, targets)

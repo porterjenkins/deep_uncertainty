@@ -6,7 +6,6 @@ from torchmetrics import Metric
 
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
-from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
 from deep_uncertainty.evaluation.custom_torchmetrics import ContinuousRankedProbabilityScore
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.backbones import Backbone
@@ -61,7 +60,6 @@ class NegBinomNN(DiscreteRegressionNN):
             nn.Softplus(),  # To ensure positivity of output params.
         )
 
-        self.nll = AverageNLL()
         self.mp = MedianPrecision()
         self.crps = ContinuousRankedProbabilityScore(mode="discrete")
 
@@ -104,7 +102,6 @@ class NegBinomNN(DiscreteRegressionNN):
 
     def _addl_test_metrics_dict(self) -> dict[str, Metric]:
         return {
-            "nll": self.nll,
             "mp": self.mp,
             "crps": self.crps,
         }
@@ -116,10 +113,8 @@ class NegBinomNN(DiscreteRegressionNN):
         var = dist.variance
         precision = 1 / var
         targets = y.flatten()
-        target_probs = torch.exp(dist.log_prob(targets))
         probs_over_support = torch.exp(dist.log_prob(torch.arange(2000).view(-1, 1))).T
 
-        self.nll.update(target_probs)
         self.mp.update(precision)
         self.crps.update(probs_over_support, targets)
 

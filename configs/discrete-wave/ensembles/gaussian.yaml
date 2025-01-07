@@ -1,0 +1,14 @@
+experiment_name: gaussian_ensemble
+accelerator: cpu
+batch_size: 128
+member_head_type: gaussian
+members:
+  - chkp/discrete-wave/gaussian/version_0/best_loss.ckpt
+  - chkp/discrete-wave/gaussian/version_1/best_loss.ckpt
+  - chkp/discrete-wave/gaussian/version_2/best_loss.ckpt
+  - chkp/discrete-wave/gaussian/version_3/best_loss.ckpt
+  - chkp/discrete-wave/gaussian/version_4/best_loss.ckpt
+dataset:
+  type: tabular
+  spec: data/discrete-wave/discrete_sine_wave.npz
+log_dir: results/discrete-wave/ensembles

@@ -57,16 +57,9 @@ class GaussianMixtureNN(DeepRegressionEnsemble[GaussianNN]):
         mu = mu.flatten()
         var = var.flatten()
         precision = 1 / var
-        std = torch.sqrt(var)
         targets = y.flatten()
 
-        preds = torch.round(mu)  # Since we have to predict counts.
-
-        # We compute "probability" by normalizing density over the discrete counts.
-        dist = torch.distributions.Normal(loc=mu, scale=std)
-        target_probs = dist.cdf(targets + 0.5) - dist.cdf(targets - 0.5)
-        self.rmse.update(preds, targets)
-        self.mae.update(preds, targets)
-        self.nll.update(target_probs=target_probs)
+        self.rmse.update(mu, targets)
+        self.mae.update(mu, targets)
         self.mp.update(precision)
         self.crps.update(torch.stack([mu, var], dim=1), targets)

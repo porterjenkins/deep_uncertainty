@@ -85,7 +85,7 @@ class MeanNN(DiscreteRegressionNN):
         return y_hat
 
     def _point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
-        return y_hat.round()
+        return y_hat
 
     def _addl_test_metrics_dict(self) -> dict[str, Metric]:
         return {"crps": self.crps}

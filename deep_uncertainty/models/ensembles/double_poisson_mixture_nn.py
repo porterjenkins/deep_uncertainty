@@ -51,19 +51,16 @@ class DoublePoissonMixtureNN(
 
     def _update_test_metrics(self, y_hat: tuple[torch.Tensor, torch.Tensor], y: torch.Tensor):
         probabilities, uncertainties = y_hat
-        N = probabilities.shape[0]
         preds = probabilities.argmax(dim=1)
         targets = y.flatten()
-        target_probs = probabilities[torch.arange(N, device=self.device), targets.long()]
 
         support = torch.arange(self.max_value, device=self.device)
         mu = (probabilities * support).sum(dim=1)
-        var = (y_hat * (support.unsqueeze(1) - mu).transpose(0, 1) ** 2).sum(dim=1)
+        var = (probabilities * (support.unsqueeze(1) - mu).transpose(0, 1) ** 2).sum(dim=1)
         precision = 1 / var
 
         self.rmse.update(preds, targets)
         self.mae.update(preds, targets)
-        self.nll.update(target_probs)
         self.mp.update(precision)
         self.crps.update(probabilities, targets)
 

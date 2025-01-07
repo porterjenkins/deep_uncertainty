@@ -8,7 +8,6 @@ from lightning import LightningModule
 from torchmetrics import MeanAbsoluteError
 from torchmetrics import MeanSquaredError
 
-from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
 from deep_uncertainty.evaluation.custom_torchmetrics import ContinuousRankedProbabilityScore
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
@@ -42,7 +41,6 @@ class DeepRegressionEnsemble(LightningModule, Generic[T]):
 
         self.rmse = MeanSquaredError(squared=False)
         self.mae = MeanAbsoluteError()
-        self.nll = AverageNLL()
         self.mp = MedianPrecision()
         self.crps = ContinuousRankedProbabilityScore(mode="discrete")
 
@@ -91,6 +89,5 @@ class DeepRegressionEnsemble(LightningModule, Generic[T]):
     def on_test_epoch_end(self):
         self.log("rmse", self.rmse.compute())
         self.log("mae", self.mae.compute())
-        self.log("nll", self.nll.compute())
         self.log("mp", self.mp.compute())
         self.log("crps", self.crps.compute())

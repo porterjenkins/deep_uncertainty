@@ -1,0 +1,10 @@
+model,mae,mae,mae,crps,crps,crps,mp,mp,mp
+,mean,std,count,mean,std,count,mean,std,count
+ddpn,0.878,0.023,5,0.640,0.008,5,0.801,0.019,5
+ddpn_ensemble,0.870,,1,0.637,,1,0.798,,1
+gaussian,0.979,0.080,5,0.698,0.052,5,0.585,0.066,5
+gaussian_ensemble,0.967,,1,0.686,,1,0.571,,1
+nbinom,0.966,0.093,5,1.212,0.006,5,0.045,0.001,5
+nbinom_ensemble,0.920,,1,1.211,,1,0.045,,1
+poisson,1.088,0.078,5,1.207,0.005,5,0.046,0.001,5
+poisson_ensemble,1.050,,1,1.202,,1,0.046,,1

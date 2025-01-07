@@ -30,7 +30,7 @@ def get_uncertainties(
         os.makedirs(log_dir)
     config = EnsembleConfig.from_yaml(config_path)
     batch_size = config.batch_size
-    num_workers = 10
+    num_workers = os.cpu_count()
     head_type = config.member_head_type
 
     if dataset == "amazon-reviews":
@@ -46,10 +46,6 @@ def get_uncertainties(
             batch_size=batch_size,
             num_workers=num_workers,
             persistent_workers=True,
-        )
-    else:
-        raise ValueError(
-            f"Expected one of ['amazon-reviews', 'bible'] for `dataset` but got {dataset}."
         )
     datamodule.setup("test")
     test_loader = datamodule.test_dataloader()

@@ -1,0 +1,14 @@
+experiment_name: nbinom_ensemble
+accelerator: gpu
+batch_size: 256
+member_head_type: negative_binomial
+members:
+  - chkp/reviews/nbinom/version_0/best_loss.ckpt
+  - chkp/reviews/nbinom/version_1/best_loss.ckpt
+  - chkp/reviews/nbinom/version_2/best_loss.ckpt
+  - chkp/reviews/nbinom/version_3/best_loss.ckpt
+  - chkp/reviews/nbinom/version_4/best_loss.ckpt
+dataset:
+  type: text
+  spec: reviews
+log_dir: results/reviews/ensembles

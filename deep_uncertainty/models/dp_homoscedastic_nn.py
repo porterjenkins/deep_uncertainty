@@ -8,7 +8,7 @@ from torchmetrics import Metric
 from deep_uncertainty.enums import BetaSchedulerType
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
-from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
+from deep_uncertainty.evaluation.custom_torchmetrics import ContinuousRankedProbabilityScore
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.backbones import Backbone
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
@@ -81,8 +81,8 @@ class DoublePoissonHomoscedasticNN(DiscreteRegressionNN):
         self.head = nn.Linear(self.backbone.output_dim, 1)
         self.logphi = nn.Parameter(torch.randn(1))
 
-        self.nll = AverageNLL()
         self.mp = MedianPrecision()
+        self.crps = ContinuousRankedProbabilityScore(mode="discrete")
 
         self.save_hyperparameters()
 
@@ -127,8 +127,8 @@ class DoublePoissonHomoscedasticNN(DiscreteRegressionNN):
 
     def _addl_test_metrics_dict(self) -> dict[str, Metric]:
         return {
-            "nll": self.nll,
             "mp": self.mp,
+            "crps": self.crps,
         }
 
     def _update_addl_test_metrics_batch(
@@ -138,10 +138,10 @@ class DoublePoissonHomoscedasticNN(DiscreteRegressionNN):
         mu, phi = dist.mu, dist.phi
         precision = phi / mu
         targets = y.flatten()
-        target_probs = dist.pmf(targets.long())
+        probs_over_support = dist.pmf(torch.arange(2000).view(-1, 1)).T
 
-        self.nll.update(target_probs)
         self.mp.update(precision)
+        self.crps.update(probs_over_support, targets)
 
     def _convert_output_to_dist(self, y_hat: torch.Tensor, log_output: bool) -> DoublePoisson:
         """Convert a network output to the implied Double Poisson distribution.

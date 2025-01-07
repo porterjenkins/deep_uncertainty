@@ -6,7 +6,7 @@ from torchmetrics import Metric
 
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
-from deep_uncertainty.evaluation.custom_torchmetrics import AverageNLL
+from deep_uncertainty.evaluation.custom_torchmetrics import ContinuousRankedProbabilityScore
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.backbones import Backbone
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
@@ -60,8 +60,8 @@ class NegBinomNN(DiscreteRegressionNN):
             nn.Softplus(),  # To ensure positivity of output params.
         )
 
-        self.nll = AverageNLL()
         self.mp = MedianPrecision()
+        self.crps = ContinuousRankedProbabilityScore(mode="discrete")
 
         self.save_hyperparameters()
 
@@ -102,8 +102,8 @@ class NegBinomNN(DiscreteRegressionNN):
 
     def _addl_test_metrics_dict(self) -> dict[str, Metric]:
         return {
-            "nll": self.nll,
             "mp": self.mp,
+            "crps": self.crps,
         }
 
     def _update_addl_test_metrics_batch(
@@ -113,10 +113,10 @@ class NegBinomNN(DiscreteRegressionNN):
         var = dist.variance
         precision = 1 / var
         targets = y.flatten()
-        target_probs = torch.exp(dist.log_prob(targets))
+        probs_over_support = torch.exp(dist.log_prob(torch.arange(2000).view(-1, 1))).T
 
-        self.nll.update(target_probs)
         self.mp.update(precision)
+        self.crps.update(probs_over_support, targets)
 
     def _convert_output_to_dist(self, y_hat: torch.Tensor) -> torch.distributions.NegativeBinomial:
         """Convert a network output to the implied negative binomial distribution.
@@ -127,17 +127,19 @@ class NegBinomNN(DiscreteRegressionNN):
         Returns:
             torch.distributions.NegativeBinomial: The implied negative binomial distribution over y.
         """
+        eps = torch.tensor(1e-3, device=y_hat.device)
+
         mu, alpha = torch.split(y_hat, [1, 1], dim=-1)
         mu = mu.flatten()
-        alpha = alpha.flatten()
+        alpha = torch.clamp(alpha, min=eps).flatten()
 
         # Convert to standard parametrization.
-        eps = torch.tensor(1e-6, device=mu.device)
         var = mu + alpha * mu**2
         p = mu / torch.maximum(var, eps)
-        failure_prob = torch.minimum(
-            1 - p, 1 - eps
-        )  # Torch docs lie and say this should be P(success).
+
+        # Torch docs lie and say this should be P(success).
+        failure_prob = torch.clamp(1 - p, min=eps, max=1 - eps)
+
         n = mu**2 / torch.maximum(var - mu, eps)
         dist = torch.distributions.NegativeBinomial(total_count=n, probs=failure_prob)
         return dist

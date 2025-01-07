@@ -161,7 +161,7 @@ class DiscreteRegressionNN(L.LightningModule):
         """Transform the network's output into a single discrete point prediction.
 
         This method will vary depending on the type of regression head (probabilistic vs. deterministic).
-        For example, a gaussian regressor will return the `mean` portion of its output as its point prediction, rounded to the nearest integer.
+        For example, a gaussian regressor will return the `mean` portion of its output as its point prediction.
 
         Args:
             y_hat (torch.Tensor): Output tensor from a regression network, with shape (N, ...).

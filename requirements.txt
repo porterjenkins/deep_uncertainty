@@ -6,7 +6,7 @@
 #
 aiohappyeyeballs==2.4.4
     # via aiohttp
-aiohttp==3.11.10
+aiohttp==3.11.11
     # via fsspec
 aiosignal==1.3.2
     # via aiohttp
@@ -24,9 +24,9 @@ certifi==2024.12.14
     # via requests
 cfgv==3.4.0
     # via pre-commit
-charset-normalizer==3.4.0
+charset-normalizer==3.4.1
     # via requests
-click==8.1.7
+click==8.1.8
     # via
     #   black
     #   pip-tools
@@ -52,7 +52,7 @@ frozenlist==1.5.0
     # via
     #   aiohttp
     #   aiosignal
-fsspec[http]==2024.10.0
+fsspec[http]==2024.12.0
     # via
     #   fsspec
     #   huggingface-hub
@@ -60,11 +60,11 @@ fsspec[http]==2024.10.0
     #   pytorch-lightning
 gdown==5.2.0
     # via -r requirements.in
-huggingface-hub==0.27.0
+huggingface-hub==0.27.1
     # via
     #   tokenizers
     #   transformers
-identify==2.6.3
+identify==2.6.5
     # via pre-commit
 idna==3.10
     # via
@@ -74,7 +74,7 @@ iniconfig==2.0.0
     # via pytest
 joblib==1.4.2
     # via scikit-learn
-kiwisolver==1.4.7
+kiwisolver==1.4.8
     # via matplotlib
 lightning==2.2.0.post0
     # via -r requirements.in
@@ -103,6 +103,7 @@ numpy==1.25.1
     #   lightning
     #   matplotlib
     #   pandas
+    #   properscoring
     #   pyarrow
     #   pycocotools
     #   pyro-ppl
@@ -134,7 +135,7 @@ pandas==2.1.4
     #   seaborn
 pathspec==0.12.1
     # via black
-pillow==11.0.0
+pillow==11.1.0
     # via
     #   matplotlib
     #   torchvision
@@ -154,6 +155,8 @@ propcache==0.2.1
     # via
     #   aiohttp
     #   yarl
+properscoring==0.1
+    # via -r requirements.in
 pyarrow==15.0.2
     # via -r requirements.in
 pycocotools==2.0.7
@@ -198,13 +201,14 @@ requests[socks]==2.32.3
     #   huggingface-hub
     #   torchvision
     #   transformers
-safetensors==0.4.5
+safetensors==0.5.0
     # via transformers
 scikit-learn==1.3.0
     # via -r requirements.in
 scipy==1.11.1
     # via
     #   -r requirements.in
+    #   properscoring
     #   scikit-learn
 seaborn==0.13.2
     # via -r requirements.in
@@ -258,9 +262,9 @@ typing-extensions==4.12.2
     #   torchvision
 tzdata==2024.2
     # via pandas
-urllib3==2.2.3
+urllib3==2.3.0
     # via requests
-virtualenv==20.28.0
+virtualenv==20.28.1
     # via pre-commit
 wget==3.2
     # via -r requirements.in

@@ -48,7 +48,6 @@ def produce_figure(
             mu = mu.flatten().detach().numpy()
             std = var.sqrt().flatten().detach().numpy()
             dist = norm(loc=mu, scale=std)
-            nll = np.mean(-np.log(dist.cdf(y + 0.5) - dist.cdf(y - 0.5)))
 
         elif isinstance(model, DoublePoissonNN):
             y_hat = model._predict_impl(torch.tensor(X).unsqueeze(1))
@@ -56,13 +55,11 @@ def produce_figure(
             mu = mu.detach().numpy().flatten()
             phi = phi.detach().numpy().flatten()
             dist = DoublePoisson(mu, phi)
-            nll = -np.log(dist.pmf(y)).mean()
 
         elif isinstance(model, PoissonNN):
             y_hat = model._predict_impl(torch.tensor(X).unsqueeze(1))
             lmbda = y_hat.detach().numpy().flatten()
             dist = poisson(lmbda)
-            nll = np.mean(-dist.logpmf(y))
 
         elif isinstance(model, NegBinomNN):
             y_hat = model._predict_impl(torch.tensor(X).unsqueeze(1))
@@ -75,7 +72,6 @@ def produce_figure(
             n = mu**2 / np.maximum(var - mu, eps)
             p = mu / np.maximum(var, eps)
             dist = nbinom(n=n, p=p)
-            nll = np.mean(-dist.logpmf(y))
 
         pred = model._point_prediction(y_hat, training=False).detach().flatten().numpy()
         mae = np.abs(pred - y).mean()
@@ -107,7 +103,6 @@ def produce_figure(
 
         ax.set_title(model_name)
         ax.annotate(f"MAE: {mae:.3f}", (0.2, 41))
-        ax.annotate(f"NLL: {nll:.3f}", (0.2, 37))
         ax.xaxis.set_major_locator(MultipleLocator(np.pi))
         ax.xaxis.set_major_formatter(FuncFormatter(multiple_formatter()))
         ax.set_xlabel(None)

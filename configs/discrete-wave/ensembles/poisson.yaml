@@ -1,0 +1,14 @@
+experiment_name: poisson_ensemble
+accelerator: cpu
+batch_size: 128
+member_head_type: poisson
+members:
+  - chkp/discrete-wave/poisson/version_0/best_loss.ckpt
+  - chkp/discrete-wave/poisson/version_1/best_loss.ckpt
+  - chkp/discrete-wave/poisson/version_2/best_loss.ckpt
+  - chkp/discrete-wave/poisson/version_3/best_loss.ckpt
+  - chkp/discrete-wave/poisson/version_4/best_loss.ckpt
+dataset:
+  type: tabular
+  spec: data/discrete-wave/discrete_sine_wave.npz
+log_dir: results/discrete-wave/ensembles

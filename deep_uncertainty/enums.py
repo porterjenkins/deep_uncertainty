@@ -21,7 +21,6 @@ class HeadType(Enum):
     FAITHFUL_GAUSSIAN = "faithful_gaussian"
     LOG_FAITHFUL_GAUSSIAN = "log_faithful_gaussian"
     NATURAL_GAUSSIAN = "natural_gaussian"
-    MULTI_CLASS = "multi_class"
 
 
 class OptimizerType(Enum):

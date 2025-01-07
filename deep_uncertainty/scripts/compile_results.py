@@ -8,7 +8,7 @@ import yaml
 def main(dataset: str, results_dir: str):
     dataset_results_dir = os.path.join(results_dir, dataset)
     heads = os.listdir(dataset_results_dir)
-    df = {"model": [], "mae": [], "nll": []}
+    df = {"model": [], "mae": [], "crps": []}
     for head in heads:
         for i in range(5):
             metrics_path = os.path.join(
@@ -18,11 +18,11 @@ def main(dataset: str, results_dir: str):
                 continue
             with open(metrics_path) as f:
                 metrics = yaml.safe_load(f)
-            nll = metrics["nll"]
             mae = metrics["test_mae"]
+            crps = metrics["crps"]
             df["model"].append(head)
-            df["nll"].append(nll)
             df["mae"].append(mae)
+            df["crps"].append(crps)
         ensemble_metrics_path = os.path.join(
             dataset_results_dir, f"ensembles/{head}_ensemble/test_metrics.yaml"
         )
@@ -30,11 +30,11 @@ def main(dataset: str, results_dir: str):
             continue
         with open(ensemble_metrics_path) as f:
             ensemble_metrics = yaml.safe_load(f)
-        nll = ensemble_metrics["nll"]
         mae = ensemble_metrics["mae"]
+        crps = ensemble_metrics["crps"]
         df["model"].append(f"{head}_ensemble")
-        df["nll"].append(nll)
         df["mae"].append(mae)
+        df["crps"].append(crps)
     result = pd.DataFrame(df).groupby("model").agg(["mean", "std", "count"]).reset_index()
     result.to_csv(
         os.path.join(dataset_results_dir, "aggregated_results.csv"),

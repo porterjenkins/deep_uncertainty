@@ -1,0 +1,14 @@
+experiment_name: beta_ddpn_0.5_ensemble
+accelerator: gpu
+batch_size: 256
+member_head_type: double_poisson
+members:
+  - chkp/reviews/beta_ddpn_0.5/version_0/best_loss.ckpt
+  - chkp/reviews/beta_ddpn_0.5/version_1/best_loss.ckpt
+  - chkp/reviews/beta_ddpn_0.5/version_2/best_loss.ckpt
+  - chkp/reviews/beta_ddpn_0.5/version_3/best_loss.ckpt
+  - chkp/reviews/beta_ddpn_0.5/version_4/best_loss.ckpt
+dataset:
+  type: text
+  spec: reviews
+log_dir: results/reviews/ensembles

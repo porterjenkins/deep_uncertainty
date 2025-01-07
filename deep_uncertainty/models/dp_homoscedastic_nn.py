@@ -138,7 +138,8 @@ class DoublePoissonHomoscedasticNN(DiscreteRegressionNN):
         mu, phi = dist.mu, dist.phi
         precision = phi / mu
         targets = y.flatten()
-        probs_over_support = dist.pmf(torch.arange(2000).view(-1, 1)).T
+        support = torch.arange(2000, device=y_hat.device).view(-1, 1)
+        probs_over_support = dist.pmf(support).T
 
         self.mp.update(precision)
         self.crps.update(probs_over_support, targets)

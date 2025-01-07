@@ -8,7 +8,7 @@ import yaml
 def main(dataset: str, results_dir: str):
     dataset_results_dir = os.path.join(results_dir, dataset)
     heads = os.listdir(dataset_results_dir)
-    df = {"model": [], "mae": [], "crps": []}
+    df = {"model": [], "mae": [], "crps": [], "mp": []}
     for head in heads:
         for i in range(5):
             metrics_path = os.path.join(
@@ -20,9 +20,11 @@ def main(dataset: str, results_dir: str):
                 metrics = yaml.safe_load(f)
             mae = metrics["test_mae"]
             crps = metrics["crps"]
+            mp = metrics["mp"]
             df["model"].append(head)
             df["mae"].append(mae)
             df["crps"].append(crps)
+            df["mp"].append(mp)
         ensemble_metrics_path = os.path.join(
             dataset_results_dir, f"ensembles/{head}_ensemble/test_metrics.yaml"
         )
@@ -32,9 +34,11 @@ def main(dataset: str, results_dir: str):
             ensemble_metrics = yaml.safe_load(f)
         mae = ensemble_metrics["mae"]
         crps = ensemble_metrics["crps"]
+        mp = ensemble_metrics["mp"]
         df["model"].append(f"{head}_ensemble")
         df["mae"].append(mae)
         df["crps"].append(crps)
+        df["mp"].append(mp)
     result = pd.DataFrame(df).groupby("model").agg(["mean", "std", "count"]).reset_index()
     result.to_csv(
         os.path.join(dataset_results_dir, "aggregated_results.csv"),

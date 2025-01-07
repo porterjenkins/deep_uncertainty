@@ -1,5 +1,4 @@
 import torch
-from torch.distributions import NegativeBinomial
 
 from deep_uncertainty.models import NegBinomNN
 from deep_uncertainty.models.ensembles.deep_regression_ensemble import DeepRegressionEnsemble
@@ -29,20 +28,22 @@ class NegBinomMixtureNN(DeepRegressionEnsemble[NegBinomNN]):
         variances = []
         dists = []
         for member in self.members:
-            mu, alpha = torch.split(member._predict_impl(x), [1, 1], dim=-1)
+            y_hat = member._predict_impl(x)
+            eps = torch.tensor(1e-3, device=y_hat.device)
+
+            mu, alpha = torch.split(y_hat, [1, 1], dim=-1)
             mu = mu.flatten()
-            alpha = alpha.flatten()
+            alpha = torch.clamp(alpha, min=eps).flatten()
 
             # Convert to standard parametrization.
-            eps = torch.tensor(1e-6, device=mu.device)
             var = mu + alpha * mu**2
             p = mu / torch.maximum(var, eps)
-            failure_prob = torch.minimum(
-                1 - p, 1 - eps
-            )  # Torch docs lie and say this should be P(success).
-            n = mu**2 / torch.maximum(var - mu, eps)
 
-            dist = NegativeBinomial(total_count=n, probs=failure_prob)
+            # Torch docs lie and say this should be P(success).
+            failure_prob = torch.clamp(1 - p, min=eps, max=1 - eps)
+
+            n = mu**2 / torch.maximum(var - mu, eps)
+            dist = torch.distributions.NegativeBinomial(total_count=n, probs=failure_prob)
             means.append(dist.mean)
             variances.append(var)
             dists.append(dist)

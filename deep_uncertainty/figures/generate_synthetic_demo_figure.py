@@ -69,8 +69,8 @@ def produce_figure(
             X_with_ood[order].flatten(),
             lower[order],
             upper[order],
-            color="lightgray",
-            alpha=0.5,
+            color="cornflowerblue",
+            alpha=0.2,
             zorder=0,
         )
         axs[1, j].plot(

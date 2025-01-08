@@ -89,6 +89,13 @@ class PoissonNN(DiscreteRegressionNN):
 
         return torch.exp(y_hat)
 
+    def _predictive_dist_impl(
+        self, y_hat: torch.Tensor, training: bool = False
+    ) -> torch.distributions.Poisson:
+        lmbda = y_hat.exp() if training else y_hat
+        dist = torch.distributions.Poisson(lmbda.squeeze())
+        return dist
+
     def _point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
         lmbda = y_hat.exp() if training else y_hat
         return lmbda.floor()
@@ -103,10 +110,10 @@ class PoissonNN(DiscreteRegressionNN):
         self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor
     ):
         lmbda = y_hat.flatten()
-        dist = torch.distributions.Poisson(lmbda)
         targets = y.flatten()
         precision = 1 / lmbda
         support = torch.arange(2000, device=y_hat.device).view(-1, 1)
+        dist = self.predictive_dist(y_hat, training=False)
         probs_over_support = torch.exp(dist.log_prob(support)).T
 
         self.mp.update(precision)

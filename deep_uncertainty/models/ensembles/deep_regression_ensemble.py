@@ -73,6 +73,9 @@ class DeepRegressionEnsemble(LightningModule, Generic[T]):
 
     @torch.inference_mode()
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.predict(x)
+
+    def predict(self, x: torch.Tensor) -> torch.Tensor:
         return self._predict_impl(x)
 
     def predict_step(self, batch: torch.Tensor) -> torch.Tensor:

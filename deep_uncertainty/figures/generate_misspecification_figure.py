@@ -39,14 +39,14 @@ def produce_figure(
     for model, model_name, ax in zip(models, names, axs):
 
         if isinstance(model, DoublePoissonNN):
-            y_hat = model._predict_impl(torch.tensor(X).float().unsqueeze(1))
+            y_hat = model.predict(torch.tensor(X).float().unsqueeze(1))
             mu, phi = torch.split(y_hat, [1, 1], dim=-1)
             mu = mu.detach().numpy().flatten()
             phi = phi.detach().numpy().flatten()
             dist = DoublePoisson(mu, phi)
 
         elif isinstance(model, NegBinomNN):
-            y_hat = model._predict_impl(torch.tensor(X).float().unsqueeze(1))
+            y_hat = model.predict(torch.tensor(X).float().unsqueeze(1))
             mu, alpha = torch.split(y_hat, [1, 1], dim=-1)
             mu = mu.flatten().detach().numpy()
             alpha = alpha.flatten().detach().numpy()

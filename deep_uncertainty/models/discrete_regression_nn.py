@@ -10,6 +10,7 @@ from torchmetrics import Metric
 from deep_uncertainty.enums import LRSchedulerType
 from deep_uncertainty.enums import OptimizerType
 from deep_uncertainty.models.backbones import Backbone
+from deep_uncertainty.random_variables.discrete_random_variable import DiscreteRandomVariable
 
 
 class DiscreteRegressionNN(L.LightningModule):
@@ -68,7 +69,9 @@ class DiscreteRegressionNN(L.LightningModule):
             optim_class = torch.optim.AdamW
         elif self.optim_type == OptimizerType.SGD:
             optim_class = torch.optim.SGD
-        optimizer = optim_class(filter(lambda p: p.requires_grad, self.parameters()), **self.optim_kwargs)
+        optimizer = optim_class(
+            filter(lambda p: p.requires_grad, self.parameters()), **self.optim_kwargs
+        )
         optim_dict = {"optimizer": optimizer}
 
         if self.lr_scheduler_type is not None:
@@ -77,7 +80,7 @@ class DiscreteRegressionNN(L.LightningModule):
             lr_scheduler = lr_scheduler_class(optimizer, **self.lr_scheduler_kwargs)
             optim_dict["lr_scheduler"] = lr_scheduler
 
-        num_params = sum(p.numel() for group in optimizer.param_groups for p in group['params'])
+        num_params = sum(p.numel() for group in optimizer.param_groups for p in group["params"])
         print(f"Number of parameters tracked by the optimizer: {num_params}")
 
         return optim_dict
@@ -114,7 +117,7 @@ class DiscreteRegressionNN(L.LightningModule):
 
     def test_step(self, batch: torch.Tensor):
         x, y = batch
-        y_hat = self._predict_impl(x)
+        y_hat = self.predict(x)
         point_predictions = self._point_prediction(y_hat, training=False).flatten()
         self.test_rmse.update(point_predictions, y.flatten().float())
         self.test_mae.update(point_predictions, y.flatten().float())
@@ -127,11 +130,10 @@ class DiscreteRegressionNN(L.LightningModule):
 
     def predict_step(self, batch: torch.Tensor) -> torch.Tensor:
         x, _ = batch
-        y_hat = self._predict_impl(x)
-
+        y_hat = self.predict(x)
         return y_hat
 
-    def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Make a forward pass through the network.
 
         Args:
@@ -140,12 +142,12 @@ class DiscreteRegressionNN(L.LightningModule):
         Returns:
             torch.Tensor: Batched output tensor, with shape (N, D_out)
         """
-        raise NotImplementedError("Should be implemented by subclass.")
+        return self._forward_impl(x)
 
-    def _predict_impl(self, x: torch.Tensor) -> torch.Tensor:
+    def predict(self, x: torch.Tensor) -> torch.Tensor:
         """Make a prediction with the network.
 
-        This method will often differ from `_forward_impl` in cases where
+        This method will often differ from `forward` in cases where
         the output used for training is in log (or some other modified)
         space for numerical convenience.
 
@@ -155,12 +157,26 @@ class DiscreteRegressionNN(L.LightningModule):
         Returns:
             torch.Tensor: Batched output tensor, with shape (N, D_out)
         """
-        raise NotImplementedError("Should be implemented by subclass.")
+        return self._predict_impl(x)
 
-    def _point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
-        """Transform the network's output into a single discrete point prediction.
+    def predictive_dist(
+        self, y_hat: torch.Tensor, training: bool = False
+    ) -> torch.distributions.Distribution | DiscreteRandomVariable:
+        """Transform the network's outputs into the implied predictive distribution.
 
-        This method will vary depending on the type of regression head (probabilistic vs. deterministic).
+        Args:
+            y_hat (torch.Tensor): Output tensor from a regression network, with shape (N, ...).
+            training (bool, optional): Boolean indicator specifying if `y_hat` is a training output or not. This particularly matters when outputs are in log space during training, for example. Defaults to False.
+
+        Returns:
+            torch.distributions.Distribution | DiscreteRandomVariable: The predictive distribution.
+        """
+        return self._predictive_dist_impl(y_hat, training)
+
+    def point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
+        """Transform the network's output into a single point prediction.
+
+        This method will vary depending on the type of regression head.
         For example, a gaussian regressor will return the `mean` portion of its output as its point prediction.
 
         Args:
@@ -170,6 +186,20 @@ class DiscreteRegressionNN(L.LightningModule):
         Returns:
             torch.Tensor: Point predictions for the true regression target, with shape (N, 1).
         """
+        return self._point_prediction(y_hat, training)
+
+    def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
+        raise NotImplementedError("Should be implemented by subclass.")
+
+    def _predict_impl(self, x: torch.Tensor) -> torch.Tensor:
+        raise NotImplementedError("Should be implemented by subclass.")
+
+    def _point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
+        raise NotImplementedError("Should be implemented by subclass.")
+
+    def _predictive_dist_impl(
+        self, y_hat: torch.Tensor, training: bool = False
+    ) -> torch.distributions.Distribution | DiscreteRandomVariable:
         raise NotImplementedError("Should be implemented by subclass.")
 
     def _addl_test_metrics_dict(self) -> dict[str, Metric]:

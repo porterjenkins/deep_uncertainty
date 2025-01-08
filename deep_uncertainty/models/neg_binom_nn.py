@@ -97,7 +97,7 @@ class NegBinomNN(DiscreteRegressionNN):
         return y_hat
 
     def _point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
-        dist = self._convert_output_to_dist(y_hat)
+        dist = self.predictive_dist(y_hat)
         return dist.mode
 
     def _addl_test_metrics_dict(self) -> dict[str, Metric]:
@@ -109,7 +109,7 @@ class NegBinomNN(DiscreteRegressionNN):
     def _update_addl_test_metrics_batch(
         self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor
     ):
-        dist = self._convert_output_to_dist(y_hat)
+        dist = self.predictive_dist(y_hat)
         var = dist.variance
         precision = 1 / var
         targets = y.flatten()
@@ -119,15 +119,9 @@ class NegBinomNN(DiscreteRegressionNN):
         self.mp.update(precision)
         self.crps.update(probs_over_support, targets)
 
-    def _convert_output_to_dist(self, y_hat: torch.Tensor) -> torch.distributions.NegativeBinomial:
-        """Convert a network output to the implied negative binomial distribution.
-
-        Args:
-            y_hat (torch.Tensor): Output from a `NegBinomNN` (nbinom parameters for the predicted distribution over y).
-
-        Returns:
-            torch.distributions.NegativeBinomial: The implied negative binomial distribution over y.
-        """
+    def _predictive_dist_impl(
+        self, y_hat: torch.Tensor, training: bool = False
+    ) -> torch.distributions.NegativeBinomial:
         eps = torch.tensor(1e-3, device=y_hat.device)
 
         mu, alpha = torch.split(y_hat, [1, 1], dim=-1)

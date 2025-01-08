@@ -30,10 +30,10 @@ class PoissonMixtureNN(DeepRegressionEnsemble[PoissonNN]):
         means = []
         variances = []
         for member in self.members:
-            mu = member._predict_impl(x)
-            means.append(mu.flatten())
-            variances.append(mu.flatten())
-            dists.append(Poisson(rate=mu.flatten()))
+            lmbda = member.predict(x)
+            means.append(lmbda.flatten())
+            variances.append(lmbda.flatten())
+            dists.append(Poisson(rate=lmbda.flatten()))
 
         mixture = DiscreteMixture(distributions=dists, weights=torch.ones(len(dists)))
         probabilities = mixture.pmf(torch.arange(self.max_value).unsqueeze(1)).transpose(0, 1)

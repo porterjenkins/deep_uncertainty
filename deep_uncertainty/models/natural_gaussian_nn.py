@@ -91,6 +91,15 @@ class NaturalGaussianNN(DiscreteRegressionNN):
         self.backbone.train()
         return y_hat
 
+    def _predictive_dist_impl(
+        self, y_hat: torch.Tensor, training: bool = False
+    ) -> torch.distributions.Normal:
+        eta_1, eta_2 = torch.split(y_hat, [1, 1], dim=-1)
+        mu = self._natural_to_mu(eta_1, eta_2)
+        var = self._natural_to_var(eta_1, eta_2)
+        dist = torch.distributions.Normal(loc=mu.squeeze(), scale=var.sqrt().squeeze())
+        return dist
+
     def _point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
         eta_1, eta_2 = torch.split(y_hat, [1, 1], dim=-1)
         mu = self._natural_to_mu(eta_1, eta_2)

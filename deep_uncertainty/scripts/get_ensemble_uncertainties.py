@@ -68,7 +68,7 @@ def get_uncertainties(
         for batch_encoding, _ in loop:
             batch_encoding = batch_encoding.to(device)
             model(batch_encoding)
-            uncertainties = model._predict_impl(batch_encoding)[1]
+            uncertainties = model.predict(batch_encoding)[1]
             aleatoric, epistemic = torch.split(uncertainties, [1, 1], dim=1)
             aleatoric_uncertainties.append(aleatoric)
             epistemic_uncertainties.append(epistemic)

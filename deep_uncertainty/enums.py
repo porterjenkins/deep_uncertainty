@@ -9,7 +9,6 @@ class AcceleratorType(Enum):
 
 
 class HeadType(Enum):
-    MEAN = "mean"
     GAUSSIAN = "gaussian"
     LOG_GAUSSIAN = "log_gaussian"
     POISSON = "poisson"

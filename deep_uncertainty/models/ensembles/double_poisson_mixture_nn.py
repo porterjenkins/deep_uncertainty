@@ -32,7 +32,7 @@ class DoublePoissonMixtureNN(
         means = []
         variances = []
         for member in self.members:
-            mu, phi = torch.split(member._predict_impl(x), [1, 1], dim=-1)
+            mu, phi = torch.split(member.predict(x), [1, 1], dim=-1)
             means.append(mu.flatten())
             variances.append((mu / phi).flatten())
             dist = DoublePoisson(mu=mu.flatten(), phi=phi.flatten())

@@ -95,7 +95,7 @@ def produce_figure(config_path: Path, chkp_path: Path | None, save_path: Path, t
                 ax_counter += 1
 
                 batch_encoding = batch_encoding.to(device)
-                y_hat = model._predict_impl(batch_encoding)
+                y_hat = model.predict(batch_encoding)
                 verse = reviews_datamodule.test[i][0]
                 review_text_ax.text(
                     x=0,
@@ -185,7 +185,7 @@ def produce_figure(config_path: Path, chkp_path: Path | None, save_path: Path, t
                 ax_counter += 1
 
                 batch_encoding = batch_encoding.to(device)
-                y_hat = model._predict_impl(batch_encoding)
+                y_hat = model.predict(batch_encoding)
                 verse = bible_datamodule.full[i][0]
                 verse_ax.text(
                     x=0,

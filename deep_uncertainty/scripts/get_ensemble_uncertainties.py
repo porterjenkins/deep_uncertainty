@@ -77,7 +77,7 @@ def get_uncertainties(
         epistemic_uncertainties = torch.cat(epistemic_uncertainties).flatten()
         save_dict = {"aleatoric": aleatoric_uncertainties, "epistemic": epistemic_uncertainties}
 
-        save_path = experiment_log_dir / f"{dataset}_entropies.pt"
+        save_path = experiment_log_dir / f"{dataset}_uncertainties.pt"
         print(f"Saving uncertainties to {save_path}")
         torch.save(save_dict, save_path)
 

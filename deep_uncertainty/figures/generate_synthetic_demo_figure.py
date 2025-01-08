@@ -63,7 +63,7 @@ def produce_figure(
         upper = torch.tensor([torch.searchsorted(cdf[i], 0.975) for i in range(len(cdf))])
         mu = (probs * torch.arange(2000).view(1, -1)).sum(dim=1)
 
-        axs[0, j].scatter(orig_X.flatten(), orig_y.flatten(), c="black", s=3)
+        axs[0, j].scatter(orig_X.flatten(), orig_y.flatten(), c="cornflowerblue", alpha=0.4, s=10)
         axs[0, j].plot(X_with_ood[order], mu[order].detach().numpy(), c="black", label="Mean")
         axs[0, j].fill_between(
             X_with_ood[order].flatten(),

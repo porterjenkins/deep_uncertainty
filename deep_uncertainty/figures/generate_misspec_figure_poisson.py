@@ -25,7 +25,7 @@ def main(save_path: Path):
         "chkp/discrete-parabola/poisson/version_0/best_loss.ckpt"
     )
 
-    fig, axs = plt.subplots(1, 2, figsize=(4, 2), sharey="row")
+    fig, axs = plt.subplots(1, 2, figsize=(8, 4), sharey="row")
 
     poisson_predictive = poisson.predictive_dist(poisson.predict(X_test_tensor))
     support = torch.arange(2000).view(-1, 1)
@@ -42,7 +42,7 @@ def main(save_path: Path):
     ddpn_lower = ddpn_predictive.ppf(0.025)
     ddpn_upper = ddpn_predictive.ppf(0.975)
 
-    axs[0].scatter(X_test, y_test, c="cornflowerblue", alpha=0.4, s=10)
+    axs[0].scatter(X_test, y_test, c="cornflowerblue", alpha=0.4, s=20)
     axs[0].plot(
         X_test[order], poisson_predictive.mean[order].detach().numpy(), c="black", label="Mean"
     )
@@ -54,9 +54,9 @@ def main(save_path: Path):
         alpha=0.2,
         zorder=0,
     )
-    axs[0].set_title("Poisson DNN", fontsize=8)
+    axs[0].set_title("Poisson DNN")
 
-    axs[1].scatter(X_test, y_test, c="cornflowerblue", alpha=0.4, s=10)
+    axs[1].scatter(X_test, y_test, c="cornflowerblue", alpha=0.4, s=20)
     axs[1].plot(X_test[order], ddpn_predictive.mu[order].detach().numpy(), c="black", label="Mean")
     axs[1].fill_between(
         X_test[order],
@@ -66,9 +66,8 @@ def main(save_path: Path):
         alpha=0.2,
         zorder=0,
     )
-    axs[1].set_title("DDPN (Ours)", fontsize=8)
+    axs[1].set_title("DDPN (Ours)")
 
-    [ax.tick_params(axis="both", which="major", labelsize=8) for ax in axs.ravel()]
     fig.tight_layout()
     fig.savefig(save_path, format="pdf", dpi=150)
 

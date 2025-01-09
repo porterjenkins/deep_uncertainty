@@ -1,0 +1,4 @@
+model,mae,mae,mae,crps,crps,crps,mp,mp,mp
+,mean,std,count,mean,std,count,mean,std,count
+ddpn,1.790,,1,1.133,,1,0.139,,1
+nbinom,1.930,,1,1.158,,1,0.139,,1

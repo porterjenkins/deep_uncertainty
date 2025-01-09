@@ -1,0 +1,27 @@
+experiment_name: nbinom
+random_seed: 1998
+head_type: negative_binomial
+dataset:
+  type: tabular
+  spec: data/bowtie/bowtie.npz
+  input_dim: 1
+training:
+  accelerator: cpu
+  batch_size: 32
+  chkp_dir: chkp/bowtie
+  chkp_freq: 100
+  num_epochs: 100
+  optimizer:
+    type: adam_w
+    kwargs:
+      lr: 0.001
+      weight_decay: 0.00001
+  lr_scheduler:
+    type: cosine_annealing
+    kwargs:
+      T_max: 100
+      eta_min: 0
+      last_epoch: -1
+evaluation:
+  num_trials: 1
+  log_dir: logs/bowtie

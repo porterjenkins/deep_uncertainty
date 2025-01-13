@@ -12,8 +12,8 @@ def difference_of_means(x: np.ndarray, y: np.ndarray, axis: int):
     return np.mean(x, axis=axis) - np.mean(y, axis=axis)
 
 
-def main(head: Literal["ddpn", "beta_ddpn_0.5", "beta_ddpn_1.0", "poisson", "nbinom"]):
-    log_dir = Path(f"logs/ood/{head}_ensemble")
+def main(head: Literal["ddpn", "beta_ddpn_0.5", "beta_ddpn_1.0", "poisson", "nbinom", "seitzer_0.5"]):
+    log_dir = Path(f"results/reviews/id-ood/{head}_ensemble")
     reg_uncertainties = torch.load(log_dir / "reviews_uncertainties.pt")
     ood_uncertainties = torch.load(log_dir / "bible_uncertainties.pt")
 
@@ -39,6 +39,6 @@ def main(head: Literal["ddpn", "beta_ddpn_0.5", "beta_ddpn_1.0", "poisson", "nbi
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--head", choices=["ddpn", "beta_ddpn_0.5", "beta_ddpn_1.0", "poisson", "nbinom"])
+    parser.add_argument("--head", choices=["ddpn", "beta_ddpn_0.5", "beta_ddpn_1.0", "poisson", "nbinom", "seitzer_0.5"])
     args = parser.parse_args()
     main(args.head)

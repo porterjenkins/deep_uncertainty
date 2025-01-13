@@ -13,6 +13,7 @@ from deep_uncertainty.enums import HeadType
 from deep_uncertainty.models.ensembles import DoublePoissonMixtureNN
 from deep_uncertainty.models.ensembles import NegBinomMixtureNN
 from deep_uncertainty.models.ensembles import PoissonMixtureNN
+from deep_uncertainty.models.ensembles import GaussianMixtureNN
 from deep_uncertainty.utils.configs import EnsembleConfig
 
 
@@ -57,8 +58,10 @@ def get_uncertainties(
         model = PoissonMixtureNN.from_config(config)
     elif head_type == HeadType.NEGATIVE_BINOMIAL:
         model = NegBinomMixtureNN.from_config(config)
+    elif head_type == HeadType.GAUSSIAN:
+        model = GaussianMixtureNN.from_config(config)
     else:
-        raise ValueError("This experiment is for discrete regression ensembles only.")
+        raise NotImplementedError("Cannot run this experiment for the specified ensemble.")
 
     device = model.members[0].device
     aleatoric_uncertainties = []
@@ -67,9 +70,12 @@ def get_uncertainties(
         loop = tqdm(test_loader, desc="Gathering uncertainties...")
         for batch_encoding, _ in loop:
             batch_encoding = batch_encoding.to(device)
-            model(batch_encoding)
-            uncertainties = model.predict(batch_encoding)[1]
-            aleatoric, epistemic = torch.split(uncertainties, [1, 1], dim=1)
+            if isinstance(model, GaussianMixtureNN):
+                uncertainties = model.predict(batch_encoding)
+                aleatoric, epistemic = uncertainties[:, 2], uncertainties[:, 3]
+            else:
+                uncertainties = model.predict(batch_encoding)[1]
+                aleatoric, epistemic = torch.split(uncertainties, [1, 1], dim=1)
             aleatoric_uncertainties.append(aleatoric)
             epistemic_uncertainties.append(epistemic)
 

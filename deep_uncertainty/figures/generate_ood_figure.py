@@ -5,18 +5,17 @@ from pathlib import Path
 from typing import Sequence
 
 import matplotlib.pyplot as plt
-import numpy as np
 import torch
 import yaml
 import seaborn as sns
 from matplotlib.pyplot import Axes
-from scipy.stats import gaussian_kde
 
 
 ENSEMBLE_HEADS_TO_NAMES = OrderedDict(
     {
         "nbinom": "NB Mixture",
         "poisson": "Poisson Mixture",
+        "seitzer_0.5": r"$\beta_{0.5}$-Gaussian Mixture",
         "ddpn": "DDPN Mixture (Ours)",
         "beta_ddpn_0.5": r"$\beta_{0.5}$-DDPN Mixture (Ours)",
         "beta_ddpn_1.0": r"$\beta_{1.0}$-DDPN Mixture (Ours)",
@@ -28,9 +27,8 @@ def produce_figure(save_path: Path | str):
     results_dir = Path("results/reviews/id-ood")
     save_path = Path(save_path)
     palette = sns.color_palette()
-    domain = np.linspace(0, 3, num=200)
     fig, axs = plt.subplots(
-        1, 5, figsize=(12, 2), sharey="row", sharex="row"
+        1, 6, figsize=(12, 2), sharey="row", sharex="row"
     )
     axs: Sequence[Axes]
     for col_num, (head, name) in enumerate(ENSEMBLE_HEADS_TO_NAMES.items()):

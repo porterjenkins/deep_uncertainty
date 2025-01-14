@@ -3,6 +3,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import yaml
 
 from deep_uncertainty.models import DoublePoissonNN
 from deep_uncertainty.models import PoissonNN
@@ -24,6 +25,11 @@ def main(save_path: Path):
     poisson = PoissonNN.load_from_checkpoint(
         "chkp/discrete-parabola/poisson/version_0/best_loss.ckpt"
     )
+
+    with open("results/discrete-parabola/ddpn/version_0/test_metrics.yaml") as f:
+        ddpn_metrics = yaml.safe_load(f)
+    with open("results/discrete-parabola/poisson/version_0/test_metrics.yaml") as f:
+        poisson_metrics = yaml.safe_load(f)
 
     fig, axs = plt.subplots(1, 2, figsize=(8, 4), sharey="row")
 
@@ -54,6 +60,8 @@ def main(save_path: Path):
         alpha=0.2,
         zorder=0,
     )
+    axs[0].annotate(f"MAE: {poisson_metrics['test_mae']:.3f}", (-4.9, 16.7))
+    axs[0].annotate(f"CRPS: {poisson_metrics['crps']:.3f}", (-4.9, 15.7))
     axs[0].set_title("Poisson DNN")
 
     axs[1].scatter(X_test, y_test, c="cornflowerblue", alpha=0.4, s=20)
@@ -66,6 +74,8 @@ def main(save_path: Path):
         alpha=0.2,
         zorder=0,
     )
+    axs[1].annotate(f"MAE: {ddpn_metrics['test_mae']:.3f}", (-4.9, 16.7))
+    axs[1].annotate(f"CRPS: {ddpn_metrics['crps']:.3f}", (-4.9, 15.7))
     axs[1].set_title("DDPN (Ours)")
 
     fig.tight_layout()

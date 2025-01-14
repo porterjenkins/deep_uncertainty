@@ -3,6 +3,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import yaml
 
 from deep_uncertainty.models import DoublePoissonNN
 from deep_uncertainty.models import NegBinomNN
@@ -16,6 +17,11 @@ def moving_average(data, window_size):
 @torch.inference_mode()
 def main(save_path: Path):
     data = np.load("data/bowtie/bowtie.npz")
+
+    with open("results/bowtie/ddpn/version_0/test_metrics.yaml") as f:
+        ddpn_metrics = yaml.safe_load(f)
+    with open("results/bowtie/nbinom/version_0/test_metrics.yaml") as f:
+        nbinom_metrics = yaml.safe_load(f)
 
     X_test = data["X_test"].flatten()
     y_test = data["y_test"].flatten()
@@ -55,6 +61,8 @@ def main(save_path: Path):
         alpha=0.2,
         zorder=0,
     )
+    axs[0].annotate(f"MAE: {nbinom_metrics['test_mae']:.3f}", (-2.5, 18.5))
+    axs[0].annotate(f"CRPS: {nbinom_metrics['crps']:.3f}", (-2.5, 17.6))
     axs[0].set_title("NB DNN")
 
     axs[1].scatter(X_test, y_test, c="cornflowerblue", alpha=0.4, s=20)
@@ -67,6 +75,8 @@ def main(save_path: Path):
         alpha=0.2,
         zorder=0,
     )
+    axs[1].annotate(f"MAE: {ddpn_metrics['test_mae']:.3f}", (-2.5, 18.5))
+    axs[1].annotate(f"CRPS: {ddpn_metrics['crps']:.3f}", (-2.5, 17.6))
     axs[1].set_title("DDPN (Ours)")
 
     fig.tight_layout()

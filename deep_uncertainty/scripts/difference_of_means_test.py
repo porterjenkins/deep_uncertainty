@@ -1,6 +1,5 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Literal
 
 import numpy as np
 import torch
@@ -12,7 +11,7 @@ def difference_of_means(x: np.ndarray, y: np.ndarray, axis: int):
     return np.mean(x, axis=axis) - np.mean(y, axis=axis)
 
 
-def main(head: Literal["ddpn", "beta_ddpn_0.5", "beta_ddpn_1.0", "poisson", "nbinom", "seitzer_0.5"]):
+def main(head: str):
     log_dir = Path(f"results/reviews/id-ood/{head}_ensemble")
     reg_uncertainties = torch.load(log_dir / "reviews_uncertainties.pt")
     ood_uncertainties = torch.load(log_dir / "bible_uncertainties.pt")
@@ -39,6 +38,6 @@ def main(head: Literal["ddpn", "beta_ddpn_0.5", "beta_ddpn_1.0", "poisson", "nbi
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--head", choices=["ddpn", "beta_ddpn_0.5", "beta_ddpn_1.0", "poisson", "nbinom", "seitzer_0.5"])
+    parser.add_argument("--head")
     args = parser.parse_args()
     main(args.head)

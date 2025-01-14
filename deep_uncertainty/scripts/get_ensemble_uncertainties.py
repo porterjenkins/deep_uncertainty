@@ -11,21 +11,21 @@ from deep_uncertainty.datamodules import BibleDataModule
 from deep_uncertainty.datamodules import ReviewsDataModule
 from deep_uncertainty.enums import HeadType
 from deep_uncertainty.models.ensembles import DoublePoissonMixtureNN
+from deep_uncertainty.models.ensembles import FaithfulGaussianMixtureNN
+from deep_uncertainty.models.ensembles import GaussianMixtureNN
+from deep_uncertainty.models.ensembles import NaturalGaussianMixtureNN
 from deep_uncertainty.models.ensembles import NegBinomMixtureNN
 from deep_uncertainty.models.ensembles import PoissonMixtureNN
-from deep_uncertainty.models.ensembles import GaussianMixtureNN
 from deep_uncertainty.utils.configs import EnsembleConfig
 
 
-def get_uncertainties(
-    log_dir: Path, config_path: Path, dataset: Literal["amazon-reviews", "bible"]
-):
+def get_uncertainties(log_dir: Path, config_path: Path, dataset: Literal["reviews", "bible"]):
     """Measure the aleatoric/epistemic uncertainty of the provided ensemble on the specified ID / OOD dataset.
 
     Args:
         log_dir (Path): Directory where results should be logged.
         config_path (Path): Path to ensemble config.
-        dataset (str): Either "amazon-reviews" or "bible".
+        dataset (str): Either "reviews" or "bible".
     """
     config = EnsembleConfig.from_yaml(config_path)
     experiment_log_dir = log_dir / config.experiment_name
@@ -35,7 +35,7 @@ def get_uncertainties(
     num_workers = os.cpu_count()
     head_type = config.member_head_type
 
-    if dataset == "amazon-reviews":
+    if dataset == "reviews":
         datamodule = ReviewsDataModule(
             root_dir="data/amazon-reviews",
             batch_size=batch_size,
@@ -60,6 +60,10 @@ def get_uncertainties(
         model = NegBinomMixtureNN.from_config(config)
     elif head_type == HeadType.GAUSSIAN:
         model = GaussianMixtureNN.from_config(config)
+    elif head_type == HeadType.NATURAL_GAUSSIAN:
+        model = NaturalGaussianMixtureNN.from_config(config)
+    elif head_type == HeadType.FAITHFUL_GAUSSIAN:
+        model = FaithfulGaussianMixtureNN.from_config(config)
     else:
         raise NotImplementedError("Cannot run this experiment for the specified ensemble.")
 
@@ -70,7 +74,7 @@ def get_uncertainties(
         loop = tqdm(test_loader, desc="Gathering uncertainties...")
         for batch_encoding, _ in loop:
             batch_encoding = batch_encoding.to(device)
-            if isinstance(model, GaussianMixtureNN):
+            if isinstance(model, GaussianMixtureNN) or isinstance(model, NaturalGaussianMixtureNN):
                 uncertainties = model.predict(batch_encoding)
                 aleatoric, epistemic = uncertainties[:, 2], uncertainties[:, 3]
             else:
@@ -99,7 +103,7 @@ def parse_args() -> Namespace:
     parser.add_argument(
         "--dataset",
         type=str,
-        choices=["amazon-reviews", "bible"],
+        choices=["reviews", "bible"],
         help="The dataset to get entropies from. Either 'amazon-reviews' (in-distribution) or 'bible' (out of distribution).",
     )
     return parser.parse_args()

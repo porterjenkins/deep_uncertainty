@@ -29,7 +29,7 @@ class NaturalGaussianMixtureNN(DeepRegressionEnsemble[NaturalGaussianNN]):
         mu_vals = []
         var_vals = []
         for member in self.members:
-            eta_1, eta_2 = torch.split(member._predict_impl(x), [1, 1], dim=-1)
+            eta_1, eta_2 = torch.split(member.predict(x), [1, 1], dim=-1)
             mu = member._natural_to_mu(eta_1, eta_2)
             var = member._natural_to_var(eta_2)
             mu_vals.append(mu)

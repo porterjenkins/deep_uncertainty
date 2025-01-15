@@ -102,6 +102,18 @@ class LogFaithfulGaussianNN(DiscreteRegressionNN):
 
         return y_hat
 
+    def _predictive_dist_impl(
+        self, y_hat: torch.Tensor, training: bool = False
+    ) -> torch.distributions.Normal:
+        if training:
+            mu, logvar = torch.split(y_hat, [1, 1], dim=-1)
+            var = logvar.exp()
+        else:
+            mu, var = torch.split(y_hat, [1, 1], dim=-1)
+
+        dist = torch.distributions.Normal(loc=mu.squeeze(), scale=var.sqrt().squeeze())
+        return dist
+
     def _point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
         mu, _ = torch.split(y_hat, [1, 1], dim=-1)
         return mu

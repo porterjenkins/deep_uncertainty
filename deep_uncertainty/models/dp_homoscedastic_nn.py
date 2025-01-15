@@ -121,7 +121,7 @@ class DoublePoissonHomoscedasticNN(DiscreteRegressionNN):
         return torch.exp(y_hat)
 
     def _point_prediction(self, y_hat: torch.Tensor, training: bool) -> torch.Tensor:
-        dist = self._convert_output_to_dist(y_hat, log_output=training)
+        dist: DoublePoisson = self.predictive_dist(y_hat, training=training)
         mode = torch.argmax(dist.pmf_vals, axis=0)
         return mode
 
@@ -134,7 +134,7 @@ class DoublePoissonHomoscedasticNN(DiscreteRegressionNN):
     def _update_addl_test_metrics_batch(
         self, x: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor
     ):
-        dist = self._convert_output_to_dist(y_hat, log_output=False)
+        dist: DoublePoisson = self.predictive_dist(y_hat, training=False)
         mu, phi = dist.mu, dist.phi
         precision = phi / mu
         targets = y.flatten()
@@ -144,17 +144,8 @@ class DoublePoissonHomoscedasticNN(DiscreteRegressionNN):
         self.mp.update(precision)
         self.crps.update(probs_over_support, targets)
 
-    def _convert_output_to_dist(self, y_hat: torch.Tensor, log_output: bool) -> DoublePoisson:
-        """Convert a network output to the implied Double Poisson distribution.
-
-        Args:
-            y_hat (torch.Tensor): Output from a `DoublePoissonNN` (mu, phi for the predicted distribution over y).
-            log_output (bool): Whether/not output is in log space (such as during training).
-
-        Returns:
-            DoublePoisson: The implied Double Poisson distribution over y.
-        """
-        output = y_hat.exp() if log_output else y_hat
+    def _predictive_dist_impl(self, y_hat: torch.Tensor, training: bool = False) -> DoublePoisson:
+        output = y_hat.exp() if training else y_hat
         mu, phi = torch.split(output, [1, 1], dim=-1)
         mu = mu.flatten()
         phi = phi.flatten()

@@ -4,7 +4,6 @@ from .faithful_gaussian_nn import FaithfulGaussianNN
 from .gaussian_nn import GaussianNN
 from .log_faithful_gaussian_nn import LogFaithfulGaussianNN
 from .log_gaussian_nn import LogGaussianNN
-from .mean_nn import MeanNN
 from .natural_gaussian_nn import NaturalGaussianNN
 from .neg_binom_nn import NegBinomNN
 from .poisson_nn import PoissonNN

@@ -47,7 +47,7 @@ def main(save_path: str | Path):
             model = DoublePoissonNN.load_from_checkpoint(
                 weights_dir / model_head / f"epoch={epoch}.ckpt"
             )
-            mu_hat, phi_hat = torch.split(model._predict_impl(grid_tensor), [1, 1], dim=-1)
+            mu_hat, phi_hat = torch.split(model.predict(grid_tensor), [1, 1], dim=-1)
             axs[0, j].plot(grid, mu_hat.flatten().detach(), alpha=alpha, color=color, label=epoch)
             axs[1, j].plot(grid, phi_hat.flatten().detach(), alpha=alpha, color=color, label=epoch)
 

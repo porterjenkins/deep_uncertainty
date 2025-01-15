@@ -11,29 +11,31 @@ from deep_uncertainty.datamodules import BibleDataModule
 from deep_uncertainty.datamodules import ReviewsDataModule
 from deep_uncertainty.enums import HeadType
 from deep_uncertainty.models.ensembles import DoublePoissonMixtureNN
+from deep_uncertainty.models.ensembles import FaithfulGaussianMixtureNN
+from deep_uncertainty.models.ensembles import GaussianMixtureNN
+from deep_uncertainty.models.ensembles import NaturalGaussianMixtureNN
 from deep_uncertainty.models.ensembles import NegBinomMixtureNN
 from deep_uncertainty.models.ensembles import PoissonMixtureNN
 from deep_uncertainty.utils.configs import EnsembleConfig
 
 
-def get_uncertainties(
-    log_dir: Path, config_path: Path, dataset: Literal["amazon-reviews", "bible"]
-):
+def get_uncertainties(log_dir: Path, config_path: Path, dataset: Literal["reviews", "bible"]):
     """Measure the aleatoric/epistemic uncertainty of the provided ensemble on the specified ID / OOD dataset.
 
     Args:
         log_dir (Path): Directory where results should be logged.
         config_path (Path): Path to ensemble config.
-        dataset (str): Either "amazon-reviews" or "bible".
+        dataset (str): Either "reviews" or "bible".
     """
-    if not log_dir.exists():
-        os.makedirs(log_dir)
     config = EnsembleConfig.from_yaml(config_path)
+    experiment_log_dir = log_dir / config.experiment_name
+    if not experiment_log_dir.exists():
+        os.makedirs(experiment_log_dir)
     batch_size = config.batch_size
-    num_workers = 10
+    num_workers = os.cpu_count()
     head_type = config.member_head_type
 
-    if dataset == "amazon-reviews":
+    if dataset == "reviews":
         datamodule = ReviewsDataModule(
             root_dir="data/amazon-reviews",
             batch_size=batch_size,
@@ -47,10 +49,6 @@ def get_uncertainties(
             num_workers=num_workers,
             persistent_workers=True,
         )
-    else:
-        raise ValueError(
-            f"Expected one of ['amazon-reviews', 'bible'] for `dataset` but got {dataset}."
-        )
     datamodule.setup("test")
     test_loader = datamodule.test_dataloader()
 
@@ -60,8 +58,14 @@ def get_uncertainties(
         model = PoissonMixtureNN.from_config(config)
     elif head_type == HeadType.NEGATIVE_BINOMIAL:
         model = NegBinomMixtureNN.from_config(config)
+    elif head_type == HeadType.GAUSSIAN:
+        model = GaussianMixtureNN.from_config(config)
+    elif head_type == HeadType.NATURAL_GAUSSIAN:
+        model = NaturalGaussianMixtureNN.from_config(config)
+    elif head_type == HeadType.FAITHFUL_GAUSSIAN:
+        model = FaithfulGaussianMixtureNN.from_config(config)
     else:
-        raise ValueError("This experiment is for discrete regression ensembles only.")
+        raise NotImplementedError("Cannot run this experiment for the specified ensemble.")
 
     device = model.members[0].device
     aleatoric_uncertainties = []
@@ -70,16 +74,20 @@ def get_uncertainties(
         loop = tqdm(test_loader, desc="Gathering uncertainties...")
         for batch_encoding, _ in loop:
             batch_encoding = batch_encoding.to(device)
-            model(batch_encoding)
-            uncertainties = model._predict_impl(batch_encoding)[1]
-            aleatoric, epistemic = torch.split(uncertainties, [1, 1], dim=1)
+            if isinstance(model, GaussianMixtureNN) or isinstance(model, NaturalGaussianMixtureNN):
+                uncertainties = model.predict(batch_encoding)
+                aleatoric, epistemic = uncertainties[:, 2], uncertainties[:, 3]
+            else:
+                uncertainties = model.predict(batch_encoding)[1]
+                aleatoric, epistemic = torch.split(uncertainties, [1, 1], dim=1)
             aleatoric_uncertainties.append(aleatoric)
             epistemic_uncertainties.append(epistemic)
 
-        aleatoric_uncertainties = torch.cat(aleatoric_uncertainties)
-        epistemic_uncertainties = torch.cat(epistemic_uncertainties)
+        aleatoric_uncertainties = torch.cat(aleatoric_uncertainties).flatten()
+        epistemic_uncertainties = torch.cat(epistemic_uncertainties).flatten()
         save_dict = {"aleatoric": aleatoric_uncertainties, "epistemic": epistemic_uncertainties}
-        save_path = log_dir / config.experiment_name / f"{dataset}_entropies.pt"
+
+        save_path = experiment_log_dir / f"{dataset}_uncertainties.pt"
         print(f"Saving uncertainties to {save_path}")
         torch.save(save_dict, save_path)
 
@@ -95,7 +103,7 @@ def parse_args() -> Namespace:
     parser.add_argument(
         "--dataset",
         type=str,
-        choices=["amazon-reviews", "bible"],
+        choices=["reviews", "bible"],
         help="The dataset to get entropies from. Either 'amazon-reviews' (in-distribution) or 'bible' (out of distribution).",
     )
     return parser.parse_args()

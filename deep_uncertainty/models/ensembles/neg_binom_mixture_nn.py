@@ -28,7 +28,7 @@ class NegBinomMixtureNN(DeepRegressionEnsemble[NegBinomNN]):
         variances = []
         dists = []
         for member in self.members:
-            y_hat = member._predict_impl(x)
+            y_hat = member.predict(x)
             eps = torch.tensor(1e-3, device=y_hat.device)
 
             mu, alpha = torch.split(y_hat, [1, 1], dim=-1)

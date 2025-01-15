@@ -1,0 +1,4 @@
+model,mae,mae,mae,crps,crps,crps,mp,mp,mp
+,mean,std,count,mean,std,count,mean,std,count
+ddpn,0.920,,1,0.630,,1,0.967,,1
+poisson,0.940,,1,0.629,,1,1.028,,1

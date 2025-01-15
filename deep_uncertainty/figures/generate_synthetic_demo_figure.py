@@ -1,142 +1,119 @@
 from pathlib import Path
-from typing import Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from matplotlib.ticker import FuncFormatter
-from matplotlib.ticker import MultipleLocator
-from scipy.interpolate import CubicSpline
-from scipy.stats import nbinom
-from scipy.stats import norm
-from scipy.stats import poisson
+import yaml
+from scipy.interpolate import interp1d
 
-from deep_uncertainty.evaluation.plotting import plot_posterior_predictive
-from deep_uncertainty.models import DoublePoissonNN
-from deep_uncertainty.models import GaussianNN
-from deep_uncertainty.models import NegBinomNN
-from deep_uncertainty.models import PoissonNN
-from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
-from deep_uncertainty.random_variables import DoublePoisson
-from deep_uncertainty.utils.figure_utils import multiple_formatter
+from deep_uncertainty.datamodules.tabular_datamodule import TabularDataModule
+from deep_uncertainty.models.ensembles import DoublePoissonMixtureNN
+from deep_uncertainty.models.ensembles import NegBinomMixtureNN
+from deep_uncertainty.models.ensembles import PoissonMixtureNN
+from deep_uncertainty.models.ensembles.deep_regression_ensemble import DeepRegressionEnsemble
+from deep_uncertainty.utils.configs import EnsembleConfig
 
 
 def produce_figure(
-    models: list[DiscreteRegressionNN],
+    ensembles: list[DeepRegressionEnsemble],
     names: list[str],
+    metrics_files: list[str],
     save_path: Path | str,
-    dataset_path: Path | str,
 ):
-    """Create a figure showcasing DDPN's ability to fit over/under-dispersed count data.
+    save_path = Path(save_path)
+    if save_path.suffix not in (".pdf", ".png"):
+        raise ValueError("Must specify a save path that is either a PDF or a PNG.")
+    fig, axs = plt.subplots(
+        1, len(ensembles), figsize=(4 * len(ensembles), 4), sharex="col", sharey="row"
+    )
+    [axs[i].set_title(name) for i, name in enumerate(names)]
 
-    Args:
-        models (list[DiscreteRegressionNN]): List of models to plot posterior predictive distributions of.
-        names (list[str]): List of display names for each respective model in `models`.
-        save_path (Path | str): Path to save figure to.
-        dataset_path (Path | str): Path with dataset to fit.
-    """
-    fig, axs = plt.subplots(1, len(models), figsize=(2.5 * len(models), 3), sharey=True)
-    axs: Sequence[plt.Axes]
-    data: dict[str, np.ndarray] = np.load(dataset_path)
-    X = data["X_test"].flatten()
-    y = data["y_test"].flatten()
+    datamodule = TabularDataModule(
+        "data/discrete-wave/discrete_sine_wave.npz",
+        batch_size=1,
+        num_workers=0,
+        persistent_workers=False,
+    )
+    datamodule.setup("")
+    datamodule.prepare_data()
+    gt_uncertainty: dict[str, np.ndarray] = np.load("data/discrete-wave/gt_uncertainty.npz")
 
-    for model, model_name, ax in zip(models, names, axs):
-        if isinstance(model, GaussianNN):
-            y_hat = model._predict_impl(torch.tensor(X).unsqueeze(1))
-            mu, var = torch.split(y_hat, [1, 1], dim=-1)
-            mu = mu.flatten().detach().numpy()
-            std = var.sqrt().flatten().detach().numpy()
-            dist = norm(loc=mu, scale=std)
+    X = datamodule.test.tensors[0]
+    y = datamodule.test.tensors[1]
 
-        elif isinstance(model, DoublePoissonNN):
-            y_hat = model._predict_impl(torch.tensor(X).unsqueeze(1))
-            mu, phi = torch.split(y_hat, [1, 1], dim=-1)
-            mu = mu.detach().numpy().flatten()
-            phi = phi.detach().numpy().flatten()
-            dist = DoublePoisson(mu, phi)
+    domain = np.linspace(X.min(), X.max())
+    gt_lower = interp1d(
+        x=gt_uncertainty["X"].flatten(),
+        y=gt_uncertainty["lower"].flatten(),
+        kind="cubic",
+    )(domain)
+    gt_upper = interp1d(
+        x=gt_uncertainty["X"].flatten(),
+        y=gt_uncertainty["upper"].flatten(),
+        kind="cubic",
+    )(domain)
+    order = torch.argsort(X.flatten())
 
-        elif isinstance(model, PoissonNN):
-            y_hat = model._predict_impl(torch.tensor(X).unsqueeze(1))
-            lmbda = y_hat.detach().numpy().flatten()
-            dist = poisson(lmbda)
+    for i, ensemble in enumerate(ensembles):
+        with open(metrics_files[i]) as f:
+            metrics = yaml.safe_load(f)
 
-        elif isinstance(model, NegBinomNN):
-            y_hat = model._predict_impl(torch.tensor(X).unsqueeze(1))
-            mu, alpha = torch.split(y_hat, [1, 1], dim=-1)
-            mu = mu.flatten().detach().numpy()
-            alpha = alpha.flatten().detach().numpy()
+        mae = metrics["mae"]
+        crps = metrics["crps"]
+        probs, _ = ensemble.predict(X)
+        cdf = torch.cumsum(probs, dim=1)
+        lower = torch.tensor([torch.searchsorted(cdf[i], 0.025) for i in range(len(cdf))])
+        upper = torch.tensor([torch.searchsorted(cdf[i], 0.975) for i in range(len(cdf))])
+        mu = (probs * torch.arange(2000).view(1, -1)).sum(dim=1)
 
-            eps = 1e-6
-            var = mu + alpha * mu**2
-            n = mu**2 / np.maximum(var - mu, eps)
-            p = mu / np.maximum(var, eps)
-            dist = nbinom(n=n, p=p)
-
-        pred = model._point_prediction(y_hat, training=False).detach().flatten().numpy()
-        mae = np.abs(pred - y).mean()
-        lower, upper = dist.ppf(0.025), dist.ppf(0.975)
-        plot_posterior_predictive(
-            X,
-            y,
-            mu,
-            lower=lower,
-            upper=upper,
-            show=False,
-            ax=ax,
-            ylims=(0, 45),
-            legend=False,
-            error_color="cornflowerblue",
+        data_label = "Test Data" if i == len(ensembles) - 1 else None
+        axs[i].scatter(
+            X.flatten(), y.flatten(), c="cornflowerblue", alpha=0.4, s=20, label=data_label
         )
+        axs[i].plot(X[order], mu[order].detach().numpy(), c="black", label="Predictive Mean")
+        axs[i].fill_between(
+            X[order].flatten(),
+            lower[order],
+            upper[order],
+            color="cornflowerblue",
+            alpha=0.2,
+            zorder=0,
+            label="Predictive Uncertainty",
+        )
+        axs[i].plot(domain, gt_lower, linestyle="--", color="gray")
+        axs[i].plot(domain, gt_upper, linestyle="--", color="gray", label="G.T. Uncertainty")
+        axs[i].annotate(f"MAE: {mae:.3f}", (0, 40))
+        axs[i].annotate(f"CRPS: {crps:.3f}", (0, 38))
 
-        # TODO: Needs formalizing.
-        uncertainty_data = np.load("data/discrete-wave/gt_uncertainty.npz")
-        uncertainty_x = uncertainty_data["X"].flatten()
-        order = np.argsort(uncertainty_x)
-        lb = uncertainty_data["lower"][order]
-        ub = uncertainty_data["upper"][order]
-        lb_interp = CubicSpline(uncertainty_x[order], lb)
-        ub_interp = CubicSpline(uncertainty_x[order], ub)
-        foo = np.linspace(uncertainty_x.min(), uncertainty_x.max())
-        ax.plot(foo, lb_interp(foo), "--", c="gray")
-        ax.plot(foo, ub_interp(foo), "--", c="gray")
+    [ax.set_xticks([0, np.pi, 2 * np.pi]) for ax in axs.ravel()]
+    [
+        ax.set_xticklabels(["0", r"$\pi$", r"$2\pi$"]) for ax in axs.ravel()
+    ]  # Optional manual labels (or use formatter below)
 
-        ax.set_title(model_name)
-        ax.annotate(f"MAE: {mae:.3f}", (0.2, 41))
-        ax.xaxis.set_major_locator(MultipleLocator(np.pi))
-        ax.xaxis.set_major_formatter(FuncFormatter(multiple_formatter()))
-        ax.set_xlabel(None)
-        ax.set_ylabel(None)
-
-    # TODO: This could be more elegant.
-    gt_data = ax.scatter(
-        X[0], y[0], facecolors="none", edgecolors="gray", alpha=0.4, label="Test data"
-    )
-    (gt_aleatoric,) = ax.plot(foo[0], lb_interp(foo[0]), "--", c="gray", label="G.T. Aleatoric")
-    (learned_mean,) = ax.plot([0], [0], "k", label="Learned Mean")
-    learned_aleatoric = ax.fill_between(
-        [0], [0], [0], alpha=0.2, color="cornflowerblue", label="Learned Aleatoric"
-    )
-
-    fig.tight_layout(rect=[0, 0.1, 1, 1])
+    [ax.set_yticks([0, 20, 40]) for ax in axs.ravel()]
+    fig.legend(*axs[-1].get_legend_handles_labels(), loc="lower center", ncols=4)
+    fig.tight_layout()
     fig.subplots_adjust(bottom=0.2)
-    fig.legend(
-        handles=[gt_data, gt_aleatoric, learned_aleatoric, learned_mean],
-        loc="lower center",
-        ncol=len(models),
-    )
-
     fig.savefig(save_path, format="pdf", dpi=150)
 
 
 if __name__ == "__main__":
-    save_path = "deep_uncertainty/figures/artifacts/synthetic_demo.pdf"
-    dataset_path = "data/discrete-wave/discrete_sine_wave.npz"
-    models = [
-        GaussianNN.load_from_checkpoint("weights/discrete_sine_wave/gaussian.ckpt"),
-        PoissonNN.load_from_checkpoint("weights/discrete_sine_wave/poisson.ckpt"),
-        NegBinomNN.load_from_checkpoint("weights/discrete_sine_wave/nbinom.ckpt"),
-        DoublePoissonNN.load_from_checkpoint("weights/discrete_sine_wave/ddpn.ckpt"),
+    save_path = "deep_uncertainty/figures/artifacts/synthetic_demo_ii.pdf"
+    ensembles = [
+        PoissonMixtureNN.from_config(
+            EnsembleConfig.from_yaml("configs/discrete-wave/ensembles/poisson.yaml")
+        ),
+        NegBinomMixtureNN.from_config(
+            EnsembleConfig.from_yaml("configs/discrete-wave/ensembles/nbinom.yaml")
+        ),
+        DoublePoissonMixtureNN.from_config(
+            EnsembleConfig.from_yaml("configs/discrete-wave/ensembles/ddpn.yaml")
+        ),
     ]
-    names = ["Gaussian DNN", "Poisson DNN", "NB DNN", "DDPN (Ours)"]
-    produce_figure(models, names, save_path, dataset_path)
+    names = ["Poisson Mixture", "NB Mixture", "DDPN Mixture (Ours)"]
+    metrics_files = [
+        "results/discrete-wave/ensembles/poisson_ensemble/test_metrics.yaml",
+        "results/discrete-wave/ensembles/nbinom_ensemble/test_metrics.yaml",
+        "results/discrete-wave/ensembles/ddpn_ensemble/test_metrics.yaml",
+    ]
+    produce_figure(ensembles, names, metrics_files, save_path)

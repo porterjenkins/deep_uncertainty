@@ -31,7 +31,7 @@ class GaussianMixtureNN(DeepRegressionEnsemble[GaussianNN]):
         mu_vals = []
         var_vals = []
         for member in self.members:
-            mu, var = torch.split(member._predict_impl(x), [1, 1], dim=-1)
+            mu, var = torch.split(member.predict(x), [1, 1], dim=-1)
             mu_vals.append(mu)
             var_vals.append(var)
         mu_vals = torch.cat(mu_vals, dim=1)

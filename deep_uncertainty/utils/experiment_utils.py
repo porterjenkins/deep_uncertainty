@@ -23,7 +23,6 @@ from deep_uncertainty.models import FaithfulGaussianNN
 from deep_uncertainty.models import GaussianNN
 from deep_uncertainty.models import LogFaithfulGaussianNN
 from deep_uncertainty.models import LogGaussianNN
-from deep_uncertainty.models import MeanNN
 from deep_uncertainty.models import NaturalGaussianNN
 from deep_uncertainty.models import NegBinomNN
 from deep_uncertainty.models import PoissonNN
@@ -43,9 +42,7 @@ def get_model(config: TrainingConfig, return_initializer: bool = False) -> Discr
 
     initializer: Type[DiscreteRegressionNN]
 
-    if config.head_type == HeadType.MEAN:
-        initializer = MeanNN
-    elif config.head_type == HeadType.GAUSSIAN:
+    if config.head_type == HeadType.GAUSSIAN:
         if config.beta_scheduler_type is not None:
             initializer = partialclass(
                 GaussianNN,
@@ -116,6 +113,7 @@ def get_model(config: TrainingConfig, return_initializer: bool = False) -> Discr
             backbone_type = MobileNetV3
         backbone_kwargs = {}
     backbone_kwargs["output_dim"] = config.hidden_dim
+    backbone_kwargs["freeze_backbone"] = config.freeze_backbone
 
     model = initializer(
         backbone_type=backbone_type,

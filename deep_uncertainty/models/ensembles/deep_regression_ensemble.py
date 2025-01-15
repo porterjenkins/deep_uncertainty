@@ -11,6 +11,7 @@ from torchmetrics import MeanSquaredError
 from deep_uncertainty.evaluation.custom_torchmetrics import ContinuousRankedProbabilityScore
 from deep_uncertainty.evaluation.custom_torchmetrics import MedianPrecision
 from deep_uncertainty.models.discrete_regression_nn import DiscreteRegressionNN
+from deep_uncertainty.random_variables.discrete_random_variable import DiscreteRandomVariable
 from deep_uncertainty.utils.configs import EnsembleConfig
 
 
@@ -44,26 +45,6 @@ class DeepRegressionEnsemble(LightningModule, Generic[T]):
         self.mp = MedianPrecision()
         self.crps = ContinuousRankedProbabilityScore(mode="discrete")
 
-    def _predict_impl(self, x: torch.Tensor) -> torch.Tensor:
-        """Make a forward (prediction) pass through the ensemble.
-
-        Args:
-            x (torch.Tensor): Batched input tensor, with shape (N, ...).
-
-        Returns:
-            torch.Tensor: Output tensor, with shape (N, ...).
-        """
-        raise NotImplementedError("Must be implemented by subclass.")
-
-    def _update_test_metrics(self, y_hat: torch.Tensor, y: torch.Tensor):
-        """Update the test metrics after a batch of predictions.
-
-        Args:
-            y_hat (torch.Tensor): Model output tensor on a batch of data, with shape (N, ...).
-            y (torch.Tensor): Regression labels for the batch of data, with shape (N, 1).
-        """
-        raise NotImplementedError("Must be implemented by subclass.")
-
     @classmethod
     def from_config(cls, config: EnsembleConfig) -> DeepRegressionEnsemble[T]:
         """Construct an ensemble from a config. This is the primary way of building an ensemble."""
@@ -73,6 +54,17 @@ class DeepRegressionEnsemble(LightningModule, Generic[T]):
 
     @torch.inference_mode()
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.predict(x)
+
+    def predict(self, x: torch.Tensor) -> torch.Tensor:
+        """Make a forward (prediction) pass through the ensemble.
+
+        Args:
+            x (torch.Tensor): Batched input tensor, with shape (N, ...).
+
+        Returns:
+            torch.Tensor: Output tensor, with shape (N, ...).
+        """
         return self._predict_impl(x)
 
     def predict_step(self, batch: torch.Tensor) -> torch.Tensor:
@@ -91,3 +83,15 @@ class DeepRegressionEnsemble(LightningModule, Generic[T]):
         self.log("mae", self.mae.compute())
         self.log("mp", self.mp.compute())
         self.log("crps", self.crps.compute())
+
+    def _predict_impl(self, x: torch.Tensor) -> torch.Tensor:
+        raise NotImplementedError("Must be implemented by subclass.")
+
+    def _update_test_metrics(self, y_hat: torch.Tensor, y: torch.Tensor):
+        """Update the test metrics after a batch of predictions.
+
+        Args:
+            y_hat (torch.Tensor): Model output tensor on a batch of data, with shape (N, ...).
+            y (torch.Tensor): Regression labels for the batch of data, with shape (N, 1).
+        """
+        raise NotImplementedError("Must be implemented by subclass.")

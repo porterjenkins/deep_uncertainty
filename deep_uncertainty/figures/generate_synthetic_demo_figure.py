@@ -99,7 +99,6 @@ def produce_figure(
     [ax.tick_params(axis="both", which="minor", labelsize=8) for ax in axs.ravel()]
 
     fig.tight_layout()
-    fig.subplots_adjust(bottom=0.2)
     fig.savefig(save_path, format="pdf", dpi=150)
 
 

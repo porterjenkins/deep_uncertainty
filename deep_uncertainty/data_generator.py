@@ -88,12 +88,20 @@ class DataGenerator:
     def generate_discrete_conflation_sine_wave(n: int = 1000) -> tuple[np.ndarray, np.ndarray]:
         x_vals = []
         y_vals = []
+        variances = []
+        support = torch.arange(2000)
         lower_bounds = []
         upper_bounds = []
         for _ in range(n):
             x = torch.rand(1) * 2 * np.pi
             rv_list = [torch.distributions.Poisson(rate=10 * np.sin(x) + 10)] * 5
             conflation = DiscreteConflation(rv_list)
+
+            probs = conflation.pmf(support)
+
+            mu = (probs * support).sum()
+            var = (probs * (support.unsqueeze(1) - mu).transpose(0, 1) ** 2).sum(dim=1)
+            variances.append(var)
             lower_bounds.append(-conflation.ppf(0.025) + 30)
             upper_bounds.append(-conflation.ppf(0.975) + 30)
 
@@ -110,6 +118,7 @@ class DataGenerator:
             y=y,
             lower=np.array(lower_bounds),
             upper=np.array(upper_bounds),
+            aleatoric=np.array(variances),
         )
 
         return X, y

@@ -24,9 +24,9 @@ def produce_figure(
     if save_path.suffix not in (".pdf", ".png"):
         raise ValueError("Must specify a save path that is either a PDF or a PNG.")
     fig, axs = plt.subplots(
-        1, len(ensembles), figsize=(4 * len(ensembles), 4), sharex="col", sharey="row"
+        3, len(ensembles), figsize=(3 * len(ensembles), 9), sharex="col", sharey="row"
     )
-    [axs[i].set_title(name) for i, name in enumerate(names)]
+    [axs[0, j].set_title(name, fontsize=14) for j, name in enumerate(names)]
 
     datamodule = TabularDataModule(
         "data/discrete-wave/discrete_sine_wave.npz",
@@ -42,36 +42,34 @@ def produce_figure(
     y = datamodule.test.tensors[1]
 
     domain = np.linspace(X.min(), X.max())
-    gt_lower = interp1d(
+    gt_aleatoric = interp1d(
         x=gt_uncertainty["X"].flatten(),
-        y=gt_uncertainty["lower"].flatten(),
+        y=gt_uncertainty["aleatoric"].flatten(),
         kind="cubic",
-    )(domain)
-    gt_upper = interp1d(
-        x=gt_uncertainty["X"].flatten(),
-        y=gt_uncertainty["upper"].flatten(),
-        kind="cubic",
+        fill_value="extrapolate",
     )(domain)
     order = torch.argsort(X.flatten())
 
-    for i, ensemble in enumerate(ensembles):
-        with open(metrics_files[i]) as f:
+    for j, ensemble in enumerate(ensembles):
+        with open(metrics_files[j]) as f:
             metrics = yaml.safe_load(f)
 
         mae = metrics["mae"]
         crps = metrics["crps"]
-        probs, _ = ensemble.predict(X)
+        probs, uncertainties = ensemble.predict(X)
+        aleatoric = uncertainties[:, 0].detach()
+        epistemic = uncertainties[:, 1].detach()
         cdf = torch.cumsum(probs, dim=1)
         lower = torch.tensor([torch.searchsorted(cdf[i], 0.025) for i in range(len(cdf))])
         upper = torch.tensor([torch.searchsorted(cdf[i], 0.975) for i in range(len(cdf))])
         mu = (probs * torch.arange(2000).view(1, -1)).sum(dim=1)
 
-        data_label = "Test Data" if i == len(ensembles) - 1 else None
-        axs[i].scatter(
+        data_label = "Test Data" if j == len(ensembles) - 1 else None
+        axs[0, j].scatter(
             X.flatten(), y.flatten(), c="cornflowerblue", alpha=0.4, s=20, label=data_label
         )
-        axs[i].plot(X[order], mu[order].detach().numpy(), c="black", label="Predictive Mean")
-        axs[i].fill_between(
+        axs[0, j].plot(X[order], mu[order].detach().numpy(), c="black", label="Predictive Mean")
+        axs[0, j].fill_between(
             X[order].flatten(),
             lower[order],
             upper[order],
@@ -80,18 +78,26 @@ def produce_figure(
             zorder=0,
             label="Predictive Uncertainty",
         )
-        axs[i].plot(domain, gt_lower, linestyle="--", color="gray")
-        axs[i].plot(domain, gt_upper, linestyle="--", color="gray", label="G.T. Uncertainty")
-        axs[i].annotate(f"MAE: {mae:.3f}", (0, 40))
-        axs[i].annotate(f"CRPS: {crps:.3f}", (0, 38))
+        axs[0, j].annotate(f"MAE: {mae:.3f}", (0, 40))
+        axs[0, j].annotate(f"CRPS: {crps:.3f}", (0, 37))
 
-    [ax.set_xticks([0, np.pi, 2 * np.pi]) for ax in axs.ravel()]
+        axs[1, j].plot(X[order], aleatoric[order], label="Predicted")
+        axs[1, j].plot(domain, gt_aleatoric, linestyle="--", label="Ground Truth")
+        axs[1, j].legend(loc="upper left", prop={"size": 9})
+        axs[2, j].plot(X[order], epistemic[order])
+
+    axs[0, 0].set_ylabel("Predictive Dist.", fontsize=14)
+    axs[1, 0].set_ylabel("Aleatoric", fontsize=14)
+    axs[2, 0].set_ylabel("Epistemic", fontsize=14)
+    [ax.set_xticks([0, np.pi, 2 * np.pi]) for ax in axs[-1].ravel()]
     [
-        ax.set_xticklabels(["0", r"$\pi$", r"$2\pi$"]) for ax in axs.ravel()
+        ax.set_xticklabels(["0", r"$\pi$", r"$2\pi$"]) for ax in axs[-1].ravel()
     ]  # Optional manual labels (or use formatter below)
+    axs[0, 0].set_yticks([0, 20, 40])
+    axs[1, 0].set_yticks([0, 15, 30])
+    [ax.tick_params(axis="both", which="major", labelsize=8) for ax in axs.ravel()]
+    [ax.tick_params(axis="both", which="minor", labelsize=8) for ax in axs.ravel()]
 
-    [ax.set_yticks([0, 20, 40]) for ax in axs.ravel()]
-    fig.legend(*axs[-1].get_legend_handles_labels(), loc="lower center", ncols=4)
     fig.tight_layout()
     fig.subplots_adjust(bottom=0.2)
     fig.savefig(save_path, format="pdf", dpi=150)
@@ -110,7 +116,7 @@ if __name__ == "__main__":
             EnsembleConfig.from_yaml("configs/discrete-wave/ensembles/ddpn.yaml")
         ),
     ]
-    names = ["Poisson Mixture", "NB Mixture", "DDPN Mixture (Ours)"]
+    names = ["Poisson Ensemble", "NB Ensemble", "DDPN Ensemble (Ours)"]
     metrics_files = [
         "results/discrete-wave/ensembles/poisson_ensemble/test_metrics.yaml",
         "results/discrete-wave/ensembles/nbinom_ensemble/test_metrics.yaml",

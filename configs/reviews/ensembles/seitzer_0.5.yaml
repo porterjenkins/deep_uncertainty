@@ -1,6 +1,6 @@
 experiment_name: seitzer_0.5_ensemble
 accelerator: gpu
-batch_size: 256
+batch_size: 32
 member_head_type: gaussian
 members:
   - chkp/reviews/seitzer_0.5/version_0/best_loss.ckpt

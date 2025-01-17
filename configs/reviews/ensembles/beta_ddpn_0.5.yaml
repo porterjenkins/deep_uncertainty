@@ -1,6 +1,6 @@
 experiment_name: beta_ddpn_0.5_ensemble
 accelerator: gpu
-batch_size: 256
+batch_size: 32
 member_head_type: double_poisson
 members:
   - chkp/reviews/beta_ddpn_0.5/version_0/best_loss.ckpt

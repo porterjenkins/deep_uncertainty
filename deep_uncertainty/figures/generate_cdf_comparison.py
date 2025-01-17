@@ -57,8 +57,7 @@ if __name__ == "__main__":
         "chkp/length-of-stay/beta_ddpn_0.5/version_0/best_loss.ckpt"
     )
 
-    fig, axs = plt.subplots(2, 1, figsize=(4, 6), sharey="all", sharex="all")
-
+    fig1, ax1 = plt.subplots(figsize=(3, 3))
     x = inputs[6]
     y = targets[6]
     gauss_dist = gaussian.predictive_dist(gaussian.predict(x))
@@ -70,18 +69,19 @@ if __name__ == "__main__":
     disc_support = torch.arange(0, max_val + 1)
     gauss_cdf_vals = gauss_dist.cdf(support)
     ddpn_cdf_vals = ddpn_dist.cdf(disc_support)
-    gt_cdf_vals = torch.where(disc_support < y, 0, 1).flatten()
 
-    axs[0].plot(support, gauss_cdf_vals.detach(), color="tab:blue", label=r"Gaussian", zorder=-1)
+    ax1.plot(support, gauss_cdf_vals.detach(), color="tab:blue", label=r"Gaussian", zorder=-1)
     plot_discrete_cdf(
-        disc_support, ddpn_cdf_vals.detach(), color="tab:green", ax=axs[0], label=r"DDPN"
+        disc_support, ddpn_cdf_vals.detach(), color="tab:green", ax=ax1, label=r"DDPN"
     )
-    axs[0].set_yticks([0, 0.5, 1.0])
-    axs[0].vlines(
-        y, -0.1, 1.1, color="black", linewidth=1, zorder=-3, linestyle="dashed", alpha=0.8
-    )
-    axs[0].set_ylim([-0.05, 1.05])
+    ax1.set_yticks([0, 0.5, 1.0])
+    ax1.vlines(y, -0.1, 1.1, color="black", linewidth=1, zorder=-3, linestyle="dashed", alpha=0.8)
+    ax1.set_ylim([-0.05, 1.05])
+    ax1.legend(loc="lower right")
+    fig1.tight_layout()
+    fig1.savefig("deep_uncertainty/figures/artifacts/pathologies_1.pdf", dpi=150)
 
+    fig2, ax2 = plt.subplots(figsize=(3, 3))
     x = inputs[47]
     y = targets[47]
     gauss_dist = gaussian.predictive_dist(gaussian.predict(x))
@@ -93,19 +93,14 @@ if __name__ == "__main__":
     disc_support = torch.arange(0, max_val + 1)
     gauss_cdf_vals = gauss_dist.cdf(support)
     ddpn_cdf_vals = ddpn_dist.cdf(disc_support)
-    gt_cdf_vals = torch.where(disc_support < y, 0, 1).flatten()
 
-    axs[1].plot(support, gauss_cdf_vals.detach(), color="tab:blue", label=r"Gaussian", zorder=-1)
+    ax2.plot(support, gauss_cdf_vals.detach(), color="tab:blue", label=r"Gaussian", zorder=-1)
     plot_discrete_cdf(
-        disc_support, ddpn_cdf_vals.detach(), color="tab:green", ax=axs[1], label=r"DDPN"
+        disc_support, ddpn_cdf_vals.detach(), color="tab:green", ax=ax2, label=r"DDPN"
     )
-    axs[1].set_yticks([0, 0.5, 1.0])
-    axs[1].vlines(
-        y, -0.1, 1.1, color="black", linewidth=1, zorder=-3, linestyle="dashed", alpha=0.8
-    )
-    axs[1].set_ylim([-0.05, 1.05])
-
-    fig.legend(*axs[1].get_legend_handles_labels(), loc="lower right", bbox_to_anchor=(0.95, 0.6))
-    fig.tight_layout()
-    fig.savefig("deep_uncertainty/figures/artifacts/pathologies.pdf", dpi=150)
-    plt.show()
+    ax2.set_yticks([0, 0.5, 1.0])
+    ax2.vlines(y, -0.1, 1.1, color="black", linewidth=1, zorder=-3, linestyle="dashed", alpha=0.8)
+    ax2.set_ylim([-0.05, 1.05])
+    ax2.legend(loc="lower right")
+    fig2.tight_layout()
+    fig2.savefig("deep_uncertainty/figures/artifacts/pathologies_2.pdf", dpi=150)

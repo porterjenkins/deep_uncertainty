@@ -1,13 +1,13 @@
 experiment_name: stirn_ensemble
 accelerator: gpu
-batch_size: 256
+batch_size: 32
 member_head_type: faithful_gaussian
 members:
-  - chkp/reviews/stirn/version_0/best_loss.ckpt
-  - chkp/reviews/stirn/version_1/best_loss.ckpt
-  - chkp/reviews/stirn/version_2/best_loss.ckpt
-  - chkp/reviews/stirn/version_3/best_loss.ckpt
-  - chkp/reviews/stirn/version_4/best_loss.ckpt
+  - chkp/reviews/stirn/version_0/last.ckpt
+  - chkp/reviews/stirn/version_1/last.ckpt
+  - chkp/reviews/stirn/version_2/last.ckpt
+  - chkp/reviews/stirn/version_3/last.ckpt
+  - chkp/reviews/stirn/version_4/last.ckpt
 dataset:
   type: text
   spec: reviews

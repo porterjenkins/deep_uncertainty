@@ -9,9 +9,18 @@ from scipy.interpolate import CubicSpline
 from deep_uncertainty.models import DoublePoissonNN
 
 
+plt.rcParams.update(
+    {
+        "text.usetex": True,
+        "font.family": "sans-serif",
+        "font.sans-serif": "Helvetica",
+    }
+)
+
+
 def main(save_path: str | Path):
 
-    data_dir = Path("data/isolated_count_data")
+    data_dir = Path("data/isolated")
     weights_dir = Path("weights/isolated_count_data")
 
     data = np.load(data_dir / "isolated_count_data.npz")
@@ -28,14 +37,14 @@ def main(save_path: str | Path):
     model_heads = "ddpn", "beta_ddpn_0.5", "beta_ddpn_1.0"
     titles = "$\\beta = 0$", "$\\beta = 0.5$", "$\\beta = 1.0$"
 
-    fig, axs = plt.subplots(2, len(model_heads), figsize=(12, 6), sharey="row")
+    fig, axs = plt.subplots(2, len(model_heads), figsize=(12, 6), sharey="row", sharex="col")
     for j, (model_head, title) in enumerate(zip(model_heads, titles)):
         axs[0, j].set_title(title)
         if j == 0:
-            axs[0, j].set_ylabel("$\mu$")
-            axs[1, j].set_ylabel("$\phi$")
+            axs[0, j].set_ylabel(r"$\mu$")
+            axs[1, j].set_ylabel(r"$\gamma$")
 
-        axs[1, j].set_xlabel("X")
+        axs[1, j].set_xlabel("$x$")
         axs[0, j].scatter(X[:-2], y[:-2], color="cornflowerblue", alpha=0.4, s=4)
         axs[0, j].scatter(X[-2:], y[-2:], color="cornflowerblue", alpha=0.5, zorder=10)
         axs[0, j].plot(grid, f(grid), linestyle="dotted", color="black", linewidth=3, zorder=9)

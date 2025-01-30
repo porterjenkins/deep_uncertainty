@@ -1,6 +1,6 @@
 # Predictive Uncertainty with Deep Learning and Count Data
 
-This repository contains the official implementation of "Flexible Heteroscedastic Count Regression with Deep Double Poisson Networks".
+This repository contains the official implementation of "Fully Heteroscedastic Count Regression with Deep Double Poisson Networks".
 
 ## Important Links
 
@@ -20,10 +20,13 @@ Our implementations of various "single forward pass" techniques referenced in th
 Implementations of "deep ensembles" referenced in the paper are found at:
 
 - [Laksh. et al.](deep_uncertainty/models/ensembles/gaussian_mixture_nn.py)
+- [Immer et al.](deep_uncertainty/models/ensembles/natural_gaussian_mixture_nn.py)
+- [Stirn et al.](deep_uncertainty/models/ensembles/faithful_gaussian_mixture_nn.py)
+- [Seitzer et al.](deep_uncertainty/models/ensembles/gaussian_mixture_nn.py) (where individual models were trained with a `beta_scheduler`)
 - [Poisson DNN Mixture](deep_uncertainty/models/ensembles/poisson_mixture_nn.py)
 - [NB DNN Mixture](deep_uncertainty/models/ensembles/neg_binom_mixture_nn.py)
 - [DDPN Mixture](deep_uncertainty/models/ensembles/double_poisson_mixture_nn.py)
-- [β-DDPN Mixture](deep_uncertainty/models/ensembles/double_poisson_mixture_nn.py)
+- [β-DDPN Mixture](deep_uncertainty/models/ensembles/double_poisson_mixture_nn.py) (where individual models were trained with a `beta_scheduler`)
 
 ## Getting Started
 
@@ -53,9 +56,9 @@ Contact the authors for access to the datasets used in the experiments.
 
 ### Reproducibility
 
-Training configs for each model benchmarked in "Flexible Heteroscedastic Count Regression with Deep Double Poisson Networks" can be found in the top-level [configs directory](configs).
+Training configs for each model benchmarked in "Fully Heteroscedastic Count Regression with Deep Double Poisson Networks" can be found in the top-level [configs directory](configs).
 
-To re-run the experiments from the paper, first contact the authors for the requisite dataset files and ensure they are saved in a top-level `data` directory. Then run the following command:
+To re-run the experiments from the paper, first contact the authors for the requisite dataset files and ensure they are saved in a top-level `data` directory. Then run the following command for any valid dataset:
 
 ```bash
 bash deep_uncertainty/scripts/train_models.sh <dataset-name>
@@ -89,13 +92,13 @@ Logs / saved model weights will be found at the locations specified in your conf
 
 #### Training on Tabular Datasets
 
-If fitting a model on tabular data, the training script assumes the dataset will be stored locally in `.npz` files with `X_train`, `y_train`, `X_val`, `y_val`, `X_test`, and `y_test` splits (these files are automatically produced by our [data generating code](deep_uncertainty/data_generator.py)). Pass a path to this `.npz` file in the `dataset` `spec` key in the config (also ensure that the `dataset` `type` is set to `tabular` and the `dataset` `input_dim` key is properly specified).
+If fitting a model on tabular data, the training script assumes the dataset will be stored locally in `.npz` files with `X_train`, `y_train`, `X_val`, `y_val`, `X_test`, and `y_test` splits (for reference, these files are automatically produced by our [synthetic data generating code](deep_uncertainty/data_generator.py)). Pass a path to this `.npz` file in the `dataset` `spec` key in the config (also ensure that the `dataset` `type` is set to `tabular` and the `dataset` `input_dim` key is properly specified).
 
 #### Training on Image Datasets
 
 The currently-supported image datasets for training models are:
 
-- `MNIST` (We regress the digit labels instead of classifying)
+- `MNIST` (Regressing the digit labels instead of classifying)
 - `COCO-People` (All images in COCO containing people, labeled with the count of "person" annotations)
 
 To train a model on any of these datasets, simply specify `"image"` for the `dataset` `type` key in the config, then set `dataset` `spec` to the requisite dataset name (see the options in the `ImageDatasetName` class [here](deep_uncertainty/enums.py))

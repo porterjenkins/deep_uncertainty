@@ -37,10 +37,14 @@ def double_poisson_nll(
     mu = torch.exp(logmu_clamped)
     phi = torch.exp(logphi_clamped)
 
+    # Efron's approximation for the normalization constant.
+    c = 1 + ((1 - phi) * (1 + torch.reciprocal(mu * phi))) / (12 * mu * phi)
+
     losses = (
         (-0.5 * logphi_clamped)
         + phi * mu
         - phi * (targets + torch.xlogy(targets, mu) - torch.xlogy(targets, targets))
+        + torch.log(c)
     )
 
     if beta is not None and beta != 0:

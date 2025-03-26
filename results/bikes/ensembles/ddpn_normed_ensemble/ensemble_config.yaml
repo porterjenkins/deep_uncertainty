@@ -1,0 +1,14 @@
+accelerator: cpu
+batch_size: 32
+dataset:
+  spec: data/bikes/bikes.npz
+  type: tabular
+experiment_name: ddpn_normed_ensemble
+log_dir: results/bikes/ensembles
+member_head_type: double_poisson
+members:
+- chkp/bikes/ddpn_normed/version_0/best_loss.ckpt
+- chkp/bikes/ddpn_normed/version_1/best_loss.ckpt
+- chkp/bikes/ddpn_normed/version_2/best_loss.ckpt
+- chkp/bikes/ddpn_normed/version_3/best_loss.ckpt
+- chkp/bikes/ddpn_normed/version_4/best_loss.ckpt
